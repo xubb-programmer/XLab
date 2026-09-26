@@ -1,2 +1,35 @@
-# 按要求跟踪工作区中的全部文件和目录。
-# Git 不会跟踪空目录，空目录使用 .gitkeep 占位。
+# 工作区中的源代码、文档和资料默认纳入版本控制。
+# 以下是 Qt、CMake、ESP-IDF 等工具生成的本机文件或构建产物。
+
+# 构建目录
+**/build/
+**/build-*/
+**/CMakeFiles/
+
+# Qt Creator、qmake 和 IDE 本机配置
+**/.qtcreator/
+**/.vscode/
+**/.idea/
+*.pro.user*
+**/.qmake.stash
+
+# CMake、Ninja 和编译数据库生成文件
+**/CMakeCache.txt
+**/compile_commands.json
+**/.ninja_deps
+**/.ninja_log
+**/build.ninja
+
+# ESP-IDF 本机配置
+**/sdkconfig
+**/sdkconfig.old
+
+# 常见编译产物
+*.o
+*.obj
+*.a
+*.so
+*.dll
+*.elf
+*.map
+*.out

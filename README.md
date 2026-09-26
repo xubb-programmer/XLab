@@ -101,13 +101,22 @@ D:\XLab
 - 个人日志和反思：`04_Notes\Life`
 - 已完成的计划、记录或可复用的清单：`05_Outputs\Life`
 
-## 4. 现有内容的位置
+## 4. GitHub 仓库与现有内容
 
-- `01_Projects\Work\EdgeAgent`：原有的开发项目，包括 `EdgeAgent`、`EdgeAgentTester` 和构建目录。
+- GitHub 仓库：[xubb-programmer/XLab](https://github.com/xubb-programmer/XLab)
+- 默认分支：`main`
+- 本地目录：`D:\XLab`
+- 推送命令：`git push`
+
+仓库保留源代码、项目文档、学习资料和工作区结构。Qt、CMake、ESP-IDF 等工具生成的构建目录、编译产物和本机配置由 `.gitignore` 排除，不需要手动提交。
+
+现有内容的位置：
+
+- `01_Projects\Work\EdgeAgent`：原有的开发项目，包括 `EdgeAgent` 和 `EdgeAgentTester` 的源代码与项目文档。
 - `01_Projects\Study\Embedded`：嵌入式开发项目及其项目文档。
 - `03_Resources\Study\Software_Design_Exam`：软件设计考试书籍和练习题。
 
-项目内的源代码、配置、文档和构建产物放在一起，以便项目正常运行，并避免破坏相对路径。项目文件夹内可以保留原有文件名；仅统一使用英文文件夹名称。
+项目内的源代码、必要配置和文档放在一起，以便项目正常运行，并避免破坏相对路径。构建产物在本机生成，不纳入版本控制。项目文件夹内可以保留原有文件名；仅统一使用英文文件夹名称。
 
 ## 5. 命名规则
 
