@@ -1,0 +1,68 @@
+{
+  "config_version": 1,
+  "node_id": "edge_box_dev",
+  "broker": {
+    "host": "127.0.0.1",
+    "port": 1883,
+    "protocol": "mqtt311",
+    "clean_session": true
+  },
+  "channels": [
+    {
+      "channel_id": "udp_plc_dev",
+      "device_id": "plc_udp_dev",
+      "type": "udp",
+      "mode": "json",
+      "bind_address": "0.0.0.0",
+      "bind_port": 18080,
+      "allowed_peers": [
+        "127.0.0.1:0",
+        "172.21.160.1:0"
+      ],
+      "max_datagram_bytes": 65507,
+      "broadcast": false,
+      "multicast": { "enabled": false },
+      "qos": 0,
+      "store_forward": { "enabled": false }
+    },
+    {
+      "channel_id": "udp_multicast_dev",
+      "device_id": "plc_udp_multicast_dev",
+      "type": "udp",
+      "mode": "json",
+      "bind_address": "0.0.0.0",
+      "bind_port": 18082,
+      "allowed_peers": [
+        "127.0.0.1:0",
+        "172.21.160.1:0",
+        "239.255.0.1:0"
+      ],
+      "max_datagram_bytes": 65507,
+      "broadcast": false,
+      "multicast": {
+        "enabled": true,
+        "group": "239.255.0.1",
+        "interface": "eth0"
+      },
+      "qos": 0,
+      "store_forward": { "enabled": false }
+    },
+    {
+      "channel_id": "tcp_server_dev",
+      "device_id": "plc_tcp_server_dev",
+      "type": "tcp",
+      "role": "server",
+      "mode": "raw",
+      "listen_address": "0.0.0.0",
+      "listen_port": 18081,
+      "max_clients": 8,
+      "frame": {
+        "kind": "delimiter",
+        "delimiter": "\n",
+        "max_bytes": 65536
+      },
+      "qos": 0,
+      "store_forward": { "enabled": false }
+    }
+  ]
+}

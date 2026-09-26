@@ -1,0 +1,5 @@
+# 工程构建文件:声明工程名
+cmake_minimum_required(VERSION 3.5)
+
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+project(button_demo)

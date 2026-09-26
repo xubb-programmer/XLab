@@ -1,0 +1,7 @@
+# ===== 按键练习工程配置 =====
+# 目标芯片:ESP32-S3
+CONFIG_IDF_TARGET="esp32s3"
+# 板载 Flash 为 16MB
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+# 控制台输出到 USB 串口(COM3),方便直接看日志
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y

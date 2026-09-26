@@ -1,0 +1,41 @@
+# 临时收集和个人参考资料
+/00_Inbox/
+/03_Resources/Study/Software_Design_Exam/
+/01_Projects/Study/Embedded/esp-projects/doc/
+/01_Projects/Study/Embedded/esp-projects/tmp/
+
+# 构建产物和工具缓存
+**/build/
+**/build-*/
+**/managed_components/
+**/.cache/
+**/.vs/
+**/.vscode/
+*.o
+*.obj
+*.a
+*.elf
+*.map
+*.bin
+*.exe
+*.dll
+*.ninja
+*.ninja_deps
+*.ninja_log
+*.out
+
+# 本机配置
+*.user
+sdkconfig
+sdkconfig.old
+*.env
+.env
+.env.*
+!*.env.example
+
+# 下载的资料和压缩包
+*.pdf
+*.zip
+*.7z
+*.rar
+*.chm

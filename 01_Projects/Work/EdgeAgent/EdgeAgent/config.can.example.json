@@ -1,0 +1,26 @@
+{
+  "config_version": 1,
+  "node_id": "edge_box_can_dev",
+  "broker": {
+    "host": "127.0.0.1",
+    "port": 1883,
+    "protocol": "mqtt311",
+    "clean_session": true
+  },
+  "channels": [
+    {
+      "channel_id": "can_vcan_dev",
+      "device_id": "can_vcan_dev",
+      "type": "can",
+      "mode": "json",
+      "backend": "socketcan",
+      "interface": "vcan0",
+      "bitrate": 500000,
+      "filters": [],
+      "receive_own_frames": false,
+      "restart_on_bus_off": true,
+      "qos": 0,
+      "store_forward": { "enabled": false }
+    }
+  ]
+}
