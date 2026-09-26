@@ -1,0 +1,2 @@
+# 把控制台输出重定向到 USB 串口(COM3),这样不用外接串口线也能看到打印
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y

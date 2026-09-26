@@ -1,0 +1,5 @@
+{
+    "ProxyEnable":  0,
+    "AutoConfigURL":  null,
+    "ProxyServer":  "127.0.0.1:7897"
+}

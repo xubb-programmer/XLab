@@ -1,0 +1,31 @@
+  [PASS] App Execution Alias
+  [PASS] Python Version
+  [PASS] pip
+  [PASS] venv
+  [PASS] Standard Library (json, os, platform)
+  [PASS] ctypes
+  [PASS] SSL/HTTPS
+Non-interactive mode: selecting all required features by default
+IDF PowerShell Environment
+-------------------------
+Environment variables set:
+IDF_PATH: C:\esp\v5.5.1\esp-idf
+IDF_TOOLS_PATH: C:\Espressif\tools
+IDF_PYTHON_ENV_PATH: C:\Espressif\tools\python\v5.5.1\venv
+
+Custom commands available:
+idf.py - Use this to run IDF commands (e.g., idf.py build)
+esptool.py
+espefuse.py
+espsecure.py
+otatool.py
+parttool.py
+
+Python environment activated.
+You can now use IDF commands and Python tools.
+NOTICE: Collecting local storage from folder "C:\Espressif\tools"
+NOTICE: 82 components loaded from "C:\Espressif\tools" folder
+NOTICE: 21 new files downloaded
+Configuration saved successfully to config.toml
+You have successfully installed ESP-IDF
+the installer placed shortcuts for PowerShell terminal with activated ESP-IDF environment to your desktop
