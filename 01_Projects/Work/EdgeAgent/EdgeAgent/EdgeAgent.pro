@@ -5,9 +5,12 @@ CONFIG -= app_bundle
 TEMPLATE = app
 TARGET = edgeagent
 
+DISTFILES += config.json
+
 SOURCES += \
     src/main.cpp \
     src/Config.cpp \
+    src/TransportCodec.cpp \
     src/FrameCodec.cpp \
     src/UdpChannel.cpp \
     src/TcpChannel.cpp \
@@ -19,6 +22,8 @@ SOURCES += \
 
 HEADERS += \
     src/Config.h \
+    src/TransportCodec.h \
+    src/TransportCommand.h \
     src/FrameCodec.h \
     src/FrameEvent.h \
     src/Channel.h \

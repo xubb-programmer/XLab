@@ -8,6 +8,7 @@
 
 #include "Config.h"
 #include "FrameEvent.h"
+#include "TransportCommand.h"
 
 #include <QObject>
 
@@ -40,6 +41,9 @@ public:
 
     /** @brief 停止通道并释放通信资源。 */
     virtual void stop() = 0;
+
+    /** 提交传输帧；成功仅表示本地发送接口接受数据。 */
+    virtual bool send(const TransportCommand &command) = 0;
 
     /**
      * @brief 获取通道配置。

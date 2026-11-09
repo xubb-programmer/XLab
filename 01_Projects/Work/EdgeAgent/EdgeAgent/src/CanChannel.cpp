@@ -219,7 +219,6 @@ void CanChannel::emitFrame(const QCanBusFrame &frame)
 {
     FrameEvent event; // 将 Qt CAN 帧转换为统一传输事件。
     event.channelId = m_config.channelId;
-    event.deviceId = m_config.deviceId;
     event.transport = QStringLiteral("can");
     event.endpoint = m_config.can.interfaceName;
     event.canId = frame.frameId();

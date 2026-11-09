@@ -16,11 +16,10 @@ namespace EdgeAgent {
 /**
  * @brief 传输层收到一帧完整数据后的统一事件。
  *
- * UDP、TCP、串口和 CAN 通道都转换为此结构，再由 EdgeAgent 负责日志记录和 MQTT 上报。
+ * 通道只标识物理来源；EdgeAgent 根据配置绑定将数据发布到设备 Topic。
  */
 struct FrameEvent {
     QString channelId; ///< 产生事件的通道标识。
-    QString deviceId; ///< 关联设备标识。
     QString transport; ///< 传输类型：udp、tcp、serial 或 can。
     QByteArray payload; ///< 收到的原始数据。
     QString peerAddress; ///< 对端 IP 地址。

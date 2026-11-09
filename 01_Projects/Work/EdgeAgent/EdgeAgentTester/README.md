@@ -17,7 +17,7 @@
 在 Qt Creator 中直接打开：
 
 ```text
-D:/XLab/Dev/Context/EdgeAgentTester/EdgeAgentTester.pro
+D:/XLab/01_Projects/Work/EdgeAgent/EdgeAgentTester/EdgeAgentTester.pro
 ```
 
 选择 Qt 5 Kit 后构建运行即可。不要打开主工程 `EdgeAgent.pro` 来启动测试工具；两个工程分别生成 `edgeagent` 和 `edgeagent-tester`。
@@ -32,7 +32,7 @@ sudo apt-get install -y libqt5serialbus5-dev libqt5serialbus5-plugins can-utils
 ```
 
 ```bash
-cd /mnt/d/XLab/Dev/Context/EdgeAgentTester
+cd /mnt/d/XLab/01_Projects/Work/EdgeAgent/EdgeAgentTester
 mkdir -p build-qmake
 cd build-qmake
 qmake ../EdgeAgentTester.pro
@@ -48,7 +48,7 @@ QT_QPA_PLATFORM=offscreen timeout 2s ./edgeagent-tester
 
 ## 测试 EdgeAgent UDP
 
-1. 启动 EdgeAgent，使用 `config.example.json`。
+1. 启动 EdgeAgent，通过 `--config` 指定项目中的统一 `config.json`，其中 UDP 单播默认已启用。
 2. 打开本工具，选择“UDP 数据报”。
 3. 本地绑定端口填 `19090`，发送目标填 `127.0.0.1:18080`。
 4. 点击“打开接收”。
@@ -82,7 +82,7 @@ sudo ip link add dev vcan0 type vcan 2>/dev/null || true
 sudo ip link set up vcan0
 ```
 
-2. EdgeAgent 使用 `config.can.example.json` 启动。
+2. 在统一 `config.json` 中将 can_vcan_dev 通道的 enabled 改为 true，确认 interface 为 vcan0，然后重启 EdgeAgent。
 3. 测试程序选择“CAN 总线帧”，接口填写 `vcan0`，点击“打开接收”。
 4. CAN 发送页填写：
 
@@ -94,4 +94,4 @@ DLC：4
 数据 HEX：01020304
 ```
 
-5. 点击“发送 CAN 帧”。EdgeAgent 会收到并向 `edge/v1/devices/can_vcan_dev/data` 发布 `edge.can.v1` JSON；测试程序勾选“接收本程序发出的回环帧”时也会显示回环报文。
+5. 点击“发送 CAN 帧”。EdgeAgent 会向 `edge/v1/devices/can_vcan_dev/data` 发布统一 JSON，CAN ID 位于 `meta.frame.id`，接口位于 `meta.endpoint.address`。显式设置 `message_format=legacy` 时保留 `edge.can.v1`。测试程序勾选“接收本程序发出的回环帧”时也会显示回环报文。

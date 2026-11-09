@@ -1,0 +1,101 @@
+{
+  "config_version": 2,
+  "node_id": "edge_box_dev",
+  "broker": {
+    "host": "127.0.0.1",
+    "port": 1883,
+    "protocol": "mqtt311",
+    "keepalive_s": 30,
+    "clean_session": true
+  },
+  "channels": [
+    {
+      "channel_id": "udp_plc_dev",
+      "enabled": true,
+      "type": "udp",
+      "bind_address": "0.0.0.0",
+      "bind_port": 18080,
+      "allowed_peers": ["127.0.0.1:0"],
+      "max_datagram_bytes": 65507,
+      "multicast": {"enabled": false}
+    },
+    {
+      "channel_id": "udp_multicast_dev",
+      "enabled": false,
+      "type": "udp",
+      "bind_address": "0.0.0.0",
+      "bind_port": 18082,
+      "allowed_peers": ["127.0.0.1:0", "239.255.0.1:0"],
+      "multicast": {
+        "enabled": true,
+        "group": "239.255.0.1",
+        "interface": ""
+      }
+    },
+    {
+      "channel_id": "tcp_server_dev",
+      "enabled": true,
+      "type": "tcp",
+      "role": "server",
+      "listen_address": "0.0.0.0",
+      "listen_port": 18081,
+      "max_clients": 8,
+      "frame": {
+        "kind": "delimiter",
+        "delimiter": "\n",
+        "max_bytes": 65536
+      }
+    },
+    {
+      "channel_id": "tcp_client_dev",
+      "enabled": false,
+      "type": "tcp",
+      "role": "client",
+      "remote_host": "127.0.0.1",
+      "remote_port": 19090,
+      "connect_timeout_ms": 5000,
+      "reconnect_initial_ms": 1000,
+      "reconnect_max_ms": 60000,
+      "frame": {
+        "kind": "delimiter",
+        "delimiter": "\n",
+        "max_bytes": 65536
+      }
+    },
+    {
+      "channel_id": "serial_dev",
+      "enabled": false,
+      "type": "serial",
+      "port_name": "/dev/ttyUSB0",
+      "baud_rate": 9600,
+      "data_bits": 8,
+      "parity": "none",
+      "stop_bits": 1,
+      "flow_control": "none",
+      "frame": {
+        "kind": "idle_timeout",
+        "idle_ms": 20,
+        "max_bytes": 65536
+      }
+    },
+    {
+      "channel_id": "can_vcan_dev",
+      "enabled": false,
+      "type": "can",
+      "backend": "socketcan",
+      "interface": "vcan0",
+      "bitrate": 500000,
+      "filters": [],
+      "receive_own_frames": false,
+      "restart_on_bus_off": true
+    }
+  ],
+  "devices": [
+    {"device_id": "plc_udp_dev", "channel_id": "udp_plc_dev", "qos": 0, "message_format": "json"},
+    {"device_id": "plc_udp_multicast_dev", "channel_id": "udp_multicast_dev", "qos": 0, "message_format": "json"},
+    {"device_id": "plc_tcp_server_dev", "channel_id": "tcp_server_dev", "qos": 0, "message_format": "json"},
+    {"device_id": "plc_tcp_client_dev", "channel_id": "tcp_client_dev", "qos": 0, "message_format": "json"},
+    {"device_id": "serial_dev", "channel_id": "serial_dev", "qos": 0, "message_format": "json"},
+    {"device_id": "can_vcan_dev", "channel_id": "can_vcan_dev", "qos": 0, "message_format": "json"}
+  ]
+}

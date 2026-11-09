@@ -1,0 +1,10 @@
+QT += core network
+QT -= gui
+CONFIG += console c++17
+CONFIG -= app_bundle
+TEMPLATE = app
+TARGET = transport-tests
+INCLUDEPATH += ../src
+SOURCES += TransportTests.cpp ../src/TransportCodec.cpp ../src/Config.cpp ../src/FrameCodec.cpp ../src/TcpChannel.cpp
+HEADERS += ../src/Channel.h ../src/TcpChannel.h
+unix: QMAKE_CXXFLAGS += -Wall -Wextra -Wpedantic

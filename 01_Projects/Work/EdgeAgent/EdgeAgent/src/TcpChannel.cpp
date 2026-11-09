@@ -7,6 +7,7 @@
 #include "TcpChannel.h"
 
 #include <QDateTime>
+#include <QUuid>
 
 namespace EdgeAgent {
 
@@ -61,13 +62,36 @@ void TcpChannel::stop()
             if (socket->state() != QAbstractSocket::UnconnectedState) {
                 socket->abort();
             }
-            socket->deleteLater();
+            handleDisconnected(socket);
         }
     }
     m_peers.clear();
     m_clientSocket = nullptr;
     m_running = false;
     setState(QStringLiteral("stopped"));
+}
+
+bool TcpChannel::send(const TransportCommand &command)
+{
+    if (!command.requireUniqueTarget && command.endpoint.isEmpty())
+        return sendFrame(command.payload, command.connectionId);
+    QString connection;
+    int matches = 0;
+    for (auto it = m_peers.cbegin(); it != m_peers.cend(); ++it) {
+        if (it.key()->state() != QAbstractSocket::ConnectedState) continue;
+        if (!command.connectionId.isEmpty() && it.value()->connectionId != command.connectionId) continue;
+        if (!command.endpoint.isEmpty()
+            && (it.key()->peerAddress() != command.address || it.key()->peerPort() != command.port)) continue;
+        connection = it.value()->connectionId;
+        ++matches;
+    }
+    if (matches != 1) {
+        reportFault(matches ? QStringLiteral("tcp_target_ambiguous") : QStringLiteral("tcp_send_not_connected"),
+                    matches ? QStringLiteral("多个 TCP 对端匹配，请指定 meta.connection 或 meta.endpoint")
+                            : QStringLiteral("没有匹配的已连接 TCP 对端"));
+        return false;
+    }
+    return sendFrame(command.payload, connection);
 }
 
 bool TcpChannel::sendFrame(const QByteArray &payload, const QString &connectionId)
@@ -105,7 +129,7 @@ void TcpChannel::acceptPendingConnections()
             socket->deleteLater();
             continue;
         }
-        const QString connectionId = QStringLiteral("server-%1").arg(static_cast<qlonglong>(socket->socketDescriptor())); // 使用套接字描述符生成连接标识。
+        const QString connectionId = QStringLiteral("server-%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces)); // 每次接入独立标识，避免描述符复用后旧目标误匹配。
         attachSocket(socket, connectionId);
     }
 }
@@ -117,16 +141,18 @@ void TcpChannel::startClientConnection()
     }
 
     m_clientSocket = new QTcpSocket(this); // Qt 父对象负责最终释放客户端套接字。
-    attachSocket(m_clientSocket, QStringLiteral("client"));
-    m_clientSocket->connectToHost(m_config.tcp.remoteHost, m_config.tcp.remotePort);
+    attachSocket(m_clientSocket, QStringLiteral("client-%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces)));
     m_connectTimer.start(m_config.tcp.connectTimeoutMs);
+    m_clientSocket->connectToHost(m_config.tcp.remoteHost, m_config.tcp.remotePort);
 }
 
 void TcpChannel::connectTimeout()
 {
-    if (m_clientSocket != nullptr && m_clientSocket->state() == QAbstractSocket::ConnectingState) {
+    if (m_clientSocket != nullptr && m_clientSocket->state() != QAbstractSocket::ConnectedState) {
         reportFault(QStringLiteral("tcp_connect_timeout"), QStringLiteral("TCP 连接超时"));
-        m_clientSocket->abort();
+        QTcpSocket *socket = m_clientSocket;
+        socket->abort();
+        handleDisconnected(socket);
     }
 }
 
@@ -141,12 +167,21 @@ void TcpChannel::attachSocket(QTcpSocket *socket, const QString &connectionId)
     context->decoder = FrameDecoder(m_config.frame);
     context->connectionId = connectionId;
     if (m_config.frame.kind == FrameKind::IdleTimeout) {
-        context->idleTimer = new QTimer(this);
+        context->idleTimer = new QTimer(socket);
+        context->idleTimer->setSingleShot(true);
         context->idleTimer->setInterval(m_config.frame.idleMs);
         connect(context->idleTimer, &QTimer::timeout, this, [this, socket]() { handleIdleTimeout(socket); });
-        context->idleTimer->start();
     }
     m_peers.insert(socket, context);
+
+    connect(socket, &QTcpSocket::connected, this, [this, socket]() {
+        if (socket == m_clientSocket) {
+            m_connectTimer.stop();
+            m_nextReconnectMs = m_config.tcp.reconnectInitialMs;
+            setState(QStringLiteral("ready"));
+        }
+        setSocketState(socket, QStringLiteral("connected"));
+    });
 
     connect(socket, &QTcpSocket::readyRead, this, [this, socket]() { handleReadyRead(socket); });
     connect(socket, &QTcpSocket::disconnected, this, [this, socket]() { handleDisconnected(socket); });
@@ -177,20 +212,22 @@ void TcpChannel::handleReadyRead(QTcpSocket *socket)
 
 void TcpChannel::handleDisconnected(QTcpSocket *socket)
 {
+    if (!m_peers.contains(socket)) return;
     const bool wasClient = socket == m_clientSocket; // 判断断开的是否为客户端连接。
     const auto context = m_peers.take(socket); // 从连接表移除并取出上下文。
     if (!context.isNull()) {
+        if (context->idleTimer) context->idleTimer->stop();
         emit stateChanged(m_config.channelId, QStringLiteral("disconnected:%1").arg(context->connectionId));
     }
     if (wasClient) {
+        m_connectTimer.stop();
         m_clientSocket = nullptr;
         if (!m_stopping) {
             scheduleReconnect();
         }
     }
-    if (socket->parent() == this) {
-        socket->deleteLater();
-    }
+    socket->disconnect(this);
+    socket->deleteLater();
 }
 
 void TcpChannel::handleSocketError(QTcpSocket *socket, QAbstractSocket::SocketError error)
@@ -202,6 +239,8 @@ void TcpChannel::handleSocketError(QTcpSocket *socket, QAbstractSocket::SocketEr
         return;
     }
     reportFault(QStringLiteral("tcp_socket_error"), QStringLiteral("TCP 套接字发生错误"));
+    socket->abort();
+    handleDisconnected(socket);
 }
 
 void TcpChannel::handleIdleTimeout(QTcpSocket *socket)
@@ -225,7 +264,7 @@ void TcpChannel::scheduleReconnect()
     }
     setState(QStringLiteral("reconnecting"));
     m_reconnectTimer.start(m_nextReconnectMs);
-    m_nextReconnectMs = qMin(m_nextReconnectMs * 2, m_config.tcp.reconnectMaxMs);
+    m_nextReconnectMs = static_cast<int>(qMin<qint64>(static_cast<qint64>(m_nextReconnectMs) * 2, m_config.tcp.reconnectMaxMs));
 }
 
 void TcpChannel::emitFrames(QTcpSocket *socket, const QVector<QByteArray> &frames)
@@ -237,7 +276,6 @@ void TcpChannel::emitFrames(QTcpSocket *socket, const QVector<QByteArray> &frame
     for (const QByteArray &payload : frames) {
         FrameEvent event; // 为当前完整 TCP 帧组装统一事件。
         event.channelId = m_config.channelId;
-        event.deviceId = m_config.deviceId;
         event.transport = QStringLiteral("tcp");
         event.payload = payload;
         event.peerAddress = socket->peerAddress().toString();

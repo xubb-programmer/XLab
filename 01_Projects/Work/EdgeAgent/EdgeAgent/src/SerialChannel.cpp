@@ -191,7 +191,6 @@ void SerialChannel::emitFrame(const QByteArray &payload)
 {
     FrameEvent event; // 将完整串口帧转换为各通道共用的数据事件。
     event.channelId = m_config.channelId;
-    event.deviceId = m_config.deviceId;
     event.transport = QStringLiteral("serial");
     event.payload = payload;
     event.endpoint = m_config.serial.portName;

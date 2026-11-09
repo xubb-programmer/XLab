@@ -136,7 +136,6 @@ void UdpChannel::emitDatagram(const QByteArray &payload, const QHostAddress &add
 {
     FrameEvent event; // 组装统一传输事件。
     event.channelId = m_config.channelId;
-    event.deviceId = m_config.deviceId;
     event.transport = QStringLiteral("udp");
     event.payload = payload;
     event.peerAddress = address.toString();

@@ -20,6 +20,9 @@ enum class ChannelType {
     Can, ///< CAN 通道。
 };
 
+/** MQTT 数据及回执格式；legacy 仅用于兼容旧客户端。 */
+enum class MessageFormat { Unified, Legacy };
+
 /** @brief TCP 和串口字节流的数据分帧方式。 */
 enum class FrameKind {
     Delimiter, ///< 使用固定分隔符分帧。
@@ -107,19 +110,24 @@ struct CanConfig {
     int reconnectMaxMs = 60000; ///< CAN 设备重连最大间隔，单位为毫秒。
 };
 
-/** @brief 单个设备通道的完整配置。 */
+/** @brief 物理通信通道配置。 */
 struct ChannelConfig {
     QString channelId; ///< 通道唯一标识。
-    QString deviceId; ///< 设备唯一标识。
+    bool enabled = true; ///< 关闭后不创建接口，也不订阅或发布对应设备 Topic。
     ChannelType type = ChannelType::Udp; ///< 通道类型。
-    QString mode; ///< 数据模式。
-    int qos = 0; ///< MQTT 发布 QoS。
-    bool storeForward = false; ///< 是否启用离线存储转发。
     FrameConfig frame; ///< TCP 或串口分帧配置。
     UdpConfig udp; ///< UDP 配置。
     TcpConfig tcp; ///< TCP 配置。
     SerialConfig serial; ///< 串口配置。
     CanConfig can; ///< CAN 配置。
+};
+
+/** @brief 将一个物理通道绑定到设备 Topic；每个通道最多一个绑定。 */
+struct DeviceConfig {
+    QString deviceId;
+    QString channelId;
+    int qos = 0;
+    MessageFormat messageFormat = MessageFormat::Unified;
 };
 
 /** @brief MQTT Broker 连接配置。 */
@@ -139,6 +147,7 @@ struct AgentConfig {
     QString nodeId; ///< 网关节点唯一标识。
     BrokerConfig broker; ///< MQTT Broker 配置。
     QVector<ChannelConfig> channels; ///< 通道配置列表。
+    QVector<DeviceConfig> devices; ///< 通道到设备 Topic 的绑定。
 };
 
 /**

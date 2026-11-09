@@ -11,6 +11,7 @@
 #include <QFile>
 #include <QRegularExpression>
 #include <QSet>
+#include <algorithm>
 
 namespace EdgeAgent {
 namespace {
@@ -90,7 +91,17 @@ bool readIntegerField(const Json &object,
     return true;
 }
 
-/** @brief 将字符串解析为 IPv4 地址。 */
+/** @brief 解析统一 JSON 或旧格式输出选项。 */
+bool parseMessageFormat(const Json &object, DeviceConfig *device, QString *error)
+{
+    const Json format = object.value("message_format", Json("json"));
+    if (format == "json") device->messageFormat = MessageFormat::Unified;
+    else if (format == "legacy") device->messageFormat = MessageFormat::Legacy;
+    else return fail(error, QStringLiteral("message_format 必须为 json 或 legacy"));
+    return true;
+}
+
+/** @brief 将字符串解析为 IP 地址。 */
 bool parseAddress(const QString &text, QHostAddress *address, QString *error, const QString &field)
 {
     QHostAddress parsed; // 临时地址对象，解析成功后再写入输出参数。
@@ -186,37 +197,39 @@ bool parseFrame(const Json &object, FrameConfig *frame, QString *error)
     if (frame->maxBytes < 1 || frame->maxBytes > 16 * 1024 * 1024) {
         return fail(error, QStringLiteral("分帧 max_bytes 必须在 1 到 16777216 之间"));
     }
+    if (frame->kind == FrameKind::FixedLength && frame->fixedLength > frame->maxBytes) {
+        return fail(error, QStringLiteral("固定帧长度不能超过 max_bytes"));
+    }
     return true;
 }
 
 /** @brief 解析单个通道配置。 */
 bool parseChannel(const Json &object, ChannelConfig *channel, QString *error)
 {
-    if (!readRequiredString(object, "channel_id", &channel->channelId, error)
-        || !readRequiredString(object, "device_id", &channel->deviceId, error)) {
+    const Json enabled = object.value("enabled", Json(true));
+    if (!enabled.is_boolean()) return fail(error, QStringLiteral("通道 enabled 必须是布尔值"));
+    channel->enabled = enabled.get<bool>();
+    if (!readRequiredString(object, "channel_id", &channel->channelId, error)) {
         return false;
     }
-    if (!kIdPattern.match(channel->channelId).hasMatch() || !kIdPattern.match(channel->deviceId).hasMatch()) {
-        return fail(error, QStringLiteral("channel_id 和 device_id 不符合标识格式"));
+    if (!kIdPattern.match(channel->channelId).hasMatch()) {
+        return fail(error, QStringLiteral("channel_id 不符合标识格式"));
     }
 
     const QString type = QString::fromStdString(object.value("type", std::string())); // 通道类型名称。
-    channel->mode = QString::fromStdString(object.value("mode", std::string()));
-    channel->qos = object.value("qos", 0);
+    QString mode = QString::fromStdString(object.value("mode", std::string()));
+    bool storeForward = false;
     if (object.contains("store_forward") && object.at("store_forward").is_object()) {
-        channel->storeForward = object.at("store_forward").value("enabled", false);
+        storeForward = object.at("store_forward").value("enabled", false);
     }
-    if (channel->qos < 0 || channel->qos > 1) {
-        return fail(error, QStringLiteral("当前版本仅支持 QoS 0 和 QoS 1"));
-    }
-    if (channel->storeForward) {
+    if (storeForward) {
         return fail(error, QStringLiteral("当前 UDP/TCP/串口/CAN 版本暂未实现 store_forward"));
     }
 
     if (type == QStringLiteral("udp")) {
         channel->type = ChannelType::Udp;
-        channel->mode = channel->mode.isEmpty() ? QStringLiteral("json") : channel->mode;
-        if (channel->mode != QStringLiteral("json")) {
+        mode = mode.isEmpty() ? QStringLiteral("json") : mode;
+        if (mode != QStringLiteral("json")) {
             return fail(error, QStringLiteral("UDP 通道必须使用 mode=json"));
         }
         QString addressText; // UDP 本地绑定地址文本。
@@ -258,8 +271,8 @@ bool parseChannel(const Json &object, ChannelConfig *channel, QString *error)
 
     if (type == QStringLiteral("tcp")) {
         channel->type = ChannelType::Tcp;
-        channel->mode = channel->mode.isEmpty() ? QStringLiteral("raw") : channel->mode;
-        if (channel->mode != QStringLiteral("raw")) {
+        mode = mode.isEmpty() ? QStringLiteral("raw") : mode;
+        if (mode != QStringLiteral("raw")) {
             return fail(error, QStringLiteral("v1 版本的 TCP 通道必须使用 mode=raw"));
         }
         if (!parseFrame(object, &channel->frame, error)) {
@@ -299,8 +312,8 @@ bool parseChannel(const Json &object, ChannelConfig *channel, QString *error)
 
     if (type == QStringLiteral("serial")) {
         channel->type = ChannelType::Serial;
-        channel->mode = channel->mode.isEmpty() ? QStringLiteral("raw") : channel->mode;
-        if (channel->mode != QStringLiteral("raw")) {
+        mode = mode.isEmpty() ? QStringLiteral("raw") : mode;
+        if (mode != QStringLiteral("raw")) {
             return fail(error, QStringLiteral("串口通道必须使用 mode=raw"));
         }
         if (!readRequiredString(object, "port_name", &channel->serial.portName, error)) {
@@ -357,8 +370,8 @@ bool parseChannel(const Json &object, ChannelConfig *channel, QString *error)
 
     if (type == QStringLiteral("can")) {
         channel->type = ChannelType::Can;
-        channel->mode = channel->mode.isEmpty() ? QStringLiteral("json") : channel->mode;
-        if (channel->mode != QStringLiteral("json")) {
+        mode = mode.isEmpty() ? QStringLiteral("json") : mode;
+        if (mode != QStringLiteral("json")) {
             return fail(error, QStringLiteral("CAN 通道必须使用 mode=json"));
         }
         if (!readRequiredString(object, "interface", &channel->can.interfaceName, error)) {
@@ -446,7 +459,7 @@ bool loadConfig(const QString &path, AgentConfig *config, QString *error)
     try {
         const Json root = Json::parse(bytes.constData(), bytes.constData() + bytes.size()); // 解析 JSON 根对象。
         const int version = root.value("config_version", 1); // 读取配置版本。
-        if (version != 1) {
+        if (version != 1 && version != 2) {
             return fail(error, QStringLiteral("不支持的 config_version：%1").arg(version));
         }
         QString nodeId; // 网关节点标识。
@@ -505,13 +518,68 @@ bool loadConfig(const QString &path, AgentConfig *config, QString *error)
             if (channelIds.contains(channel.channelId)) {
                 return fail(error, QStringLiteral("channel_id 重复：%1").arg(channel.channelId));
             }
-            if (deviceIds.contains(channel.deviceId)) {
-                return fail(error, QStringLiteral("device_id 重复：%1").arg(channel.deviceId));
-            }
             channelIds.insert(channel.channelId);
-            deviceIds.insert(channel.deviceId);
             loaded.channels.append(channel);
+            if (version == 1) {
+                DeviceConfig device;
+                if (!readRequiredString(value, "device_id", &device.deviceId, error)
+                    || !kIdPattern.match(device.deviceId).hasMatch()
+                    || deviceIds.contains(device.deviceId)
+                    || !readIntegerField(value, "qos", 0, 0, 1, &device.qos, error, "qos")) {
+                    return fail(error, QStringLiteral("v1 device_id 或 qos 无效/重复"));
+                }
+                if (!parseMessageFormat(value, &device, error)) return false;
+                device.channelId = channel.channelId;
+                deviceIds.insert(device.deviceId);
+                loaded.devices.append(device);
+            }
         }
+        if (version == 2) {
+            if (!root.contains("devices") || !root.at("devices").is_array() || root.at("devices").empty()) {
+                return fail(error, QStringLiteral("v2 必须提供非空 devices 数组"));
+            }
+            QSet<QString> boundChannels;
+            for (const Json &value : root.at("devices")) {
+                DeviceConfig device;
+                if (!readRequiredString(value, "device_id", &device.deviceId, error)
+                    || !readRequiredString(value, "channel_id", &device.channelId, error)
+                    || !kIdPattern.match(device.deviceId).hasMatch() || deviceIds.contains(device.deviceId)
+                    || !channelIds.contains(device.channelId)) {
+                    return fail(error, QStringLiteral("设备标识重复/无效或引用了不存在的通道"));
+                }
+                if (value.value("store_forward", Json::object()).value("enabled", false)) {
+                    return fail(error, QStringLiteral("尚未实现 store_forward"));
+                }
+                // 兼容既有的透明绑定声明，不再选择或加载设备协议。
+                if (value.contains("protocol") && value.at("protocol") != "transparent") {
+                    return fail(error, QStringLiteral("设备仅支持透明收发绑定"));
+                }
+                const QSet<QString> allowedFields = {"device_id", "channel_id", "qos", "protocol", "store_forward", "message_format"};
+                for (auto field = value.cbegin(); field != value.cend(); ++field) {
+                    if (!allowedFields.contains(QString::fromStdString(field.key()))) {
+                        return fail(error, QStringLiteral("不支持的设备配置字段：%1").arg(QString::fromStdString(field.key())));
+                    }
+                }
+                if (!readIntegerField(value, "qos", 0, 0, 1, &device.qos, error, "qos")
+                    || !parseMessageFormat(value, &device, error)) {
+                    return false;
+                }
+                if (boundChannels.contains(device.channelId)) {
+                    return fail(error, QStringLiteral("每个物理通道只能绑定一个设备 Topic"));
+                }
+                boundChannels.insert(device.channelId);
+                deviceIds.insert(device.deviceId);
+                loaded.devices.append(device);
+            }
+        }
+
+        // 所有定义均先校验，随后仅输出启用通道及其 Topic 绑定。
+        loaded.channels.erase(std::remove_if(loaded.channels.begin(), loaded.channels.end(),
+            [](const ChannelConfig &channel) { return !channel.enabled; }), loaded.channels.end());
+        QSet<QString> activeChannels;
+        for (const auto &channel : loaded.channels) activeChannels.insert(channel.channelId);
+        loaded.devices.erase(std::remove_if(loaded.devices.begin(), loaded.devices.end(),
+            [&activeChannels](const DeviceConfig &device) { return !activeChannels.contains(device.channelId); }), loaded.devices.end());
 
         *config = loaded;
         return true;

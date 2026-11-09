@@ -33,6 +33,8 @@ public:
 
     /** @brief 停止接收并关闭 UDP 套接字。 */
     void stop() override;
+    bool send(const TransportCommand &command) override
+    { return sendDatagram(command.payload, command.address, command.port); }
 
     /**
      * @brief 向指定目标发送 UDP 数据报。

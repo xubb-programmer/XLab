@@ -24,27 +24,24 @@ bool FrameDecoder::feed(const QByteArray &data, QVector<QByteArray> *frames, QSt
         }
         return false;
     }
+    auto tooLarge = [this, error]() {
+        m_buffer.clear();
+        if (error) *error = QStringLiteral("分帧长度超过 max_bytes=%1").arg(m_config.maxBytes);
+        return false;
+    };
     // TCP 是连续字节流，先把本次数据追加到连接自己的缓存中。
     if (!data.isEmpty()) {
         m_buffer.append(data);
     }
 
-    // 缓存超过限制时立即清空，避免异常数据长期占用内存。
-    if (m_buffer.size() > m_config.maxBytes + qMax(m_config.lengthBytes, 0)) {
-        m_buffer.clear();
-        if (error != nullptr) {
-            *error = QStringLiteral("分帧长度超过 max_bytes=%1").arg(m_config.maxBytes);
-        }
-        return false;
-    }
-
     // 空闲超时模式暂不立即输出，等待定时器通知末尾数据。
     if (m_config.kind == FrameKind::IdleTimeout) {
-        return true;
+        return m_buffer.size() <= m_config.maxBytes || tooLarge();
     }
 
     // 分隔符模式可以一次从缓存中提取多帧。
     if (m_config.kind == FrameKind::Delimiter) {
+        if (m_config.delimiter.isEmpty()) return tooLarge();
         while (true) {
             const int end = m_buffer.indexOf(m_config.delimiter); // 分隔符结束位置。
             if (end < 0) {
@@ -61,11 +58,12 @@ bool FrameDecoder::feed(const QByteArray &data, QVector<QByteArray> *frames, QSt
             frames->append(frame);
             m_buffer.remove(0, end + m_config.delimiter.size());
         }
-        return true;
+        return m_buffer.size() <= m_config.maxBytes + m_config.delimiter.size() - 1 || tooLarge();
     }
 
     // 固定长度模式只在缓存足够时输出完整帧。
     if (m_config.kind == FrameKind::FixedLength) {
+        if (m_config.fixedLength < 1 || m_config.fixedLength > m_config.maxBytes) return tooLarge();
         while (m_buffer.size() >= m_config.fixedLength) {
             frames->append(m_buffer.left(m_config.fixedLength));
             m_buffer.remove(0, m_config.fixedLength);

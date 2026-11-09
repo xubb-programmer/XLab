@@ -35,6 +35,8 @@ public:
 
     /** @brief 停止重试并关闭串口。 */
     void stop() override;
+    bool send(const TransportCommand &command) override
+    { return sendBytes(command.payload); }
 
     /**
      * @brief 向串口写入原始字节。

@@ -45,6 +45,7 @@ public:
 
     /** @brief 停止 TCP 连接并释放所有套接字。 */
     void stop() override;
+    bool send(const TransportCommand &command) override;
 
     /**
      * @brief 向 TCP 对端发送一帧数据。

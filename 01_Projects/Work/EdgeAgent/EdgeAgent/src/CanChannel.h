@@ -36,6 +36,8 @@ public:
 
     /** @brief 停止 CAN 设备和重连定时器。 */
     void stop() override;
+    bool send(const TransportCommand &command) override
+    { return sendFrame(command.canId, command.extended, command.remote, command.dlc, command.payload); }
 
     /**
      * @brief 发送一条经典 CAN 帧。
