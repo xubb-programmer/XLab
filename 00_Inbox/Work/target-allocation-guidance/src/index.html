@@ -68,6 +68,15 @@
         }
       });
     }
+    if (!AbortSignal.prototype.throwIfAborted) {
+      Object.defineProperty(AbortSignal.prototype, "throwIfAborted", {
+        configurable: true,
+        writable: true,
+        value() {
+          if (this.aborted) throw this.reason || new DOMException("The operation was aborted.", "AbortError");
+        }
+      });
+    }
   </script>
   <script defer src="/cesium/Cesium.js"></script>
   <script type="module" src="/js/main.js?v=2.2"></script>
