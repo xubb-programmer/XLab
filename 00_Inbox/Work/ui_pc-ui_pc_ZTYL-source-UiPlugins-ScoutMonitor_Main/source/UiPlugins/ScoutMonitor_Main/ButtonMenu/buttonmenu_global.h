@@ -1,0 +1,12 @@
+﻿#ifndef BUTTONMENU_GLOBAL_H
+#define BUTTONMENU_GLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+#if defined(BUTTONMENU_LIBRARY)
+#  define BUTTONMENUSHARED_EXPORT Q_DECL_EXPORT
+#else
+#  define BUTTONMENUSHARED_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // BUTTONMENU_GLOBAL_H

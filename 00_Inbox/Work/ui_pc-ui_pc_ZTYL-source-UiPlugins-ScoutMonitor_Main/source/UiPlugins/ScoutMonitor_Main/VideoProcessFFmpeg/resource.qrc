@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>resource/VideoOffLine.png</file>
+        <file>resource/btn-保存-normal.png</file>
+        <file>resource/btn-保存-pressed.png</file>
+        <file>resource/btn-删除-normal.png</file>
+        <file>resource/btn-删除-pressed.png</file>
+        <file>resource/btn-保存-hover.png</file>
+        <file>resource/btn-删除hover.png</file>
+    </qresource>
+</RCC>

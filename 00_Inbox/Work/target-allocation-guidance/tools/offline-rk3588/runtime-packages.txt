@@ -1,0 +1,12 @@
+curl
+ffmpeg
+libmosquitto1
+libqt5core5a
+libqt5network5
+libqt5serialbus5
+libqt5serialport5
+libspdlog1
+libstdc++6
+mosquitto
+mosquitto-clients
+python3

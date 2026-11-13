@@ -1,0 +1,13 @@
+#ifndef MESSAGEBOX_GLOBAL_H
+#define MESSAGEBOX_GLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+#define MESSAGEBOX_LIBRARY
+#if defined(MESSAGEBOX_LIBRARY)
+#  define MESSAGEBOXSHARED_EXPORT Q_DECL_EXPORT
+#else
+#  define MESSAGEBOXSHARED_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // GDEXPLORE_GLOBAL_H

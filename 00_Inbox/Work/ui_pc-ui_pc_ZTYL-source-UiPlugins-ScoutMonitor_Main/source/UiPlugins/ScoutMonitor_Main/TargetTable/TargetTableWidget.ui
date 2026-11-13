@@ -1,0 +1,493 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TargetTableWidget</class>
+ <widget class="QWidget" name="TargetTableWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>250</width>
+    <height>694</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>16777215</width>
+    <height>16777215</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_4">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <item row="0" column="0">
+    <widget class="QWidget" name="TableContent_widget" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>250</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QWidget#TableContent_widget
+{
+	background-color: rgba(16, 36, 56, 0.8);
+}
+
+QLabel#Table_label
+{
+	font:22px &quot;阿里巴巴普惠体&quot;;
+	color:white;
+}
+
+
+QPushButton#Add_pushButton
+{
+    	font:18px &quot;阿里巴巴普惠体&quot;;
+	color:#b8c5d5;
+	border-image: url(:/resource/目标列表-iconbtn-添加-normal.png);
+}
+QPushButton#Add_pushButton::hover
+{
+    	font:18px &quot;阿里巴巴普惠体&quot;;
+	color:#b8c5d5;
+	border-image: url(:/resource/目标列表-iconbtn-添加-hover.png);
+}
+QPushButton#Add_pushButton::pressed
+{
+    font:18px &quot;阿里巴巴普惠体&quot;;
+	color:#ffffff;
+	border-image: url(:/resource/目标列表-iconbtn-添加-pressed.png);
+}
+
+QPushButton#Del_pushButton
+{
+    	font:18px &quot;阿里巴巴普惠体&quot;;
+	color:#b8c5d5;
+	border-image: url(:/resource/目标列表-iconbtn-删除-normal.png);
+}
+QPushButton#Del_pushButton::hover
+{
+    	font:18px &quot;阿里巴巴普惠体&quot;;
+	color:#b8c5d5;
+	border-image: url(:/resource/目标列表-iconbtn-删除-normal.png);
+}
+QPushButton#Del_pushButton::pressed
+{
+    	font:18px &quot;阿里巴巴普惠体&quot;;
+	color:#ffffff;
+	border-image: url(:/resource/目标列表-iconbtn-删除-normal.png);
+}
+
+QPushButton#ShowAndHide_Btn
+{
+    	font:18px &quot;阿里巴巴普惠体&quot;;
+	color:#b8c5d5;
+	border-image: url(:/resource/target-iconBtn_hide-normal.png);
+}
+QPushButton#ShowAndHide_Btn::hover
+{
+    	font:18px &quot;阿里巴巴普惠体&quot;;
+	color:#b8c5d5;
+	border-image: url(:/resource/target-iconBtn_hide-hover.png);
+}
+QPushButton#ShowAndHide_Btn::pressed
+{
+    	font:18px &quot;阿里巴巴普惠体&quot;;
+	color:#ffffff;
+	border-image: url(:/resource/target-iconBtn_hide-pressed.png);
+}
+
+QScrollBar::vertical
+{
+	background-color: #2b3840;
+	width: 8px;
+	height: 10px;
+}
+
+QScrollBar::handle::vertical
+{
+    background-color: #39b9cc;
+	height:5px;
+}
+QScrollBar::add-line::vertical,QScrollArea QScrollBar::sub-line::vertical
+{
+	background:transparent;
+	height:0 px;
+	width:0 px;
+	border:none;
+}
+
+QScrollBar::horizontal
+{
+	background-color: #2b3840;
+	width: 8px;
+	height: 10px;
+}
+
+QScrollBar::handle::horizontal
+{
+    background-color: #39b9cc;
+	height:8px;
+}
+QScrollBar::add-line::horizontal,QScrollArea QScrollBar::sub-line::horizontal
+{
+	background:transparent;
+	height:0 px;
+	width:0 px;
+	border:none;
+}
+
+QScrollBar:vertical{border: 0px solid; background: #00456b;width:10px;margin: 0px 0 0px 0;}
+QScrollBar::handle:vertical{background: #00b7e7;min-height: 25px;}
+QScrollBar::add-line:vertical{height: 0px;}
+QScrollBar::sub-line:vertical{height: 0px;}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {background: none;}
+</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_5">
+      <item row="0" column="0">
+       <widget class="QWidget" name="Title_widget" native="true">
+        <layout class="QGridLayout" name="gridLayout_3">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item row="0" column="0">
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <item>
+            <widget class="QLabel" name="Table_label">
+             <property name="text">
+              <string>目标列表</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout">
+             <item>
+              <widget class="QPushButton" name="Add_pushButton">
+               <property name="minimumSize">
+                <size>
+                 <width>38</width>
+                 <height>38</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>38</width>
+                 <height>38</height>
+                </size>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>10</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="Del_pushButton">
+               <property name="minimumSize">
+                <size>
+                 <width>38</width>
+                 <height>38</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>38</width>
+                 <height>38</height>
+                </size>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QStackedWidget" name="stackedWidget">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <widget class="QWidget" name="Table_page">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>233</width>
+           <height>628</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <layout class="QGridLayout" name="gridLayout">
+          <property name="sizeConstraint">
+           <enum>QLayout::SetDefaultConstraint</enum>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item row="0" column="0">
+           <widget class="QScrollArea" name="scrollArea">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>233</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="sizeAdjustPolicy">
+             <enum>QAbstractScrollArea::AdjustIgnored</enum>
+            </property>
+            <property name="widgetResizable">
+             <bool>true</bool>
+            </property>
+            <widget class="QWidget" name="scrollAreaWidgetContents">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>233</width>
+               <height>740</height>
+              </rect>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>233</width>
+               <height>740</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_2">
+              <item row="0" column="0">
+               <spacer name="verticalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="WFX_label">
+                <property name="minimumSize">
+                 <size>
+                  <width>140</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">color:white;
+font:16pt &quot;阿里巴巴普惠体&quot;;
+border-image:transparent;</string>
+                </property>
+                <property name="text">
+                 <string>暂未发现目标</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QPushButton" name="WFX_Btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>200</width>
+                  <height>200</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>200</width>
+                  <height>200</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">border-image: url(:/resource/暂无数据.png);</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <spacer name="verticalSpacer_2">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </widget>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

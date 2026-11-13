@@ -1,0 +1,8 @@
+node_modules/
+/dist/
+.DS_Store
+Thumbs.db
+*.log
+/config/video.json
+/config/targets.json
+/public/offline-satellite/

@@ -1,0 +1,18 @@
+﻿<RCC>
+    <qresource prefix="/">
+        <file>resource/png-device.png</file>
+        <file>resource/icon-show.png</file>
+        <file>resource/icon-eth-on.png</file>
+        <file>resource/icon-eth-off.png</file>
+        <file>resource/icon-USB-on.png</file>
+        <file>resource/icon-USB-off.png</file>
+        <file>resource/icon-TYPE-C-on.png</file>
+        <file>resource/icon-TYPE-C-off.png</file>
+        <file>resource/icon-HDMI-on.png</file>
+        <file>resource/icon-HDMI-off.png</file>
+        <file>resource/iconbtn-close-pressed.png</file>
+        <file>resource/iconbtn-close-normal.png</file>
+        <file>resource/iconbtn-close-hover.png</file>
+        <file>resource/kpbg.png</file>
+    </qresource>
+</RCC>

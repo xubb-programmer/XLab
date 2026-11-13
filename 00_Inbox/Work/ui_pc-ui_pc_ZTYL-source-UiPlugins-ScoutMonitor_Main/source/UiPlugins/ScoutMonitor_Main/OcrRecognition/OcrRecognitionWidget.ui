@@ -1,0 +1,944 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>OcrRecognitionWidget</class>
+ <widget class="QWidget" name="OcrRecognitionWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1057</width>
+    <height>750</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget#OcrContent_widget
+{
+	background-color:#183757;
+}
+
+QWidget#Icon_widget
+{
+	border-image: url(:/resource/noData.png);
+}
+
+QWidget#widget_OCR
+{
+	background:transparent;
+}
+
+QTextEdit#textEdit_OCR
+{
+    background-color: rgba(36, 74, 106, 7%);
+	border: 1px solid #41c2ff;
+	font:18px &quot;阿里巴巴普惠体&quot;;
+	color:white;
+}
+
+QTextEdit#textEdit_OCR::hover
+{
+    background-color: rgba(36, 74, 106, 7%);
+	border: 1px solid #41c2ff;
+	font:18px &quot;阿里巴巴普惠体&quot;;
+	color:white;
+}
+
+QTextEdit#textEdit_OCR::focus
+{
+    background-color: rgba(36, 74, 106, 7%);
+	border: 1px solid #41c2ff;
+	font:18px &quot;阿里巴巴普惠体&quot;;
+	color:white;
+}
+
+QLabel#Ocr_label
+{
+	font:22px &quot;阿里巴巴普惠体&quot;;
+	color:#ffffff;
+}
+
+QLabel#Number_label,QLabel#Lat_label,QLabel#Type_label,QLabel#Ele_label,QLabel#Lon_label,QLabel#Time_label,QLabel#X_label,QLabel#Y_label,QLabel#OCRresult_label
+{
+	font:18px &quot;阿里巴巴普惠体&quot;;
+	color:#b8c5d5;
+}
+
+QLineEdit#Number_value_label,QLineEdit#Lat_value_label,QLineEdit#Type_value_label,QLineEdit#Ele_value_label,
+QLineEdit#Lon_value_label,QLineEdit#Time_value_label,QLineEdit#X_value_label,QLineEdit#Y_value_label
+{
+	background-color: rgba(36, 74, 106, 7%);
+	border: 1px solid #41c2ff;
+	font:18px &quot;阿里巴巴普惠体&quot;;
+	color:white;
+}
+
+QLineEdit#Number_value_label::disabled,QLineEdit#Lat_value_label::disabled,QLineEdit#Type_value_label::disabled,QLineEdit#Ele_value_label::disabled,
+QLineEdit#Lon_value_label::disabled,QLineEdit#Time_value_label::disabled,QLineEdit#X_value_label::disabled,QLineEdit#Y_value_label::disabled
+{
+	background-color: rgba(36, 74, 106, 7%);
+	border:none;
+	font:18px &quot;阿里巴巴普惠体&quot;;
+	color:white;
+}
+
+QPushButton#Report_Btn
+{
+    font:18px &quot;阿里巴巴普惠体&quot;;
+	color:#b8c5d5;
+	border-image: url(:/resource/目标列表-iconbtn-上报-normal.png);
+}
+QPushButton#Report_Btn::hover
+{
+    font:18px &quot;阿里巴巴普惠体&quot;;
+	color:#b8c5d5;
+	border-image: url(:/resource/目标列表-iconbtn-上报-hover.png);
+}
+QPushButton#Report_Btn::pressed
+{
+    font:18px &quot;阿里巴巴普惠体&quot;;
+	color:#ffffff;
+	border-image: url(:/resource/目标列表-iconbtn-上报-pressed.png);
+}
+
+QPushButton#Modify_Btn
+{
+    font:18px &quot;阿里巴巴普惠体&quot;;
+	color:#b8c5d5;
+	border-image: url(:/resource/目标列表-iconbtn-编辑-normal.png);
+}
+
+QPushButton#Modify_Btn::checked
+{
+    font:18px &quot;阿里巴巴普惠体&quot;;
+	color:#ffffff;
+	border-image: url(:/resource/目标列表-iconbtn-编辑-hover.png);
+}
+
+QPushButton#Close_Btn
+{
+	border-image: url(:/resource/iconbtn-关闭-normal.png);
+}
+QPushButton#Close_Btn::hover
+{
+	border-image: url(:/resource/iconbtn-关闭-hover.png);
+}
+QPushButton#Close_Btn::pressed
+{
+	border-image: url(:/resource/iconbtn-关闭-pressed.png);
+}
+
+QPushButton#pushButton_Track
+{
+	border-image: url(:/resource/目标列表-iconbtn-上报-normal.png);
+}
+QPushButton#pushButton_Track::hover
+{
+	border-image: url(:/resource/目标列表-iconbtn-上报-normal.png);
+}
+QPushButton#pushButton_Track::checked
+{
+	border-image: url(:/resource/目标列表-iconbtn-上报-hover.png);
+}
+
+
+QComboBox#Type_comboBox
+{
+    border: 1px solid;
+    padding:1px 1px 1px 1px;
+    combobox-popup:0;
+    font:18px &quot;阿里巴巴普惠体&quot;;
+    color:white;
+	background-color: rgba(36, 74, 106, 7%);
+	border: 1px solid #41c2ff;
+}
+
+QComboBox#Type_comboBox::disabled
+{
+    border: 1px solid;
+    padding:1px 1px 1px 1px;
+    combobox-popup:0;
+    border-image: url(:/resource/ComboBox_disable.png);
+    font:18px &quot;阿里巴巴普惠体&quot;;
+    color:white;
+}
+
+
+QComboBox#Type_comboBox::drop-down
+{
+	width:35px;
+	height:31px;
+	border-image: url(:/resource/下拉框-iconBtn-normal.png);
+}
+QComboBox#Type_comboBox::drop-down::hover
+{
+	width:35px;
+	height:31px;
+	border-image: url(:/resource/下拉框-iconBtn_hover-select.png);
+}
+QComboBox#Type_comboBox::drop-down::checked
+{
+	width:35px;
+	height:31px;
+	border-image: url(:/resource/下拉框-iconBtn_pressed.png);
+}
+QComboBox#Type_comboBox::drop-down::disabled
+{
+	width:0px;
+	height:0px;
+}
+
+QComboBox#Type_comboBox QAbstractItemView
+{	
+	font:18px &quot;阿里巴巴普惠体&quot;;
+	color:white;
+	background-color: #192737;
+	border:1px solid #1b99f5;
+	border-radius: 3px;
+}
+QComboBox#Type_comboBox QAbstractItemView::item 
+{
+	height:40px;
+	padding:1px 1px 1px 1px;
+	font:18px &quot;阿里巴巴普惠体&quot;;
+	color:white;
+}
+QComboBox#Type_comboBox QAbstractItemView::item::hover 
+{
+	height:40px;
+	padding:1px 1px 1px 1px;
+	font:18px &quot;阿里巴巴普惠体&quot;;
+	color:white;
+	background-color: #00a7f6;
+}
+QComboBox#Type_comboBox QAbstractItemView::item::selected 
+{
+	height:40px;
+	padding:1px 1px 1px 1px;
+	font:18px &quot;阿里巴巴普惠体&quot;;
+	color:white;
+	background-color: #00a7f6;
+} 
+
+QScrollBar:vertical{border: 0px solid; background: #00456b;width:10px;margin: 0px 0 0px 0;}
+QScrollBar::handle:vertical{background: #00b7e7;min-height: 25px;}
+QScrollBar::add-line:vertical{height: 0px;}
+QScrollBar::sub-line:vertical{height: 0px;}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {background: none;}</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <item row="0" column="0">
+    <widget class="QWidget" name="OcrContent_widget" native="true">
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_3" rowstretch="0,0,0,0,0">
+      <property name="leftMargin">
+       <number>20</number>
+      </property>
+      <property name="topMargin">
+       <number>12</number>
+      </property>
+      <property name="rightMargin">
+       <number>20</number>
+      </property>
+      <property name="bottomMargin">
+       <number>12</number>
+      </property>
+      <item row="0" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="spacing">
+         <number>9</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="Ocr_label">
+          <property name="text">
+            <string>目标上报</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_Track">
+          <property name="minimumSize">
+           <size>
+            <width>38</width>
+            <height>38</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="Close_Btn">
+          <property name="minimumSize">
+           <size>
+            <width>38</width>
+            <height>38</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>38</width>
+            <height>38</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="2" column="0">
+       <layout class="QGridLayout" name="gridLayout_2">
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item row="0" column="0">
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QLabel" name="Number_label">
+            <property name="minimumSize">
+             <size>
+              <width>55</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>55</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>编号:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="Number_value_label">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>--</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="1">
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
+          <item>
+           <widget class="QLabel" name="Lon_label">
+            <property name="minimumSize">
+             <size>
+              <width>55</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>55</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>经度:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="Lon_value_label">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>--</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="2">
+         <layout class="QHBoxLayout" name="horizontalLayout_9">
+          <item>
+           <widget class="QLabel" name="X_label">
+            <property name="minimumSize">
+             <size>
+              <width>55</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>55</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>X:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="X_value_label">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>--</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="3">
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <widget class="QLabel" name="Ele_label">
+            <property name="minimumSize">
+             <size>
+              <width>55</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>55</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>H:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="Ele_value_label">
+            <property name="minimumSize">
+             <size>
+              <width>130</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>--</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="4">
+         <widget class="QPushButton" name="Modify_Btn">
+          <property name="minimumSize">
+           <size>
+            <width>38</width>
+            <height>38</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>38</width>
+            <height>38</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QLabel" name="Type_label">
+            <property name="minimumSize">
+             <size>
+              <width>55</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>55</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>类型:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="Type_comboBox">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
+            <item>
+             <property name="text">
+              <string>目标</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>炸点</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="1" column="1">
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QLabel" name="Lat_label">
+            <property name="minimumSize">
+             <size>
+              <width>55</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>55</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>纬度:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="Lat_value_label">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>--</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="1" column="2">
+         <layout class="QHBoxLayout" name="horizontalLayout_8">
+          <item>
+           <widget class="QLabel" name="Y_label">
+            <property name="minimumSize">
+             <size>
+              <width>55</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>55</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Y:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="Y_value_label">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>--</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="1" column="3">
+         <layout class="QHBoxLayout" name="horizontalLayout_7">
+          <item>
+           <widget class="QLabel" name="Time_label">
+            <property name="minimumSize">
+             <size>
+              <width>55</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>55</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>时间:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="Time_value_label">
+            <property name="minimumSize">
+             <size>
+              <width>130</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>31</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>--</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="1" column="4">
+         <widget class="QPushButton" name="Report_Btn">
+          <property name="minimumSize">
+           <size>
+            <width>38</width>
+            <height>38</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>38</width>
+            <height>38</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="1" column="0">
+       <widget class="QWidget" name="Picture_widget" native="true">
+        <layout class="QGridLayout" name="gridLayout_5">
+         <property name="verticalSpacing">
+          <number>3</number>
+         </property>
+         <item row="3" column="0">
+          <spacer name="verticalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="0" column="0">
+          <spacer name="verticalSpacer">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="2" column="0">
+          <widget class="QWidget" name="pushStatus_widget" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>30</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>30</height>
+            </size>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_4">
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <item row="0" column="0">
+             <widget class="QLabel" name="pushStatus_label">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>30</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>30</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font:22px;color:#F6D94E;</string>
+              </property>
+              <property name="text">
+               <string>无视频流接入</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QWidget" name="Icon_widget" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>310</width>
+             <height>310</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>310</width>
+             <height>310</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QWidget" name="widget_OCR" native="true">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>45</height>
+         </size>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_6">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item row="0" column="4">
+          <layout class="QHBoxLayout" name="horizontalLayout_10">
+           <property name="spacing">
+            <number>6</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>44</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="OCRresult_label">
+             <property name="minimumSize">
+              <size>
+               <width>55</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>55</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>结果:</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QTextEdit" name="textEdit_OCR">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>16777215</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

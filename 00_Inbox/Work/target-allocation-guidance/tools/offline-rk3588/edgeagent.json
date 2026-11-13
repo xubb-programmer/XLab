@@ -1,0 +1,50 @@
+{
+  "config_version": 2,
+  "node_id": "target_guidance_edge",
+  "broker": {
+    "host": "127.0.0.1",
+    "port": 1883,
+    "protocol": "mqtt311",
+    "keepalive_s": 30,
+    "clean_session": true
+  },
+  "channels": [
+    {
+      "channel_id": "udp_plc_dev",
+      "enabled": true,
+      "type": "udp",
+      "bind_address": "0.0.0.0",
+      "bind_port": 28080,
+      "allowed_peers": ["127.0.0.1:0"],
+      "max_datagram_bytes": 65507,
+      "multicast": { "enabled": false }
+    },
+    {
+      "channel_id": "udp_multicast_dev",
+      "enabled": true,
+      "type": "udp",
+      "bind_address": "0.0.0.0",
+      "bind_port": 5678,
+      "allowed_peers": ["192.168.10.130:0"],
+      "max_datagram_bytes": 65507,
+      "multicast": {
+        "enabled": true,
+        "group": "239.255.0.1",
+        "interface": ""
+      }
+    },
+    {
+      "channel_id": "firepower_01_tcp",
+      "type": "tcp",
+      "role": "client",
+      "remote_host": "127.0.0.1",
+      "remote_port": 5567,
+      "frame": { "kind": "delimiter", "delimiter": "\n" }
+    }
+  ],
+  "devices": [
+    { "device_id": "plc_udp_dev", "channel_id": "udp_plc_dev", "qos": 0, "message_format": "json" },
+    { "device_id": "plc_udp_multicast_dev", "channel_id": "udp_multicast_dev", "qos": 0, "message_format": "json" },
+    { "device_id": "FIRE-01", "channel_id": "firepower_01_tcp", "qos": 1, "message_format": "json" }
+  ]
+}

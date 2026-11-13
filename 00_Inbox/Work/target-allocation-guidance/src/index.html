@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#060b11">
+  <title>单兵作战智能化指挥平台</title>
+  <link rel="stylesheet" href="/cesium/Widgets/widgets.css">
+  <link rel="stylesheet" href="/styles/main.css?v=2.1">
+  <link rel="stylesheet" href="/styles/layout.css?v=2.1">
+  <link rel="stylesheet" href="/styles/components.css?v=2.1">
+  <script>window.CESIUM_BASE_URL = "/cesium/";</script>
+  <script>
+    // Keep the offline board compatible with its Chromium 91 runtime.
+    if (!Array.prototype.toSorted) {
+      Object.defineProperty(Array.prototype, "toSorted", {
+        configurable: true,
+        writable: true,
+        value(compareFn) {
+          return Array.from(this).sort(compareFn);
+        }
+      });
+    }
+    if (!Array.prototype.at) {
+      Object.defineProperty(Array.prototype, "at", {
+        configurable: true,
+        writable: true,
+        value(index) {
+          const offset = Math.trunc(index);
+          const position = offset >= 0 ? offset : this.length + offset;
+          return this[position];
+        }
+      });
+    }
+    if (!AbortSignal.timeout) {
+      Object.defineProperty(AbortSignal, "timeout", {
+        configurable: true,
+        writable: true,
+        value(milliseconds) {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), milliseconds);
+          controller.signal.addEventListener("abort", () => clearTimeout(timer), { once: true });
+          return controller.signal;
+        }
+      });
+    }
+    if (!AbortSignal.any) {
+      Object.defineProperty(AbortSignal, "any", {
+        configurable: true,
+        writable: true,
+        value(signals) {
+          const controller = new AbortController();
+          const cleanup = [];
+          const abort = () => {
+            cleanup.forEach(({ signal, listener }) => signal.removeEventListener("abort", listener));
+            controller.abort();
+          };
+          for (const signal of signals) {
+            if (signal.aborted) {
+              abort();
+              break;
+            }
+            const listener = abort;
+            cleanup.push({ signal, listener });
+            signal.addEventListener("abort", listener, { once: true });
+          }
+          return controller.signal;
+        }
+      });
+    }
+  </script>
+  <script defer src="/cesium/Cesium.js"></script>
+  <script type="module" src="/js/main.js?v=2.2"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- 顶部状态与宏观指标栏 -->
+    <header class="topbar">
+      <div class="brand-section">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+          <path d="M 2.5 19.5 Q 9.7 0.3 16.9 10.3"/>
+          <path d="M 16.9 10.3 Q 19.3 13.7 21.5 19.5" stroke-dasharray="1.5 2.5" opacity=".55"/>
+          <path d="M -2.6 -1.5 H 0 C 1.3 -1.5 2.5 -0.9 3.5 0 C 2.5 0.9 1.3 1.5 0 1.5 H -2.6 Z"
+            transform="translate(16.9 10.3) rotate(54)" fill="currentColor" stroke="none"/>
+        </svg>
+        <div class="brand-title">
+          <h1>单兵作战智能化指挥平台</h1>
+          <p>INDIVIDUAL COMBAT INTELLIGENT COMMAND PLATFORM</p>
+        </div>
+      </div>
+
+      <!-- 顶部工作台主入口导航 -->
+      <nav class="topbar-nav" aria-label="软件功能作业入口导航">
+        <button type="button" id="nav-btn-tactical" class="topbar-nav-tab active" title="三维态势与火力协同作战大厅">
+          <span class="nav-tab-text">战术协同大厅</span>
+        </button>
+        <button type="button" id="nav-btn-battery-config" class="topbar-nav-tab" title="火力点参数整备">
+          <span class="nav-tab-text">火力整备</span>
+        </button>
+        <button type="button" id="nav-btn-video-matrix" class="topbar-nav-tab highlight-recon" title="打开视频总览">
+          <span class="nav-tab-text">视频总览</span>
+          <span id="nav-video-source-count" class="video-source-count-badge">检测中…</span>
+        </button>
+        <button type="button" id="nav-btn-tools" class="topbar-nav-tab">
+          <span class="nav-tab-text">工具</span>
+        </button>
+      </nav>
+
+      <div class="topbar-stats">
+        <div class="stat-item">
+          <span class="stat-label">侦察席</span>
+          <span id="stat-platform-count" class="stat-value">—</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">火力点</span>
+          <span id="stat-firepower-count" class="stat-value">—</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">侦察目标／炸点目标</span>
+          <span id="stat-target-count" class="stat-value">—</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">战术数据链状态</span>
+          <span id="stat-data-source" class="stat-value stat-link">
+            <span class="status-dot-point standby" aria-hidden="true"></span>
+            <span>正在连接…</span>
+          </span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">北京时间</span>
+          <span id="military-clock" class="stat-value military-clock-time">—</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 工作台三栏主分割视窗 -->
+    <main id="page-tactical" class="workspace page-view" aria-label="战术协同大厅">
+      <aside id="platform-sidebar" class="sidebar-left" aria-label="侦察席与火力点">
+        <section class="panel-section platform-list-panel" aria-labelledby="uav-list-heading">
+          <header class="panel-header uav-panel-header">
+            <h3 id="uav-list-heading">
+              <svg class="panel-heading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              侦察席
+            </h3>
+            <button type="button" id="btn-uav-recon-video-matrix" class="btn btn-xs btn-tactical-tool" title="打开所有侦察载荷视频链路总览矩阵">
+              <span>视频总览</span>
+            </button>
+          </header>
+          <p id="device-simulation-status" class="device-simulation-status" role="status" hidden></p>
+          <div id="uav-list-container" class="panel-body-scroll" tabindex="0" role="group" aria-labelledby="uav-list-heading"></div>
+        </section>
+
+        <section class="panel-section platform-list-panel" aria-labelledby="firepower-list-heading">
+          <header class="panel-header">
+            <h3 id="firepower-list-heading">
+              <svg class="panel-heading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M 7 17 V 3 H 20 L 16.5 7 L 20 11 H 7"/>
+                <path d="M 3 21 L 6 17 H 18 L 21 21 Z"/>
+              </svg>
+              <span id="firepower-heading-text">火力点</span>
+            </h3>
+            <div class="panel-header-actions">
+              <button type="button" id="btn-tactical-add-firepower" class="btn btn-xs btn-tactical-tool highlight-tool" title="新增火力至编制中">
+                <span>+ 新增火力</span>
+              </button>
+            </div>
+          </header>
+          <div id="firepower-list-container" class="panel-body-scroll" tabindex="0" role="group" aria-labelledby="firepower-list-heading"></div>
+        </section>
+      </aside>
+
+      <!-- 中央三维 Cesium 地球视窗 (内置无人机光电/红外摄像头 HUD 视盘) -->
+      <section class="map-viewport">
+        <div id="cesium-container"></div>
+
+        <button type="button" class="sidebar-toggle sidebar-toggle-left" aria-controls="platform-sidebar"
+          aria-expanded="true" aria-label="收起侦察载荷与火力点侧栏" title="收起侦察载荷与火力点侧栏">
+          <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+            <path d="M 3 1.5 L 10 6 L 3 10.5 Z"/>
+          </svg>
+        </button>
+        <button type="button" class="sidebar-toggle sidebar-toggle-right" aria-controls="target-sidebar"
+          aria-expanded="true" aria-label="收起目标处理侧栏" title="收起目标处理侧栏">
+          <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+            <path d="M 3 1.5 L 10 6 L 3 10.5 Z"/>
+          </svg>
+        </button>
+
+        <div class="map-overlay-tools">
+          <button id="btn-view-tactical" class="btn btn-sm" type="button">战术视角</button>
+          <button id="btn-view-top" class="btn btn-sm" type="button">俯视视角</button>
+          <button id="btn-box-select" class="btn btn-sm btn-map-icon" type="button" aria-label="框选目标（点击开启，或按住Shift键在地图上拖动框选）" title="框选目标（点击开启，或按住Shift键在地图上拖动框选）">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" stroke-width="2"/>
+              <circle cx="9" cy="12" r="1.5" fill="currentColor"/>
+              <circle cx="15" cy="12" r="1.5" fill="currentColor"/>
+            </svg>
+          </button>
+          <button id="btn-toggle-guidance" class="btn btn-sm btn-map-icon active" type="button" aria-label="态势引导线：开启（点击关闭）" title="态势引导线：开启（点击关闭）">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="5" cy="19" r="2" fill="currentColor"></circle>
+              <path d="M6.5 17.5 C 9 9, 15 5.5, 20 4.5"></path>
+              <polyline points="15.5 4.5 20 4.5 20 9"></polyline>
+            </svg>
+          </button>
+          <button id="btn-view-uav" class="btn btn-sm" type="button" hidden>聚焦侦察无人机</button>
+          <button id="btn-map-mode" class="btn btn-sm btn-map-mode is-offline" type="button" aria-label="底图模式切换" title="当前：离线底图（点击切换在线）"></button>
+          <span id="map-mode-status" class="map-offline-status" role="status" hidden></span>
+        </div>
+      </section>
+
+      <!-- 右侧栏：地图目标列表 -->
+      <aside id="target-sidebar" class="sidebar-right" aria-label="侦察目标与炸点目标">
+        <!-- 侦察目标与炸点目标列表 -->
+        <div class="panel-section" style="flex: 1; min-height: 0;">
+          <div class="panel-header">
+            <h3>
+              <svg class="panel-heading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M 18 9 C 18 13 12 18 12 18 S 6 13 6 9 A 6 6 0 1 1 18 9 Z"/>
+                <circle cx="12" cy="9" r="1.8"/>
+                <path d="M 7 17.5 C 5.5 17.9 4.5 18.5 4.5 19.3 C 4.5 20.5 7.9 21.5 12 21.5 S 19.5 20.5 19.5 19.3 C 19.5 18.5 18.5 17.9 17 17.5"/>
+              </svg>
+              侦察目标与炸点目标
+            </h3>
+          </div>
+          
+          <!-- 快速目标分类筛选器 -->
+          <div style="display:flex; gap:6px; padding:6px 10px; background:var(--bg-dark-1); border-bottom:1px solid var(--border-subtle);">
+            <button id="filter-btn-all" class="btn btn-sm active" type="button">全部目标</button>
+            <button id="filter-btn-recon" class="btn btn-sm" type="button">侦察目标</button>
+            <button id="filter-btn-burst" class="btn btn-sm" type="button">炸点目标</button>
+          </div>
+
+          <!-- 批量上报操作工具栏 (入口 1: 卡片多选工具栏) -->
+          <div id="target-selection-bar" class="target-selection-bar" style="display: none;">
+            <label class="selection-checkbox-label" title="全选当前分类目标">
+              <input type="checkbox" id="chk-select-all-targets">
+              <span>全选</span>
+            </label>
+            <span class="selection-status-text">已选 <strong id="selected-target-count" class="mono">0</strong> 个</span>
+            <div class="selection-bar-actions">
+              <button type="button" id="btn-report-history" class="btn btn-sm btn-secondary">上报记录</button>
+              <button type="button" id="btn-batch-report-firepower" class="btn btn-sm btn-primary-red" disabled title="将选中的目标上报至火力点">
+                <span>上报火力</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="target-list-container" class="panel-body-scroll">
+            <div class="tactical-datalink-standby">
+              <div class="radar-ping-ring"></div>
+              <div class="datalink-label">等待目标数据</div>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+    </main>
+
+    <!-- 地图点选火力阵位顶部悬浮提示栏 -->
+    <aside id="map-picking-hud" class="map-picking-hud is-hidden" hidden style="display: none;" aria-live="polite">
+      <div class="picking-hud-content">
+        <span class="picking-hud-icon pulse" aria-hidden="true">🎯</span>
+        <span class="picking-hud-text">请在三维地图上<strong>单击任意位置</strong>以标定火力阵位坐标</span>
+      </div>
+      <div class="picking-hud-actions">
+        <button type="button" id="btn-cancel-picking" class="btn btn-sm btn-secondary">
+          <span>✕ 取消点选</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- 地图多选目标悬浮操作栏 (入口 2: 地图选取目标) -->
+    <aside id="map-target-selection-hud" class="map-target-selection-hud is-hidden" hidden style="display: none;" aria-live="polite">
+      <div class="selection-hud-content">
+        <span class="selection-hud-text">已选 <strong id="map-hud-selected-count" class="mono">0</strong> 目标</span>
+      </div>
+      <div class="selection-hud-actions">
+        <button type="button" id="btn-map-hud-report" class="btn btn-sm btn-primary-red" title="上报已选目标至火力点">
+          <span>上报火力</span>
+        </button>
+        <button type="button" id="btn-map-hud-clear" class="btn btn-sm btn-secondary" title="清除地图选中目标">
+          <span>清空</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- 地面火力点手动配置弹窗 -->
+    <div id="firepower-config-modal" class="modal-backdrop is-hidden" hidden style="display: none;">
+      <div class="modal-dialog firepower-modal" role="dialog" aria-labelledby="firepower-modal-title" aria-modal="true">
+        <div class="card-corner-tl"></div>
+        <div class="card-corner-br"></div>
+        
+        <header class="modal-header">
+          <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+            <span class="status-dot-point online" aria-hidden="true"></span>
+            <strong id="firepower-modal-title">地面火力点阵位场景配置</strong>
+          </div>
+          <button type="button" class="btn-close-modal" id="btn-close-firepower-modal" aria-label="关闭">✕</button>
+        </header>
+
+        <form id="form-firepower-config" class="tactical-form">
+          <div class="modal-body">
+            <!-- 设备状态与标识信息栏 (设备名称、设备ID、设备IP、运行状态) -->
+            <div id="cfg-fp-device-info-bar" class="modal-device-meta-bar">
+              <div class="modal-meta-field">
+                <span class="modal-meta-label">设备名称</span>
+                <strong id="cfg-fp-disp-name" class="modal-meta-val">—</strong>
+              </div>
+              <div class="modal-meta-field">
+                <span class="modal-meta-label">设备编号 ID</span>
+                <strong id="cfg-fp-disp-id" class="modal-meta-val mono badge-meta-id">—</strong>
+              </div>
+              <div class="modal-meta-field">
+                <span class="modal-meta-label">通信 IP 地址</span>
+                <strong id="cfg-fp-disp-ip" class="modal-meta-val mono highlight-cyan">—</strong>
+              </div>
+              <div class="modal-meta-field">
+                <span class="modal-meta-label">运行状态</span>
+                <strong id="cfg-fp-disp-status" class="modal-meta-val status-online">● 在线</strong>
+              </div>
+            </div>
+
+            <div class="form-row" data-operational-point-field>
+              <label class="form-label" for="cfg-fp-name">火力点名称</label>
+              <input type="text" id="cfg-fp-name" class="text-input" placeholder="例如: 地面火力输出点" required>
+            </div>
+
+            <div class="form-row-grid-3">
+              <div class="form-field">
+                <label class="form-label" for="cfg-fp-lon">经度 LON (°)</label>
+                <input type="number" step="0.000001" min="-180" max="180" id="cfg-fp-lon" class="text-input mono" placeholder="如: 118.250000" required>
+              </div>
+              <div class="form-field">
+                <label class="form-label" for="cfg-fp-lat">纬度 LAT (°)</label>
+                <input type="number" step="0.000001" min="-90" max="90" id="cfg-fp-lat" class="text-input mono" placeholder="如: 24.380000" required>
+              </div>
+              <div class="form-field">
+                <label class="form-label" for="cfg-fp-alt">高度 ALT (m)</label>
+                <input type="number" step="0.1" id="cfg-fp-alt" class="text-input mono" placeholder="如: 45" required>
+              </div>
+            </div>
+
+            <div class="form-row-grid-2" data-operational-point-field>
+              <div class="form-field">
+                <label class="form-label" for="cfg-fp-range">打击范围 (km)</label>
+                <input type="text" id="cfg-fp-range" class="text-input mono" placeholder="如: 40 km" required>
+              </div>
+              <div class="form-field">
+                <label class="form-label" for="cfg-fp-max-targets">单次最大目标数 (通道容量)</label>
+                <input type="number" step="1" min="1" max="50" id="cfg-fp-max-targets" class="text-input mono" placeholder="默认 1" required>
+              </div>
+            </div>
+
+            <div class="form-row-grid-2" data-operational-point-field>
+              <div class="form-field">
+                <label class="form-label" for="cfg-fp-ip">通信 IP 地址</label>
+                <input type="text" id="cfg-fp-ip" class="text-input mono" placeholder="127.0.0.1" required>
+              </div>
+              <div class="form-field">
+                <label class="form-label" for="cfg-fp-port">通信端口 (TCP)</label>
+                <input type="number" step="1" min="1" max="65535" id="cfg-fp-port" class="text-input mono" placeholder="5567" required>
+              </div>
+            </div>
+            <input type="hidden" id="cfg-fp-device" value="FIRE-01">
+
+            <div class="modal-helper-row">
+              <button type="button" id="btn-pick-map-center" class="btn btn-sm btn-tactical-tool" title="将当前三维地图画面中心坐标填入">
+                <span>获取视心</span>
+              </button>
+              <button type="button" id="btn-pick-map-point" class="btn btn-sm btn-tactical-tool highlight-tool" title="在三维地图上任意单击拾取坐标">
+                <span>地图点选</span>
+              </button>
+            </div>
+            <div id="cfg-fp-picked-hint" class="coord-picked-banner" hidden></div>
+            <p id="cfg-fp-save-error" class="firepower-save-error" role="alert" hidden></p>
+          </div>
+
+          <footer class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="modal-footer-left">
+              <button type="button" id="btn-modal-role-to-recon" class="btn btn-secondary" hidden>转为侦察席</button>
+              <button type="button" id="btn-modal-role-to-firepower" class="btn btn-secondary" hidden>转为火力点</button>
+            </div>
+            <div class="modal-footer-right" style="display:flex; gap:10px;">
+              <button type="button" id="btn-cancel-firepower" class="btn btn-secondary">取消</button>
+              <button type="submit" id="btn-save-firepower" class="btn btn-primary-red">
+                <span>保存配置</span>
+              </button>
+            </div>
+          </footer>
+        </form>
+      </div>
+    </div>
+
+    <!-- 目标上报至火力点交互弹窗 -->
+    <div id="target-report-modal" class="modal-backdrop is-hidden" hidden style="display: none;">
+      <div class="modal-dialog target-report-modal-dialog" role="dialog" aria-labelledby="target-report-modal-title" aria-modal="true">
+        <div class="card-corner-tl"></div>
+        <div class="card-corner-br"></div>
+
+        <header class="modal-header">
+          <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+            <span class="status-dot-point online" aria-hidden="true"></span>
+            <strong id="target-report-modal-title">目标上报至火力点 · 协同分配方案</strong>
+          </div>
+          <button type="button" class="btn-close-modal" id="btn-close-report-modal" aria-label="关闭">✕</button>
+        </header>
+
+        <form id="form-target-report" class="tactical-form">
+          <div class="modal-body">
+            <div id="report-history-row" class="form-row" hidden>
+              <label class="form-label" for="report-history-select">上报批次</label>
+              <select id="report-history-select" class="text-input"></select>
+            </div>
+            <div id="report-plan">
+            <!-- 火力打击多对多协同分配策略建议总览 -->
+            <div id="report-allocation-strategy-box" class="allocation-strategy-box">
+              <div class="strategy-header">
+                <div class="strategy-title">
+                  <strong>协同分配建议</strong>
+                </div>
+                <div class="strategy-actions">
+                  <button type="button" id="btn-apply-strategy-recommendation" class="btn btn-xs btn-tactical-tool" title="一键采用系统推荐方案">
+                    <span>应用建议</span>
+                  </button>
+                  <select id="batch-assign-all-select" class="text-input text-input-xs" title="全部指定阵位">
+                    <option value="">全部指定为…</option>
+                  </select>
+                </div>
+              </div>
+              <div class="strategy-body">
+                <div id="strategy-recommended-reason" class="strategy-reason-text">
+                  解算中…
+                </div>
+                <div id="strategy-battery-load-bar" class="battery-load-bar">
+                  <!-- 动态显示各阵位承揽目标负荷 -->
+                </div>
+              </div>
+            </div>
+
+            <!-- 多目标分配方案矩阵清单 -->
+            <div class="form-row">
+              <div class="human-decision-header">
+                <div class="decision-title-group">
+                  <span class="form-label" style="margin-bottom:0;">目标指派方案</span>
+                  <span id="report-target-summary-badge" class="badge-target-protocol recon">0 目标</span>
+                </div>
+                <span class="human-badge">人工裁决</span>
+              </div>
+
+              <!-- 矩阵列表容器 -->
+              <div id="report-allocation-matrix-list" class="report-allocation-matrix-list">
+                <!-- 动态填充各目标的指派行卡片 -->
+              </div>
+
+              <div class="human-hint-text">
+                可逐项更改指派阵位，人工确认后发送。
+              </div>
+            </div>
+            </div>
+
+            <!-- 实时反馈横幅 (成功/失败/超时) -->
+            <div id="report-result-banner" class="report-result-banner is-hidden" hidden></div>
+            <div id="report-result-items" class="report-result-items" hidden></div>
+          </div>
+
+          <footer class="modal-footer">
+            <button type="button" id="btn-cancel-report-modal" class="btn btn-secondary">取消</button>
+            <button type="submit" id="btn-confirm-report-modal" class="btn btn-primary-red">
+              <span id="btn-confirm-report-text">🚀 确认按方案分发上报</span>
+            </button>
+          </footer>
+        </form>
+      </div>
+    </div>
+
+    <!-- 页面 2: 视频总览 (平级页面 2，全屏独立展示) -->
+    <section id="page-video-matrix" class="page-view fullpage-view fullpage-video-matrix" hidden style="display: none;" aria-label="视频总览">
+      <header class="view-header video-matrix-header">
+        <div class="header-title-group">
+          <div class="view-title" style="display:flex; align-items:center; gap:8px;">
+            <strong id="video-matrix-title" tabindex="-1">侦察席列表</strong>
+          </div>
+          <div class="matrix-header-meta">
+            <span id="matrix-header-count" class="meta-tag">共 0 个侦察席</span>
+          </div>
+        </div>
+
+        <!-- 矩阵控制工具组: 分屏切换、刷新与返回 -->
+        <div class="matrix-header-controls">
+          <label class="matrix-source-picker" hidden>
+            <span>视频源</span>
+            <select id="matrix-source-select" class="select-input"></select>
+          </label>
+          <div class="grid-layout-switcher" role="group" aria-label="分屏布局切换" hidden>
+            <button type="button" class="btn btn-xs btn-matrix-layout active" data-layout="1" title="单屏特写">1分屏</button>
+            <button type="button" class="btn btn-xs btn-matrix-layout" data-layout="2" title="双屏并列">2分屏</button>
+          </div>
+          <button type="button" id="btn-refresh-video-matrix" class="btn btn-xs btn-tactical-tool" title="重新探测视频链路" hidden>
+            <span>⟳ 刷新链路</span>
+          </button>
+          <button type="button" id="btn-matrix-back-to-list" class="btn btn-xs btn-secondary" hidden>返回列表</button>
+        </div>
+      </header>
+
+      <div class="view-body video-seat-directory" id="video-seat-directory">
+        <p id="video-seat-empty" class="workspace-empty" role="status">暂无侦察席</p>
+        <ul id="video-seat-list" class="video-seat-list" aria-label="侦察席列表" hidden></ul>
+      </div>
+
+      <div class="view-body video-matrix-body" id="video-matrix-playback" hidden>
+        <!-- 视频矩阵网格容器 (铺满全屏) -->
+        <div id="video-matrix-grid" class="video-matrix-grid layout-grid-1">
+          <!-- 动态生成各个视频流单元 -->
+        </div>
+      </div>
+
+      <footer class="view-footer video-matrix-footer" id="video-matrix-footer" hidden>
+        <div class="matrix-footer-info">
+          <span class="footer-legend-item"><span class="legend-dot live"></span> 实时推流在线</span>
+          <span class="footer-legend-item"><span class="legend-dot standby"></span> 链路在席待命</span>
+          <span class="footer-legend-item"><span class="legend-dot note"></span> 点击画面右上方 ⛶ 可快速特写单屏</span>
+        </div>
+        <div class="matrix-footer-actions">
+          <button type="button" id="btn-matrix-close-foot" class="btn btn-secondary">返回战术协同大厅</button>
+        </div>
+      </footer>
+    </section>
+
+    <!-- 页面 3: 火力整备 (平级页面 3，全屏独立展示，完整树状拓扑图 + 组播动态挂载) -->
+    <section id="page-firepower-affiliation" class="page-view fullpage-view fullpage-firepower-affiliation" hidden style="display: none;" aria-label="火力整备">
+      <header class="view-header affiliation-header">
+        <div class="header-title-group">
+          <div class="view-title" style="display:flex; align-items:center; gap:8px;">
+            <span class="status-dot-point online" aria-hidden="true"></span>
+            <strong id="affiliation-modal-title">战术火力整备 · 编制隶属拓扑</strong>
+          </div>
+          <div class="affiliation-header-meta">
+            <span class="meta-tag">指挥中枢 ➔ 营 ➔ 连 ➔ 火力点</span>
+            <span class="meta-tag highlight-cyan">组播设备动态挂载</span>
+          </div>
+        </div>
+
+        <div class="affiliation-header-stats">
+          <div class="tree-stat-badge">
+            <span class="stat-lbl">阵位总数:</span>
+            <strong id="tree-stat-total" class="stat-val mono">3</strong>
+          </div>
+          <div class="tree-stat-badge">
+            <span class="stat-lbl">在线就绪:</span>
+            <strong id="tree-stat-online" class="stat-val mono highlight-green">1</strong>
+          </div>
+          <div class="tree-stat-badge">
+            <span class="stat-lbl">离线/未挂载:</span>
+            <strong id="tree-stat-offline" class="stat-val mono dim">2</strong>
+          </div>
+          <div class="tree-stat-badge">
+            <span class="stat-lbl">设备在线:</span>
+            <strong id="tree-stat-multicast" class="stat-val mono highlight-cyan">1 台在线</strong>
+          </div>
+        </div>
+
+        <div class="affiliation-header-controls">
+          <button type="button" id="btn-tree-org-scale" class="btn btn-xs btn-tactical-tool" title="设置编制中有几个营、每个营有几个连">
+            <span>营连建制设置</span>
+          </button>
+          <button type="button" id="btn-tree-add-point" class="btn btn-xs btn-tactical-tool highlight-tool" title="新增火力至编制中">
+            <span>+ 新增火力</span>
+          </button>
+          <button type="button" id="btn-tree-auto-mount" class="btn btn-xs btn-tactical-tool" title="自动将在线侦察设备按序挂载至未就绪火力点">
+            <span>一键智能挂载</span>
+          </button>
+          <button type="button" id="btn-tree-reset-default" class="btn btn-xs btn-tactical-tool" title="重置为标准三阵位建制">
+            <span>重置编制</span>
+          </button>
+          <button type="button" class="btn btn-xs btn-secondary" id="btn-close-affiliation-modal" title="返回战术协同大厅">
+            <span>返回大厅</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="view-body affiliation-modal-body">
+        <!-- 主树状拓扑图展示画板 (全屏铺开) -->
+        <div class="affiliation-tree-scroll-container">
+          <div id="affiliation-tree-canvas" class="affiliation-tree-canvas">
+            <!-- 动态渲染树状结构: 指挥所 -> 营 -> 连 -> 火力点 -->
+          </div>
+        </div>
+
+        <!-- 右侧边栏：在线侦察席设备池 (组播实时就绪设备) -->
+        <aside class="affiliation-recon-sidebar">
+          <div class="recon-sidebar-header">
+            <div class="sidebar-title-row">
+              <svg class="panel-heading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <strong>组播侦察席设备池</strong>
+            </div>
+            <span class="recon-pool-hint">239.255.0.1:5678</span>
+          </div>
+          <p class="recon-pool-desc">组播在线设备可作为火力点通信信道，挂载后阵位立即转为在线就绪。</p>
+          <div id="affiliation-recon-pool-list" class="affiliation-recon-pool-list">
+            <!-- 动态渲染各在线设备卡片及快捷挂载按钮 -->
+          </div>
+        </aside>
+
+        <!-- 抽屉：编辑或新增阵位隶属关系 -->
+        <div id="affiliation-edit-drawer" class="affiliation-edit-drawer" hidden style="display: none;">
+          <div class="drawer-header">
+            <strong id="tree-drawer-title">编辑阵位编制</strong>
+            <button type="button" id="btn-cancel-tree-drawer" class="btn-close-drawer" aria-label="关闭抽屉">✕</button>
+          </div>
+          <form id="form-tree-drawer-edit" class="tactical-form drawer-form">
+            <input type="hidden" id="tree-edit-point-id">
+            <div class="form-row-grid-2">
+              <div class="form-field">
+                <label class="form-label" for="tree-edit-battalion">所属营</label>
+                <select id="tree-edit-battalion" class="text-input select-input" required></select>
+              </div>
+              <div class="form-field">
+                <label class="form-label" for="tree-edit-company">所属连</label>
+                <select id="tree-edit-company" class="text-input select-input" required></select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label class="form-label" for="tree-edit-name">火力点名称</label>
+              <input type="text" id="tree-edit-name" class="text-input" placeholder="例如: 1号火力点" required>
+            </div>
+
+            <div class="form-row">
+              <label class="form-label" for="tree-edit-mounted-device">挂载在线设备ID (组播通信信道)</label>
+              <select id="tree-edit-mounted-device" class="text-input select-input">
+                <option value="">(未挂载 / 阵位离线)</option>
+              </select>
+              <small class="form-field-hint">选择已在组播网络中的设备ID，挂载后阵位将变为在线。</small>
+            </div>
+
+            <div class="form-row-grid-3">
+              <div class="form-field">
+                <label class="form-label" for="tree-edit-lon">经度 LON (°)</label>
+                <input type="number" step="0.000001" min="-180" max="180" id="tree-edit-lon" class="text-input mono" required>
+              </div>
+              <div class="form-field">
+                <label class="form-label" for="tree-edit-lat">纬度 LAT (°)</label>
+                <input type="number" step="0.000001" min="-90" max="90" id="tree-edit-lat" class="text-input mono" required>
+              </div>
+              <div class="form-field">
+                <label class="form-label" for="tree-edit-alt">高度 ALT (m)</label>
+                <input type="number" step="0.1" id="tree-edit-alt" class="text-input mono" required>
+              </div>
+            </div>
+
+            <div class="modal-helper-row drawer-helper-row">
+              <button type="button" id="btn-tree-pick-center" class="btn btn-sm btn-tactical-tool" title="将当前三维地图画面中心坐标填入">
+                <span>获取视心</span>
+              </button>
+              <button type="button" id="btn-tree-pick-point" class="btn btn-sm btn-tactical-tool highlight-tool" title="切至三维地图点选拾取坐标">
+                <span>地图点选</span>
+              </button>
+            </div>
+            <div id="tree-edit-picked-hint" class="coord-picked-banner" hidden style="display: none;"></div>
+
+            <div class="form-row-grid-2">
+              <div class="form-field">
+                <label class="form-label" for="tree-edit-range">打击范围 (km)</label>
+                <input type="text" id="tree-edit-range" class="text-input mono" placeholder="如: 12 km" required>
+              </div>
+              <div class="form-field">
+                <label class="form-label" for="tree-edit-max-targets">单次最大目标数 (通道容量)</label>
+                <input type="number" step="1" min="1" max="50" id="tree-edit-max-targets" class="text-input mono" placeholder="1" required>
+              </div>
+            </div>
+
+            <div class="form-row-grid-2">
+              <div class="form-field">
+                <label class="form-label" for="tree-edit-ip">通信 IP 地址</label>
+                <input type="text" id="tree-edit-ip" class="text-input mono" placeholder="127.0.0.1" required>
+              </div>
+              <div class="form-field">
+                <label class="form-label" for="tree-edit-port">通信端口 (TCP)</label>
+                <input type="number" step="1" min="1" max="65535" id="tree-edit-port" class="text-input mono" placeholder="5567" required>
+              </div>
+            </div>
+
+            <div class="drawer-actions-row">
+              <button type="button" id="btn-cancel-tree-drawer-btn" class="btn btn-sm btn-secondary">
+                <span>取消</span>
+              </button>
+              <div class="drawer-btn-group">
+                <button type="submit" id="btn-tree-save-drawer" class="btn btn-sm btn-primary-red">
+                  <span>保存配置</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- 抽屉/模态：营连建制规模设置 -->
+        <div id="affiliation-org-modal" class="affiliation-edit-drawer affiliation-org-drawer" hidden style="display: none;">
+          <div class="drawer-header">
+            <strong id="org-modal-title">战术建制规模 · 营连架构设置</strong>
+            <button type="button" id="btn-close-org-modal" class="btn-close-drawer" aria-label="关闭营连设置">✕</button>
+          </div>
+          <div class="drawer-form org-settings-form">
+            <!-- 快速建制规模设置 -->
+            <div class="org-quick-scale-panel">
+              <div class="panel-section-title">
+                <span class="status-dot-point online" aria-hidden="true"></span>
+                <strong>快捷建制规模生成</strong>
+              </div>
+              <p class="org-helper-desc">设定当前指挥中枢下辖的营数量以及各营标配连数量：</p>
+              <div class="form-row-grid-2">
+                <div class="form-field">
+                  <label class="form-label" for="input-scale-battalions">设置营数量</label>
+                  <div class="stepper-input-row">
+                    <input type="number" id="input-scale-battalions" class="text-input mono" min="1" max="10" step="1" value="2" required>
+                    <span class="input-unit">个营</span>
+                  </div>
+                </div>
+                <div class="form-field">
+                  <label class="form-label" for="input-scale-companies">每营下辖连数</label>
+                  <div class="stepper-input-row">
+                    <input type="number" id="input-scale-companies" class="text-input mono" min="1" max="10" step="1" value="2" required>
+                    <span class="input-unit">个连</span>
+                  </div>
+                </div>
+              </div>
+              <div class="scale-actions-row">
+                <button type="button" id="btn-apply-org-scale" class="btn btn-sm btn-tactical-tool highlight-tool">
+                  <span>快速应用建制规模</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 详细营连编制树形管理列表 -->
+            <div class="org-detail-manage-panel">
+              <div class="panel-section-title">
+                <span class="status-dot-point standby" aria-hidden="true"></span>
+                <strong>当前营连编制清单</strong>
+              </div>
+              <div id="org-manage-tree-list" class="org-manage-tree-list">
+                <!-- 动态渲染各营及连管理项 -->
+              </div>
+              <div class="org-add-battalion-row">
+                <input type="text" id="input-new-battalion-name" class="text-input" placeholder="输入新营名称 (例如: 3营)">
+                <button type="button" id="btn-add-new-battalion" class="btn btn-sm btn-secondary">
+                  <span>+ 添加新营</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="drawer-actions-row">
+              <button type="button" id="btn-reset-org-default" class="btn btn-sm btn-secondary">
+                <span>重置默认建制</span>
+              </button>
+              <button type="button" id="btn-finish-org-modal" class="btn btn-sm btn-primary-red">
+                <span>完成设置</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="view-footer affiliation-footer">
+        <div class="affiliation-footer-meta">
+          <span class="footer-legend-item"><span class="legend-dot live"></span> 设备挂载在线</span>
+          <span class="footer-legend-item"><span class="legend-dot standby"></span> 未挂载或设备离线</span>
+          <span class="footer-legend-item"><span class="legend-dot note"></span> 可在侦察席或设备池中直接选取设备挂载至阵位</span>
+        </div>
+        <div class="affiliation-footer-actions">
+          <button type="button" id="btn-affiliation-close-foot" class="btn btn-secondary">返回战术协同大厅</button>
+        </div>
+      </footer>
+    </section>
+
+    <section id="page-tools" class="page-view fullpage-view" aria-label="工具" hidden>
+      <div class="view-body management-page">
+        <a class="btn" href="http://127.0.0.1:4196/" target="_blank" rel="noopener">数据管理演示</a>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

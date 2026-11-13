@@ -1,0 +1,24 @@
+{
+  "name": "uav-recon-artillery-guidance",
+  "version": "1.0.0",
+  "description": "单兵作战智能化指挥平台 (Individual Combat Intelligent Command Platform)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server/serve.mjs",
+    "preview:data": "node server/data-preview.mjs",
+    "relay:edgeagent": "node tools/edgeagent-multicast-relay.mjs",
+    "check": "node --check src/js/main.js && node --check server/serve.mjs"
+  },
+  "keywords": [
+    "cesium",
+    "uav-reconnaissance",
+    "camera-gimbal-hud",
+    "scoutmonitor-protocols",
+    "edgeagent"
+  ],
+  "dependencies": {
+    "cesium": "1.147.0",
+    "mqtt": "5.16.1"
+  }
+}

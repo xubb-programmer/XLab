@@ -1,0 +1,8 @@
+{
+  "brokerUrl": "",
+  "topic": "edge/v1/devices/plc_udp_dev/data",
+  "deviceStatusTopic": "edge/v1/devices/plc_udp_multicast_dev/data",
+  "deviceStatusRelayIp": "172.29.48.1",
+  "username": "",
+  "password": ""
+}

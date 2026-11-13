@@ -1,48 +1,30 @@
-# EdgeAgent 通信代理：文档入口
+# EdgeAgent 通信代理
 
-更新日期：2026-11-09。
-
-EdgeAgent 将 UDP、TCP、串口和经典 CAN 接口双向映射到 MQTT Topic。代理负责连接、收发、字节流分帧、传输元数据及发送回执；设备业务报文由上层服务生成和解释。
+EdgeAgent 将 UDP、TCP、串口和经典 CAN 接口接入 MQTT。它管理现场连接，将收到的数据报或帧发布到设备 Topic，并将 MQTT 命令中的字节提交给对应的现场接口。设备报文的编码、解析和应答关联由业务服务处理。
 
 ```text
-现场设备 ↔ UDP/TCP/串口/CAN ↔ EdgeAgent ↔ MQTT Broker ↔ 业务服务
+现场设备 ↔ UDP / TCP / 串口 / CAN ↔ EdgeAgent ↔ MQTT Broker ↔ 业务服务
 ```
 
-## 阅读顺序
+## 默认配置
 
-| 文档 | 内容 |
-|---|---|
-| [01 方案大纲与架构](01-方案大纲与架构.md) | 产品职责、通道与 Topic 绑定、数据链路 |
-| [02 核心实现细节](02-核心实现细节.md) | 代码模块、分帧、重连、线程和生命周期 |
-| [03 配置与接口契约](03-配置与接口契约.md) | 配置版本、字段、Topic、命令和回执 |
-| [04 扩展开发与迁移](04-扩展开发与迁移.md) | 构建、配置迁移和新增通信通道 |
-| [05 验证与实现边界](05-验证与实现边界.md) | 测试入口、覆盖范围和现场验收边界 |
+仓库的 [config.json](../EdgeAgent/config.json) 使用配置 v2，Broker 为 `127.0.0.1:1883`，网关标识为 `edge_box_dev`。默认启用两个通道。
 
-## 当前能力
+| 通道 | 本地地址 | MQTT 设备 ID | 接收规则 |
+| --- | --- | --- | --- |
+| UDP 单播 | `0.0.0.0:18080` | `plc_udp_dev` | 每个数据报单独上报，白名单只允许 `127.0.0.1` 的任意端口 |
+| TCP 服务端 | `0.0.0.0:18081` | `plc_tcp_server_dev` | 按换行符 `0A` 分帧，最多 8 条连接 |
 
-- UDP 单播、组播及来源/目标白名单。
-- TCP 客户端、服务端、多连接接收和指定连接发送。
-- 串口参数配置、收发及断线重开。
-- 经典 CAN 标准帧、扩展帧、RTR、过滤和重连。
-- TCP/串口的分隔符、固定长度、长度前缀和空闲超时分帧。
-- MQTT 命令、数据、发送回执、在线状态与异常断线遗嘱。
-- 默认统一 JSON：id、ts、transport、data、meta；元数据共用 endpoint、connection、frame。
-- 显式 message_format=legacy 保留旧数据及回执输出，旧下行格式继续兼容。
-- v1 通道内声明设备、v2 独立设备绑定；每通道最多一个设备 Topic 绑定。
-- 单份 config.json 管理全部通道；通过通道 enabled 开关启停，关闭通道时其设备 Topic 也不启用。
+UDP 组播、TCP 客户端、串口和 CAN 均为关闭的模板。启用前先按环境修改参数，再设置对应通道的 `enabled: true` 并重启。默认数据和发送回执采用 JSON。旧消费者可通过设备绑定中的 `message_format: "legacy"` 继续接收旧格式。
 
-## 示例和测试
+## 文档导航
 
-- [统一配置 config.json](../EdgeAgent/config.json)：包含 UDP 单播/组播、TCP 客户端/服务端、串口和 CAN。默认仅启用 UDP 单播和 TCP 服务端，其余按需修改参数并设置 enabled=true。
-- [测试入口](../EdgeAgent/tests/run_tests.py)
-- [独立图形测试工具](../EdgeAgentTester/README.md)
+| 我需要了解 | 文档 |
+| --- | --- |
+| 职责、模块和数据流 | [01 方案大纲与架构](01-方案大纲与架构.md) |
+| 接收分帧、连接恢复和日志 | [02 核心实现细节](02-核心实现细节.md) |
+| 配置字段、Topic、命令和兼容格式 | [03 配置与接口契约](03-配置与接口契约.md) |
+| 构建、启动、UDP 联调和迁移 | [04 扩展开发与迁移](04-扩展开发与迁移.md) |
+| 测试入口、执行结果和验收边界 | [05 验证与实现边界](05-验证与实现边界.md) |
 
-Linux/WSL 中从项目根目录执行：
-
-```bash
-python3 EdgeAgent/tests/run_tests.py
-```
-
-所有相对路径均以同时包含 `Doc`、`EdgeAgent` 和 `EdgeAgentTester` 的项目根目录为准。
-
-运行时通过 `--config` 指定这份文件；未指定参数和环境变量时，程序查找可执行文件所在目录的 config.json。修改配置需重启，不需要改动多份协议示例文件。
+文档中的构建和测试命令从同时包含 `Doc`、`EdgeAgent`、`EdgeAgentTester` 的目录执行。主程序和 [EdgeAgentTester](../EdgeAgentTester/README.md) 是独立的 Qt 工程。测试工具模拟现场端，MQTT 侧由 Broker 和业务客户端完成。

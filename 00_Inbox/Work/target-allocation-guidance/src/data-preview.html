@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>数据管理演示</title>
+  <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/layout.css">
+  <link rel="stylesheet" href="/styles/components.css">
+  <script type="module" src="/js/ui/data-preview.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <header class="topbar"><div class="brand-title"><h1>数据管理演示</h1></div></header>
+    <section class="page-view fullpage-view" aria-label="数据管理">
+      <div class="view-body management-page">
+        <header class="management-header">
+          <h2>数据管理</h2>
+          <nav class="management-tabs" aria-label="数据类别">
+            <button type="button" class="btn" data-record-type="recon" aria-pressed="true">侦察席</button>
+            <button type="button" class="btn" data-record-type="firepower" aria-pressed="false">火力点</button>
+            <button type="button" class="btn" data-record-type="targets" aria-pressed="false">目标</button>
+          </nav>
+        </header>
+        <form id="management-search" class="management-toolbar" role="search">
+          <input class="text-input" name="q" type="search" maxlength="100" placeholder="搜索名称或编号" aria-label="搜索名称或编号">
+          <button class="btn" type="submit">查询</button>
+          <button class="btn btn-primary" id="management-add" type="button">新增侦察席</button>
+        </form>
+        <p id="management-status" class="management-status" role="status"></p>
+        <div class="management-table-wrap">
+          <table class="management-table">
+            <thead id="management-columns"></thead>
+            <tbody id="management-rows"></tbody>
+          </table>
+        </div>
+        <div class="management-pages" aria-label="分页">
+          <button type="button" class="btn" id="management-prev">上一页</button>
+          <span id="management-page-count"></span>
+          <button type="button" class="btn" id="management-next">下一页</button>
+        </div>
+      </div>
+      <dialog id="management-dialog" class="management-dialog" aria-labelledby="management-dialog-title">
+        <form id="management-editor" class="management-editor">
+          <h3 id="management-dialog-title"></h3>
+          <div id="management-fields" class="management-fields"></div>
+          <p id="management-error" class="management-error" role="alert" hidden></p>
+          <div class="management-editor-actions">
+            <button class="btn" id="management-cancel" type="button">取消</button>
+            <button class="btn btn-primary" type="submit">保存</button>
+          </div>
+        </form>
+      </dialog>
+    </section>
+  </div>
+</body>
+</html>

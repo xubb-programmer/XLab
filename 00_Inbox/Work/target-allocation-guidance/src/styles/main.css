@@ -1,0 +1,81 @@
+:root {
+  --bg-dark-0: #060b11;
+  --bg-dark-1: #090f17;
+  --bg-dark-2: #0e1724;
+  --bg-dark-3: #142236;
+  --bg-dark-4: #1b2e47;
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.16);
+  --border-highlight: rgba(0, 240, 255, 0.4);
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  --cyan-glow: #00f0ff;
+  --cyan-glow-dim: rgba(0, 240, 255, 0.15);
+  --green-glow: #38ef7d;
+  --yellow-glow: #ffd166;
+  --red-threat: #ff4757;
+  --orange-threat: #ffa502;
+  --purple-accent: #bf55ec;
+
+  /* 显控系统色彩规范: 整体青色 / 平台偏红 / 目标偏蓝 */
+  --theme-cyan: #00f0ff;
+  --theme-cyan-dim: rgba(0, 240, 255, 0.15);
+  --theme-cyan-border: rgba(0, 240, 255, 0.35);
+
+  --platform-red: #ff4757;
+  --platform-red-bright: #ff6b81;
+  --platform-red-light: #fca5a5;
+  --platform-red-dim: rgba(255, 71, 87, 0.14);
+  --platform-red-border: rgba(255, 71, 87, 0.35);
+
+  --target-blue: #3b82f6;
+  --target-blue-bright: #60a5fa;
+  --target-blue-light: #93c5fd;
+  --target-blue-dim: rgba(59, 130, 246, 0.16);
+  --target-blue-border: rgba(59, 130, 246, 0.4);
+
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-dark-0);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: 13px;
+  line-height: 1.5;
+  user-select: none;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-dark-1);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-dark-4);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cyan-glow);
+}

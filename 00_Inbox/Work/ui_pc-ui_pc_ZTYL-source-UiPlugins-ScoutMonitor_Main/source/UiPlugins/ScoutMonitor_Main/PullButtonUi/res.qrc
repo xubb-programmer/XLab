@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/">
+        <file>resource/target-iconBtn_hide-hover.png</file>
+        <file>resource/target-iconBtn_hide-normal.png</file>
+        <file>resource/target-iconBtn_hide-pressed.png</file>
+        <file>resource/target-iconBtn_show-hover.png</file>
+        <file>resource/target-iconBtn_show-normal.png</file>
+        <file>resource/target-iconBtn_show-pressed.png</file>
+    </qresource>
+</RCC>

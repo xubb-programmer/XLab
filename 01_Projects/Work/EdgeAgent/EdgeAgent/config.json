@@ -21,13 +21,13 @@
     },
     {
       "channel_id": "udp_multicast_dev",
-      "enabled": false,
+      "enabled": true,
       "type": "udp",
       "bind_address": "0.0.0.0",
       "bind_port": 18082,
-      "allowed_peers": ["127.0.0.1:0", "239.255.0.1:0"],
+      "allowed_peers": ["172.29.48.1:0"],
       "multicast": {
-        "enabled": true,
+        "enabled": false,
         "group": "239.255.0.1",
         "interface": ""
       }

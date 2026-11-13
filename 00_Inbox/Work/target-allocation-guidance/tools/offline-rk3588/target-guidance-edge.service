@@ -1,0 +1,18 @@
+[Unit]
+Description=Target Guidance EdgeAgent Gateway
+After=network-online.target mosquitto.service
+Wants=network-online.target
+Requires=mosquitto.service
+
+[Service]
+Type=simple
+User=target-guidance
+Group=target-guidance
+WorkingDirectory=/var/lib/target-guidance/edge
+Environment=EDGEAGENT_LOG_FILE=/var/lib/target-guidance/edge/edgeagent.log
+ExecStart=/opt/jw/uav/current/bin/edgeagent --config /etc/target-guidance/edgeagent.json
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

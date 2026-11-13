@@ -1,0 +1,4619 @@
+/* 按钮与交互控件 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 4px;
+  border: 1px solid var(--border-medium);
+  background: var(--bg-dark-3);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  background: var(--bg-dark-4);
+  border-color: var(--cyan-glow);
+  color: #fff;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: var(--cyan-glow);
+  color: var(--cyan-glow);
+}
+.btn-primary:hover {
+  background: var(--cyan-glow);
+  color: #000;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+.btn-fusion {
+  background: rgba(56, 239, 125, 0.18);
+  border-color: var(--green-glow);
+  color: var(--green-glow);
+  font-weight: 600;
+}
+.btn-fusion:hover, .btn-fusion.active {
+  background: var(--green-glow);
+  color: #000;
+  box-shadow: 0 0 12px rgba(56, 239, 125, 0.4);
+}
+
+.btn-sm {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.btn.playing {
+  background: rgba(56, 239, 125, 0.2);
+  border-color: var(--green-glow);
+  color: var(--green-glow);
+}
+
+.btn-speed.active {
+  background: var(--cyan-glow);
+  color: #000;
+  font-weight: 700;
+}
+
+/* 下拉选择框与文本框 */
+.select-input, .text-input {
+  padding: 5px 8px;
+  font-size: 11px;
+  background: var(--bg-dark-3);
+  border: 1px solid var(--border-medium);
+  color: var(--text-primary);
+  border-radius: 4px;
+  outline: none;
+}
+.select-input:focus, .text-input:focus {
+  border-color: var(--cyan-glow);
+}
+
+/* 徽章样式 */
+.badge {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 10px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.badge-locked {
+  background: rgba(255, 71, 87, 0.2);
+  color: var(--red-threat);
+  border: 1px solid var(--red-threat);
+  animation: pulse-locked 1.2s infinite alternate;
+}
+.badge-neutralized {
+  background: rgba(100, 116, 139, 0.25);
+  color: #64748b;
+  text-decoration: line-through;
+}
+
+@keyframes pulse-locked {
+  from { opacity: 0.7; }
+  to { opacity: 1; filter: drop-shadow(0 0 4px var(--red-threat)); }
+}
+
+/* 威胁等级徽标 */
+.threat-badge {
+  display: inline-block;
+  padding: 2px 5px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 2px;
+}
+.threat-p1 {
+  background: var(--red-threat);
+  color: #fff;
+}
+.threat-p2 {
+  background: var(--orange-threat);
+  color: #000;
+}
+.threat-p3 {
+  background: var(--yellow-glow);
+  color: #000;
+}
+.threat-p4 {
+  background: rgba(112, 161, 255, 0.25);
+  color: #70a1ff;
+  border: 1px solid #70a1ff;
+}
+
+/* 平台资产监控卡片 */
+.asset-card {
+  background: var(--bg-dark-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.asset-card:hover {
+  background: var(--bg-dark-3);
+  border-color: var(--cyan-glow);
+}
+.asset-card.selected {
+  border-color: var(--cyan-glow);
+  background: rgba(0, 240, 255, 0.08);
+  box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.15);
+}
+
+.asset-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.asset-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.asset-type {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.asset-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.endurance-bar {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.endurance-fill {
+  height: 100%;
+  background: var(--green-glow);
+}
+
+.asset-target-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+.asset-target-link .label {
+  color: var(--text-muted);
+}
+
+/* 目标态势卡片 */
+.target-card {
+  width: 100%;
+  flex-shrink: 0;
+  text-align: left;
+  color: var(--text-primary);
+  background: var(--bg-dark-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.target-card:hover {
+  background: var(--bg-dark-3);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.target-card.selected {
+  border-color: var(--yellow-glow);
+  background: rgba(255, 209, 102, 0.08);
+}
+.target-card.neutralized {
+  opacity: 0.55;
+  background: rgba(0, 0, 0, 0.2);
+}
+.target-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.target-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.target-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.target-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+.neutralized-text {
+  font-size: 10px;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* 参数深度分析卡片 */
+.inspector-card {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.inspector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.inspector-header h4 {
+  font-size: 13px;
+  color: var(--cyan-glow);
+}
+.inspector-grid {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 4px 8px;
+  font-size: 11px;
+}
+.inspector-grid dt {
+  color: var(--text-muted);
+}
+.inspector-grid dd {
+  color: var(--text-primary);
+}
+.inspector-grid dd.highlight {
+  color: var(--yellow-glow);
+  font-weight: 700;
+}
+.mono {
+  font-family: var(--font-mono);
+}
+.divider {
+  border: none;
+  border-top: 1px dashed var(--border-subtle);
+  margin: 4px 0;
+}
+.quiet-tip {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.empty-state {
+  padding: 16px;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+/* 导引质量条 */
+.quality-bar {
+  display: inline-block;
+  width: 70px;
+  height: 6px;
+  background: var(--bg-dark-4);
+  border-radius: 3px;
+  overflow: hidden;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.quality-fill {
+  height: 100%;
+  background: var(--cyan-glow);
+}
+
+/* 隐藏类 */
+.hidden {
+  display: none !important;
+}
+
+/* 地图融合悬浮面板 (Fusion Panel) */
+.fusion-panel {
+  position: absolute;
+  top: 60px;
+  left: 14px;
+  width: 320px;
+  background: rgba(9, 15, 23, 0.94);
+  border: 1px solid var(--green-glow);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  border-radius: 6px;
+  padding: 12px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  backdrop-filter: blur(8px);
+}
+.fusion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 6px;
+}
+.fusion-header h4 {
+  font-size: 13px;
+  color: var(--green-glow);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.fusion-pip-box {
+  width: 100%;
+  height: 140px;
+  background: #000;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+.fusion-pip-box video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.fusion-slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.slider-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+}
+.slider-row label {
+  color: var(--text-secondary);
+  width: 80px;
+}
+.slider-row input[type="range"] {
+  flex: 1;
+  margin: 0 8px;
+  accent-color: var(--green-glow);
+}
+.slider-row span {
+  width: 48px;
+  text-align: right;
+  font-family: var(--font-mono);
+  color: var(--green-glow);
+}
+
+/* 通用弹窗 */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-backdrop[hidden],
+.modal-backdrop.is-hidden {
+  display: none !important;
+}
+.modal-dialog {
+  width: 480px;
+  max-width: 90vw;
+  background: var(--bg-dark-2);
+  border: 1px solid var(--yellow-glow);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.modal-header {
+  padding: 12px 16px;
+  background: var(--bg-dark-1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.modal-header h3 {
+  font-size: 14px;
+  color: var(--yellow-glow);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.modal-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.modal-footer {
+  padding: 12px 16px;
+  background: var(--bg-dark-1);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+.modal-footer-role-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+}
+.modal-footer-main-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.btn-warning {
+  background: rgba(255, 170, 0, 0.16);
+  border: 1px solid rgba(255, 170, 0, 0.6);
+  color: #ffb833;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(255, 170, 0, 0.2);
+  transition: all 0.2s ease;
+}
+.btn-warning:hover:not(:disabled) {
+  background: rgba(255, 170, 0, 0.35);
+  border-color: #ffb833;
+  color: #fff;
+  box-shadow: 0 0 16px rgba(255, 170, 0, 0.45);
+}
+.btn-info {
+  background: rgba(0, 240, 255, 0.16);
+  border: 1px solid rgba(0, 240, 255, 0.6);
+  color: var(--cyan-glow);
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+  transition: all 0.2s ease;
+}
+.btn-info:hover:not(:disabled) {
+  background: rgba(0, 240, 255, 0.35);
+  border-color: var(--cyan-glow);
+  color: #fff;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.45);
+}
+/* ==========================================================================
+   无人机光电/红外侦察吊舱 HUD 视盘组件 (UAV Camera Pod HUD)
+   ========================================================================== */
+.camera-hud-panel {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: min(400px, calc(100% - 28px));
+  background: rgba(8, 14, 22, 0.92);
+  border: 1px solid rgba(0, 240, 255, 0.45);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 240, 255, 0.15);
+  border-radius: 6px;
+  z-index: 15;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+.camera-hud-header {
+  padding: 8px 12px;
+  background: rgba(14, 24, 36, 0.95);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.25);
+}
+
+.camera-hud-heading {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+#hud-pod-title {
+  font-size: 12px;
+  color: #fff;
+  letter-spacing: 0.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#btn-hud-to-matrix {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.hud-chip-btn {
+  padding: 2px 7px;
+  font-size: 10px;
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid var(--cyan-glow);
+  color: var(--cyan-glow);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hud-chip-btn:hover {
+  background: var(--cyan-glow);
+  color: #000;
+}
+
+.camera-hud-body {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.camera-video-viewport {
+  position: relative;
+  width: 100%;
+  height: 214px;
+  background: #000;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#camera-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.camera-video-message {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.camera-hud-panel[hidden],
+.camera-hud-panel [hidden] {
+  display: none;
+}
+
+.target-number {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.camera-hud-header .camera-stream-picker {
+  min-width: 0;
+  max-width: min(145px, 42%);
+  padding: 3px 6px;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  border: 1px solid var(--border-medium);
+  border-radius: 4px;
+  background: var(--bg-dark-1);
+  color: var(--text-primary);
+}
+
+.btn-uav-video {
+  align-self: flex-start;
+}
+
+
+/* ==========================================================================
+   无人机卡片与火炮阵地卡片样式 (UAV & Artillery Cards)
+   ========================================================================== */
+.uav-recon-card {
+  background: rgba(0, 240, 255, 0.05);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.uav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.uav-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  font-size: 13px;
+}
+
+.status-dot-uav {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cyan-glow);
+  box-shadow: 0 0 6px var(--cyan-glow);
+}
+
+.uav-recon-card.is-unlocated .status-dot-uav {
+  background: var(--text-muted);
+  box-shadow: none;
+}
+
+.badge-uav {
+  background: rgba(0, 240, 255, 0.2);
+  color: var(--cyan-glow);
+  border: 1px solid var(--cyan-glow);
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.uav-telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px 8px;
+  font-size: 11px;
+}
+
+.uav-telemetry-grid > div {
+  display: grid;
+  gap: 3px;
+}
+
+.uav-position-status {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+#btn-toggle-guidance {
+  width: 28px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0.75;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: var(--text-muted, #94a3b8) !important;
+  background: rgba(6, 18, 28, 0.75) !important;
+  transition: all 0.18s ease;
+}
+
+#btn-toggle-guidance svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+  pointer-events: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  transition: stroke 0.18s ease, stroke-width 0.18s ease;
+}
+
+#btn-toggle-guidance.active {
+  opacity: 1;
+  background: rgba(0, 240, 255, 0.2) !important;
+  border-color: #00f0ff !important;
+  color: #00f0ff !important;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.45);
+}
+
+#btn-toggle-guidance:hover {
+  background: var(--cyan-glow, #00f0ff) !important;
+  border-color: var(--cyan-glow, #00f0ff) !important;
+  color: #06121c !important;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.6) !important;
+  opacity: 1;
+}
+
+#btn-toggle-guidance:hover svg {
+  stroke: #06121c !important;
+  stroke-width: 2.2 !important;
+}
+
+#btn-toggle-guidance:hover svg circle {
+  fill: #06121c !important;
+}
+
+#btn-box-select {
+  width: 28px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0.75;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: var(--text-muted, #94a3b8) !important;
+  background: rgba(6, 18, 28, 0.75) !important;
+  transition: all 0.18s ease;
+}
+
+#btn-box-select svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+  pointer-events: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  transition: stroke 0.18s ease, stroke-width 0.18s ease;
+}
+
+#btn-box-select.active {
+  opacity: 1;
+  background: rgba(0, 240, 255, 0.2) !important;
+  border-color: #00f0ff !important;
+  color: #00f0ff !important;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.45);
+}
+
+#btn-box-select:hover {
+  background: var(--cyan-glow, #00f0ff) !important;
+  border-color: var(--cyan-glow, #00f0ff) !important;
+  color: #06121c !important;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.6) !important;
+  opacity: 1;
+}
+
+#btn-box-select:hover svg {
+  stroke: #06121c !important;
+  stroke-width: 2.2 !important;
+}
+
+#btn-box-select:hover svg circle {
+  fill: #06121c !important;
+}
+
+/* 地图框选矩形框与十字光标 */
+.cesium-box-select-marquee {
+  position: absolute;
+  border: 1.5px dashed #00f0ff;
+  background: rgba(0, 240, 255, 0.16);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35), inset 0 0 10px rgba(0, 240, 255, 0.12);
+  pointer-events: none;
+  z-index: 100;
+  box-sizing: border-box;
+  border-radius: 2px;
+}
+
+.map-viewport.is-box-selecting,
+.map-viewport.is-box-selecting canvas {
+  cursor: crosshair !important;
+}
+
+#btn-view-uav[hidden] {
+  display: none;
+}
+
+.uav-telemetry-grid span {
+  color: var(--text-muted);
+}
+
+.uav-telemetry-grid strong {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.uav-pod-box {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  padding: 6px 8px;
+}
+
+.pod-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.pod-tag {
+  font-size: 10px;
+  color: #00ff77;
+  font-weight: 600;
+}
+
+.pod-specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.pod-specs strong {
+  color: var(--text-primary);
+}
+
+.artillery-card {
+  background: var(--bg-dark-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+}
+
+button.artillery-card {
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+button.artillery-card:hover {
+  border-color: var(--cyan-glow);
+  background: var(--bg-dark-3);
+}
+
+.artillery-card.selected {
+  border-color: var(--yellow-glow);
+  box-shadow: 0 0 10px rgba(255, 209, 102, 0.2);
+}
+
+.artillery-header {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.artillery-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #fff;
+}
+
+.artillery-callsign {
+  font-size: 10px;
+  color: var(--cyan-glow);
+  font-family: var(--font-mono);
+}
+
+/* ==========================================================================
+   战术军事风格显控台核心样式 (Tactical C2 Military HUD Styling)
+   ========================================================================== */
+
+/* ==========================================================================
+   战术军事风格显控台核心样式 (Tactical C2 Military HUD Styling)
+   色彩规范: 整体青色 / 无人机与火力列表偏红 / 目标与弹着点偏蓝
+   ========================================================================== */
+
+/* 战术卡片基础机壳 */
+.tactical-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(14, 24, 38, 0.95) 0%, rgba(9, 15, 25, 0.98) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.22);
+  border-radius: 4px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: inset 0 0 15px rgba(0, 240, 255, 0.04), 0 4px 14px rgba(0, 0, 0, 0.45);
+  transition: all 0.25s ease;
+  overflow: hidden;
+  text-align: left;
+}
+
+/* 战术卡片机械四角标靶装饰 */
+.card-corner-tl, .card-corner-br {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  pointer-events: none;
+}
+
+.card-corner-tl {
+  top: 0;
+  left: 0;
+  border-top: 2px solid var(--cyan-glow);
+  border-left: 2px solid var(--cyan-glow);
+}
+
+.card-corner-br {
+  bottom: 0;
+  right: 0;
+  border-bottom: 2px solid var(--cyan-glow);
+  border-right: 2px solid var(--cyan-glow);
+}
+
+/* --------------------------------------------------------------------------
+   左侧平台列表样式 (无人机与地面火力点: 偏红 TACTICAL RED)
+   -------------------------------------------------------------------------- */
+.uav-recon-card, .artillery-card {
+  background: linear-gradient(135deg, rgba(32, 14, 20, 0.95) 0%, rgba(18, 9, 14, 0.98) 100%);
+  border: 1px solid var(--platform-red-border);
+  box-shadow: 0 0 10px rgba(255, 71, 87, 0.22), inset 0 0 12px rgba(255, 71, 87, 0.06);
+}
+
+.uav-recon-card.is-unlocated, .artillery-card.is-unlocated {
+  border-color: rgba(255, 107, 129, 0.28);
+  background: linear-gradient(135deg, rgba(26, 14, 18, 0.95) 0%, rgba(16, 9, 12, 0.98) 100%);
+}
+
+.uav-recon-card:hover, .artillery-card:hover {
+  border-color: var(--platform-red-bright);
+  box-shadow: 0 4px 18px rgba(255, 71, 87, 0.35), inset 0 0 12px rgba(255, 71, 87, 0.1);
+  transform: translateY(-1px);
+}
+
+.uav-recon-card.selected, .artillery-card.selected {
+  border-color: var(--platform-red-bright);
+  box-shadow: 0 0 18px rgba(255, 71, 87, 0.55), inset 0 0 12px rgba(255, 71, 87, 0.2);
+  background: linear-gradient(135deg, rgba(42, 18, 26, 0.98) 0%, rgba(22, 10, 16, 0.98) 100%);
+}
+
+.uav-recon-card .card-corner-tl,
+.uav-recon-card .card-corner-br,
+.artillery-card .card-corner-tl,
+.artillery-card .card-corner-br {
+  border-color: var(--platform-red);
+}
+
+.uav-recon-card.is-unlocated .card-corner-tl,
+.uav-recon-card.is-unlocated .card-corner-br,
+.artillery-card.is-unlocated .card-corner-tl,
+.artillery-card.is-unlocated .card-corner-br {
+  border-color: rgba(255, 107, 129, 0.45);
+}
+
+/* 状态 LED 呼吸灯 (平台偏红) */
+.status-dot-uav, .status-dot-point {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot-uav.online, .status-dot-point.online {
+  background: var(--platform-red);
+  box-shadow: 0 0 8px var(--platform-red), 0 0 14px rgba(255, 71, 87, 0.7);
+  animation: tactical-beacon-pulse 2s infinite ease-in-out;
+}
+
+.status-dot-uav.standby, .status-dot-point.standby {
+  background: #64748b;
+  box-shadow: none;
+}
+
+@keyframes tactical-beacon-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.9); }
+}
+
+/* 平台卡片头部 */
+.uav-header, .artillery-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.header-tags {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.uav-title, .artillery-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.uav-title strong, .artillery-title strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.artillery-card .artillery-header {
+  align-items: flex-start;
+}
+
+.artillery-card .artillery-title {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 3px 8px;
+  min-width: 0;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.artillery-title .status-dot-point {
+  align-self: start;
+  margin-top: 6px;
+}
+
+.artillery-affiliation {
+  grid-column: 2;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* 核心极简信息行 (大字号、突出重点) */
+.card-essential-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 0 2px 0;
+}
+
+.essential-meta-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.meta-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.meta-val-id {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  font-family: var(--font-mono);
+}
+
+.btn-essential-video {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(0, 240, 255, 0.16);
+  border: 1px solid var(--cyan-glow);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-essential-video:hover {
+  background: var(--cyan-glow);
+  color: #06121c;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+.btn-essential-video.is-active {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #ef4444;
+  color: #fecaca;
+}
+
+.status-essential-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.status-essential-tag.online {
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+}
+
+.status-essential-tag.standby {
+  color: #fb923c;
+  background: rgba(251, 146, 60, 0.12);
+  border: 1px solid rgba(251, 146, 60, 0.35);
+}
+
+.essential-actions-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.essential-actions-group .btn-tactical-role-revert {
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  color: #fb7185;
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.essential-actions-group .btn-tactical-role-revert:hover {
+  background: rgba(244, 63, 94, 0.25);
+  color: #fff;
+}
+
+.btn-firepower-config {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.badge-node-type, .badge-point-type {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 2px;
+  letter-spacing: 0.5px;
+}
+
+.badge-node-type {
+  background: var(--platform-red-dim);
+  border: 1px solid var(--platform-red-border);
+  color: var(--platform-red-bright);
+}
+
+.badge-point-type {
+  background: rgba(255, 99, 72, 0.18);
+  border: 1px solid rgba(255, 99, 72, 0.5);
+  color: #ff7f50;
+}
+
+.badge-uav, .artillery-callsign {
+  font-size: 10px;
+  color: var(--platform-red-light);
+  font-family: var(--font-mono);
+}
+
+/* 遥测三栏参数网格 (平台卡片偏红底色) */
+.tactical-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 3px;
+}
+
+.uav-recon-card .tactical-grid,
+.artillery-card .tactical-grid {
+  background: rgba(20, 8, 12, 0.75);
+  border: 1px solid rgba(255, 71, 87, 0.18);
+}
+
+.telemetry-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cell-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.cell-value {
+  font-size: 11px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.uav-recon-card .cell-value,
+.artillery-card .cell-value {
+  color: #fee2e2;
+}
+
+.telemetry-cell-full {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px dashed rgba(255, 71, 87, 0.22);
+  padding-top: 5px;
+  margin-top: 3px;
+}
+
+.telemetry-cell-full .cell-label {
+  font-size: 10px;
+  color: var(--platform-red-light);
+  letter-spacing: 0.5px;
+}
+
+.telemetry-cell-full .cell-value.highlight-strike {
+  color: #ff6b81;
+  font-size: 12px;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(255, 71, 87, 0.45);
+}
+
+.telemetry-cell .cell-value.highlight-strike {
+  color: #ff6b81;
+  font-weight: 700;
+}
+
+.telemetry-cell-full .cell-value.highlight-ip {
+  color: #38bdf8;
+  font-size: 11px;
+}
+
+/* 状态链路标签行 (平台偏红) */
+.uav-link-status, .point-link-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.uav-recon-card .link-tag-online,
+.artillery-card .link-tag-online {
+  color: var(--platform-red-bright);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.click-hint {
+  font-size: 10px;
+  color: var(--platform-red-light);
+  opacity: 0.85;
+}
+
+.uav-position-status, .point-position-status {
+  font-size: 10px;
+  color: #fca5a5;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.warn-dot {
+  font-size: 11px;
+}
+
+/* 战术卡片操作按钮与状态元数据 */
+.uav-device-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+  padding: 2px 0;
+  margin-top: 1px;
+}
+
+.uav-device-meta .meta-divider {
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 10px;
+  user-select: none;
+}
+
+.uav-device-meta .device-tag-id {
+  color: #cbd5e1;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  background: rgba(148, 163, 184, 0.12);
+  padding: 1px 6px;
+  border-radius: 2px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.uav-device-meta .device-tag-ip {
+  color: #38bdf8;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.uav-device-meta .device-tag-status {
+  font-size: 11px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.uav-device-meta .device-tag-status.online {
+  color: #4ade80;
+}
+
+.uav-device-meta .device-tag-status.offline {
+  color: #94a3b8;
+}
+
+.uav-device-meta .device-tag-video {
+  color: #38bdf8;
+  font-size: 11px;
+}
+
+.uav-device-meta .device-tag-warn {
+  color: #fbbf24;
+  font-size: 10.5px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.uav-device-meta .device-tag-point-role {
+  color: #fca5a5;
+  font-size: 10.5px;
+}
+
+.uav-card-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.uav-card-actions .btn-tactical-video,
+.uav-card-actions .btn-tactical-focus {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+  padding: 6px 8px;
+  font-size: 11px;
+  justify-content: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-tactical-focus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 10px;
+  background: var(--platform-red-dim);
+  border: 1px solid var(--platform-red-border);
+  color: var(--platform-red-bright);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-tactical-focus:hover:not(:disabled) {
+  background: rgba(255, 71, 87, 0.28);
+  border-color: var(--platform-red);
+  box-shadow: 0 0 12px rgba(255, 71, 87, 0.4);
+  color: #fff;
+}
+
+.btn-tactical-focus:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: rgba(148, 163, 184, 0.2);
+  color: #64748b;
+  background: transparent;
+}
+
+.uav-card-actions .btn-tactical-role {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1.2;
+}
+
+.uav-card-actions .btn-tactical-role:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: #38bdf8;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+.uav-card-actions .btn-tactical-role:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-color: rgba(148, 163, 184, 0.25);
+  color: #64748b;
+  background: rgba(15, 23, 42, 0.4);
+  box-shadow: none;
+}
+
+.uav-card-actions .btn-tactical-role-revert {
+  background: rgba(244, 63, 94, 0.12);
+  border-color: rgba(244, 63, 94, 0.4);
+  color: #fb7185;
+}
+
+.uav-card-actions .btn-tactical-role-revert:hover:not(:disabled) {
+  background: rgba(244, 63, 94, 0.25);
+  border-color: #f43f5e;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.4);
+}
+
+.device-simulation-status {
+  padding: 4px 10px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.simulation-card-status { overflow-wrap: anywhere; }
+
+.btn-tactical-video {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--platform-red-dim);
+  border: 1px solid var(--platform-red-border);
+  color: var(--platform-red-bright);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-tactical-video:hover {
+  background: rgba(255, 71, 87, 0.28);
+  border-color: var(--platform-red);
+  box-shadow: 0 0 12px rgba(255, 71, 87, 0.4);
+  color: #fff;
+}
+
+.btn-tactical-video.is-active {
+  background: rgba(185, 28, 28, 0.25);
+  border-color: #ef4444;
+  color: #fecaca;
+}
+
+.btn-tactical-video.is-active:hover {
+  background: rgba(220, 38, 38, 0.35);
+  border-color: #f87171;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.45);
+  color: #fff;
+}
+
+/* --------------------------------------------------------------------------
+   右侧目标与弹着点列表样式 (目标偏蓝 TACTICAL BLUE)
+   -------------------------------------------------------------------------- */
+
+/* 战术空状态 / 监听等待状态箱 (偏蓝) */
+.tactical-empty-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 16px;
+  background: rgba(6, 14, 30, 0.5);
+  border: 1px dashed rgba(59, 130, 246, 0.2);
+  border-radius: 4px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.tactical-empty-box .empty-text {
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.tactical-datalink-standby {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px 12px;
+  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.08) 0%, rgba(6, 12, 26, 0.8) 70%);
+  border: 1px dashed rgba(59, 130, 246, 0.35);
+  border-radius: 6px;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.radar-ping-ring {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid rgba(59, 130, 246, 0.5);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radar-ping-ring::before {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--target-blue);
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--target-blue);
+}
+
+.radar-ping-ring::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 50%;
+  animation: radar-sweep-wave 2.4s infinite linear;
+}
+
+@keyframes radar-sweep-wave {
+  0% { transform: scale(0.6); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.datalink-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--target-blue-bright);
+  letter-spacing: 0.5px;
+}
+
+.datalink-sub {
+  font-size: 10px;
+  color: var(--target-blue-light);
+  word-break: break-all;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 3px;
+}
+
+.datalink-hint {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* 战术目标威胁卡片 (偏蓝) */
+.target-threat-card {
+  position: relative;
+  width: 100%;
+  background: linear-gradient(135deg, rgba(10, 22, 45, 0.95) 0%, rgba(6, 14, 30, 0.98) 100%);
+  border: 1px solid var(--target-blue-border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  box-shadow: inset 0 0 15px rgba(59, 130, 246, 0.04), 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+.target-threat-card:hover {
+  border-color: var(--target-blue-bright);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(59, 130, 246, 0.35);
+}
+
+.target-threat-card.selected {
+  border-color: #60a5fa;
+  box-shadow: 0 0 18px rgba(59, 130, 246, 0.55), inset 0 0 12px rgba(59, 130, 246, 0.2);
+}
+
+.target-threat-card.is-burst {
+  border-color: rgba(96, 165, 250, 0.45);
+  background: linear-gradient(135deg, rgba(14, 26, 52, 0.95) 0%, rgba(8, 16, 36, 0.98) 100%);
+}
+
+.target-threat-card.is-burst:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 4px 18px rgba(96, 165, 250, 0.35);
+}
+
+.target-threat-card.is-burst.selected {
+  border-color: #bfdbfe;
+  box-shadow: 0 0 18px rgba(147, 197, 253, 0.55), inset 0 0 12px rgba(147, 197, 253, 0.2);
+}
+
+.target-threat-card .card-corner-tl,
+.target-threat-card .card-corner-br {
+  border-color: var(--target-blue-bright);
+}
+
+.target-threat-card.is-burst .card-corner-tl,
+.target-threat-card.is-burst .card-corner-br {
+  border-color: #93c5fd;
+}
+
+.target-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.target-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.target-card-title strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.badge-target-protocol {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+
+.badge-target-protocol.recon {
+  background: var(--target-blue-dim);
+  border: 1px solid var(--target-blue);
+  color: var(--target-blue-light);
+}
+
+.badge-target-protocol.burst {
+  background: rgba(30, 64, 175, 0.35);
+  border: 1px solid rgba(96, 165, 250, 0.6);
+  color: #dbeafe;
+}
+
+.target-serial-tag {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--target-blue-light);
+}
+
+.target-essential-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 0 2px 0;
+}
+
+.target-essential-row .link-tag-online {
+  color: #34d399;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.target-essential-row .link-tag-reported {
+  color: #60a5fa;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.target-essential-row .card-action-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.target-essential-row .btn-locate-target {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  background: var(--target-blue-dim);
+  border: 1px solid var(--target-blue-border);
+  color: var(--target-blue-bright);
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.target-essential-row .btn-locate-target:hover {
+  background: var(--target-blue);
+  border-color: #60a5fa;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.target-essential-row .btn-report-single-target {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 3px 12px;
+  border-radius: 3px;
+}
+
+/* ==========================================================================
+   无人机光电/红外摄像机战术 HUD 覆盖层 (Tactical UAV Camera HUD OSD)
+   ========================================================================== */
+.camera-hud-osd-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px 10px;
+  z-index: 2;
+}
+
+/* 顶部 OSD 遥测横幅 */
+.hud-osd-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.hud-osd-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--green-glow);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 2px 6px;
+  border-radius: 2px;
+  border: 1px solid rgba(56, 239, 125, 0.4);
+}
+
+.hud-osd-live-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--green-glow);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--green-glow);
+  animation: tactical-beacon-pulse 1.5s infinite;
+}
+
+.hud-osd-cam-type {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--cyan-glow);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 2px 6px;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+/* 中央战术十字瞄准线 (Tactical Center Reticle) */
+.hud-osd-center-reticle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90px;
+  height: 90px;
+  pointer-events: none;
+}
+
+.reticle-crosshair-h {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(0, 240, 255, 0.55);
+}
+
+.reticle-crosshair-v {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(0, 240, 255, 0.55);
+}
+
+.reticle-center-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  border: 1px dashed rgba(0, 240, 255, 0.6);
+  border-radius: 50%;
+}
+
+.reticle-center-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 4px;
+  background: var(--cyan-glow);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--cyan-glow);
+}
+
+/* 视窗四角战术光标框 (Corner Targeting Brackets) */
+.hud-osd-bracket-tl,
+.hud-osd-bracket-tr,
+.hud-osd-bracket-bl,
+.hud-osd-bracket-br {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+}
+
+.hud-osd-bracket-tl {
+  top: 8px;
+  left: 8px;
+  border-top: 2px solid var(--cyan-glow);
+  border-left: 2px solid var(--cyan-glow);
+}
+
+.hud-osd-bracket-tr {
+  top: 8px;
+  right: 8px;
+  border-top: 2px solid var(--cyan-glow);
+  border-right: 2px solid var(--cyan-glow);
+}
+
+.hud-osd-bracket-bl {
+  bottom: 8px;
+  left: 8px;
+  border-bottom: 2px solid var(--cyan-glow);
+  border-left: 2px solid var(--cyan-glow);
+}
+
+.hud-osd-bracket-br {
+  bottom: 8px;
+  right: 8px;
+  border-bottom: 2px solid var(--cyan-glow);
+  border-right: 2px solid var(--cyan-glow);
+}
+
+/* 底部 OSD 遥测横幅 */
+.hud-osd-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+/* 顶部全局军事战术时钟与态势栏 */
+.military-clock-time {
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}
+
+/* ==========================================================================
+   地面火力点手动配置弹窗与按钮样式 (Tactical Firepower Config Modal & Buttons)
+   ========================================================================== */
+.modal-dialog.firepower-modal {
+  position: relative;
+  width: 560px;
+  background: linear-gradient(135deg, rgba(28, 12, 18, 0.98) 0%, rgba(14, 8, 12, 0.98) 100%);
+  border: 1px solid var(--platform-red-border);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.9), 0 0 24px rgba(255, 71, 87, 0.2);
+}
+
+.modal-dialog.firepower-modal .modal-header {
+  background: rgba(36, 12, 18, 0.9);
+  border-bottom: 1px solid rgba(255, 71, 87, 0.3);
+}
+
+.modal-dialog.firepower-modal .modal-title strong {
+  font-size: 13px;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.btn-close-modal {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.btn-close-modal:hover {
+  color: #fff;
+}
+
+.tactical-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.form-row-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.form-row-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-label {
+  font-size: 11px;
+  color: var(--platform-red-light);
+  letter-spacing: 0.5px;
+}
+
+/* 弹窗顶部设备状态信息栏 */
+.modal-device-meta-bar {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr 1.1fr 1.1fr;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(20, 8, 12, 0.75);
+  border: 1px solid rgba(255, 71, 87, 0.2);
+  border-radius: 4px;
+  margin-bottom: 14px;
+}
+
+.modal-meta-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.modal-meta-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.modal-meta-val {
+  font-size: 11px;
+  font-weight: 600;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.modal-meta-val.badge-meta-id {
+  color: #cbd5e1;
+  font-family: var(--font-mono);
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  padding: 1px 5px;
+  border-radius: 2px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.modal-meta-val.highlight-cyan {
+  color: #38bdf8;
+  font-family: var(--font-mono);
+}
+
+.modal-meta-val.status-online {
+  color: #4ade80;
+}
+
+.modal-meta-val.status-offline {
+  color: #94a3b8;
+}
+
+.modal-helper-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 71, 87, 0.15);
+  border-radius: 4px;
+}
+
+.modal-helper-row .btn-tactical-tool {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 8px;
+  font-size: 11px;
+}
+
+.modal-helper-row .btn-tactical-tool.highlight-tool {
+  background: rgba(0, 240, 255, 0.12);
+  border-color: rgba(0, 240, 255, 0.45);
+  color: #00f0ff;
+}
+
+.modal-helper-row .btn-tactical-tool.highlight-tool:hover {
+  background: rgba(0, 240, 255, 0.25);
+  color: #fff;
+  border-color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+.coord-picked-banner {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: rgba(56, 239, 125, 0.12);
+  border: 1px solid rgba(56, 239, 125, 0.35);
+  color: #38ef7d;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.coord-picked-banner[hidden] {
+  display: none !important;
+}
+
+.firepower-save-error {
+  margin: 8px 0 0;
+  color: var(--platform-red-light);
+  font-size: 12px;
+}
+
+/* 地图点选标定顶部悬浮 HUD (Map Picking HUD) */
+.map-picking-hud {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: rgba(14, 23, 36, 0.95);
+  border: 1px solid var(--theme-cyan);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8), 0 0 16px rgba(0, 240, 255, 0.35);
+  border-radius: 6px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  backdrop-filter: blur(8px);
+  animation: fadeInDown 0.25s ease-out;
+  pointer-events: auto;
+}
+
+.map-picking-hud[hidden],
+.map-picking-hud.is-hidden {
+  display: none !important;
+}
+
+.picking-hud-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.picking-hud-icon {
+  font-size: 16px;
+  color: var(--theme-cyan);
+}
+
+.picking-hud-icon.pulse {
+  animation: pulseCrosshair 1.5s infinite;
+}
+
+.picking-hud-text {
+  font-size: 13px;
+  color: #f1f5f9;
+  letter-spacing: 0.5px;
+}
+
+.picking-hud-text strong {
+  color: var(--theme-cyan);
+  font-weight: 700;
+}
+
+.picking-hud-actions {
+  display: flex;
+  align-items: center;
+}
+
+@keyframes pulseCrosshair {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.7; }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translate(-50%, -15px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.btn-tactical-tool {
+  background: rgba(255, 71, 87, 0.15);
+  border: 1px solid rgba(255, 71, 87, 0.4);
+  color: var(--platform-red-bright);
+}
+
+.btn-tactical-tool:hover {
+  background: rgba(255, 71, 87, 0.3);
+  color: #fff;
+  border-color: var(--platform-red);
+}
+
+.btn-primary-red {
+  background: rgba(255, 71, 87, 0.25);
+  border: 1px solid var(--platform-red);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(255, 71, 87, 0.3);
+}
+
+.btn-primary-red:hover {
+  background: var(--platform-red);
+  color: #000;
+  box-shadow: 0 0 16px rgba(255, 71, 87, 0.6);
+}
+
+.btn-firepower-config {
+  background: rgba(255, 71, 87, 0.12);
+  border: 1px solid rgba(255, 71, 87, 0.35);
+  color: var(--platform-red-bright);
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-firepower-config:hover {
+  background: rgba(255, 71, 87, 0.25);
+  border-color: var(--platform-red);
+  color: #fff;
+}
+
+.header-tags .btn-tactical-edit-point {
+  width: auto;
+  font-size: 10px;
+  padding: 2px 7px;
+  gap: 3px;
+}
+
+.panel-header .badge-point-type {
+  font-size: 9px;
+  padding: 2px 6px;
+  letter-spacing: 0.8px;
+}
+
+.btn-tactical-edit-point {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: rgba(255, 71, 87, 0.1);
+  border: 1px solid rgba(255, 71, 87, 0.3);
+  color: var(--platform-red-bright);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-tactical-edit-point:hover {
+  background: rgba(255, 71, 87, 0.25);
+  border-color: var(--platform-red);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(255, 71, 87, 0.35);
+}
+
+/* ==========================================================================
+   目标上报至火力点交互样式 (支持多选、卡片入口与地图入口)
+   ========================================================================== */
+
+/* 1. 右侧栏：目标批量上报工具栏 */
+.target-selection-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: rgba(10, 20, 30, 0.95);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.25);
+  font-size: 11px;
+}
+
+.selection-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--text-normal);
+  user-select: none;
+}
+
+.selection-checkbox-label input[type="checkbox"] {
+  accent-color: #00f0ff;
+  cursor: pointer;
+}
+
+.selection-status-text {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.selection-status-text strong {
+  color: #00f0ff;
+  font-weight: 700;
+}
+
+.selection-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 2. 目标卡片多选勾选框与高亮状态 */
+.target-card-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-right: 4px;
+}
+
+.target-card-checkbox {
+  accent-color: #00f0ff;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+.target-threat-card.selected {
+  border-color: rgba(0, 240, 255, 0.7) !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.25) !important;
+  background: rgba(0, 240, 255, 0.05) !important;
+}
+
+.card-action-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-report-single-target {
+  background: rgba(255, 71, 87, 0.18);
+  border: 1px solid var(--platform-red);
+  color: #fff;
+  padding: 3px 8px;
+  font-size: 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  font-family: var(--font-mono);
+}
+
+.btn-report-single-target:hover {
+  background: rgba(255, 71, 87, 0.4);
+  box-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
+  border-color: #ff6b81;
+}
+
+.link-tag-reported {
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 3. 地图多选悬浮操作栏 (入口 2) */
+.map-target-selection-hud {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 18px;
+  background: rgba(6, 11, 17, 0.92);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 240, 255, 0.5);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.8), 0 0 16px rgba(0, 240, 255, 0.2);
+  border-radius: 4px;
+  z-index: 1000;
+  animation: slideUpFade 0.25s ease-out;
+}
+
+.selection-hud-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-normal);
+}
+
+.selection-hud-text strong {
+  color: #00f0ff;
+  font-size: 14px;
+}
+
+.selection-hud-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 4. 目标上报至火力点弹窗 (Target Report Modal) */
+.target-report-modal-dialog {
+  width: 540px;
+  max-width: 92vw;
+}
+
+.report-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.report-target-list-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.report-target-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chip-dot.recon {
+  background: #3b82f6;
+  box-shadow: 0 0 6px #3b82f6;
+}
+
+.chip-dot.burst {
+  background: #60a5fa;
+  box-shadow: 0 0 6px #60a5fa;
+}
+
+.chip-name {
+  color: var(--text-normal);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip-coord {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.chip-alt {
+  color: #00f0ff;
+  font-size: 10px;
+}
+
+.btn-remove-chip {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 11px;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.btn-remove-chip:hover {
+  color: #ff4757;
+  background: rgba(255, 71, 87, 0.15);
+}
+
+.report-result-banner {
+  padding: 10px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+#report-plan:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.report-result-items:not([hidden]) {
+  display: grid;
+  gap: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.report-result-item {
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color, #263c51);
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.report-result-reason {
+  color: var(--text-secondary);
+}
+
+.report-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.report-result-banner .banner-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.report-result-banner .banner-details {
+  font-size: 11px;
+  opacity: 0.9;
+  line-height: 1.5;
+}
+
+.banner-success {
+  background: rgba(52, 211, 153, 0.15);
+  border: 1px solid #34d399;
+  color: #34d399;
+}
+
+.banner-timeout {
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid #fbbf24;
+  color: #fbbf24;
+}
+
+.banner-error {
+  background: rgba(255, 71, 87, 0.15);
+  border: 1px solid #ff4757;
+  color: #ff4757;
+}
+
+.banner-info {
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid #00f0ff;
+  color: #00f0ff;
+}
+
+/* ==========================================================================
+   火力打击目标分配策略建议样式 (人机在环 · 建议预览与人工最终裁决)
+   ========================================================================== */
+
+.allocation-strategy-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.08);
+  border-radius: 4px;
+}
+
+.strategy-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.strategy-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #00f0ff;
+  letter-spacing: 0.5px;
+}
+
+.strategy-icon {
+  font-size: 13px;
+}
+
+.btn-xs {
+  font-size: 10px;
+  padding: 2px 8px;
+  height: 22px;
+}
+
+.strategy-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.strategy-badge-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.strategy-label {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.strategy-name-highlight {
+  color: #ff6b81;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.strategy-reason-text {
+  display: none;
+}
+
+/* 人工最终裁决区域 */
+.human-decision-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.human-badge {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 2px;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  letter-spacing: 0.5px;
+}
+
+.human-hint-text {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* 目标卡片内实时距离与包络标签 */
+.chip-distance-tag {
+  margin-left: auto;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.range-tag-in {
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+}
+
+.range-tag-out {
+  color: #fb923c;
+  background: rgba(251, 146, 60, 0.12);
+  border: 1px solid rgba(251, 146, 60, 0.35);
+}
+
+/* ==========================================================================
+   多目标对多火力点协同分配策略矩阵样式 (人机在环 · 建议预览与人工逐项裁决)
+   ========================================================================== */
+
+.target-report-modal-dialog {
+  width: 820px !important;
+  max-width: 95vw !important;
+}
+
+.strategy-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.text-input-xs {
+  font-size: 10px;
+  padding: 2px 6px;
+  height: 22px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  color: #00f0ff;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.battery-load-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.battery-load-chip {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  transition: all 0.2s ease;
+}
+
+.battery-load-chip.active {
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.45);
+  color: #00f0ff;
+}
+
+.battery-load-chip.overload {
+  background: rgba(255, 170, 0, 0.16);
+  border: 1px solid rgba(255, 170, 0, 0.65);
+  color: #ffaa00;
+}
+
+.battery-load-chip.idle {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  color: var(--text-muted);
+}
+
+.decision-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.report-allocation-matrix-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 4px 2px;
+  border-radius: 4px;
+}
+
+.matrix-target-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.matrix-target-card:hover {
+  border-color: rgba(0, 240, 255, 0.4);
+  background: rgba(0, 240, 255, 0.03);
+}
+
+.matrix-card-left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.matrix-target-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.matrix-target-title .target-name {
+  color: var(--text-normal);
+}
+
+.matrix-target-title .target-coord {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.matrix-target-title .target-alt {
+  color: #00f0ff;
+  font-size: 11px;
+}
+
+.matrix-rec-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.matrix-rec-hint strong {
+  color: #ff6b81;
+}
+
+.matrix-card-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.matrix-select-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.matrix-select-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.matrix-firepower-select {
+  width: 200px;
+  font-size: 11px;
+  padding: 3px 6px;
+  background: rgba(10, 20, 30, 0.9);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  color: var(--text-normal);
+  border-radius: 3px;
+}
+
+.matrix-range-badge-box {
+  width: 76px;
+  text-align: center;
+}
+
+.matrix-range-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.matrix-range-badge.range-in {
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+}
+
+.matrix-range-badge.range-out {
+  color: #fb923c;
+  background: rgba(251, 146, 60, 0.12);
+  border: 1px solid rgba(251, 146, 60, 0.35);
+}
+
+.btn-remove-matrix-target {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 13px;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.btn-remove-matrix-target:hover {
+  color: #ff4757;
+  background: rgba(255, 71, 87, 0.15);
+}
+
+/* ==========================================================================
+   侦察载荷全视频链路总览矩阵控制中心 (Recon Video Payload Matrix Hub)
+   ========================================================================== */
+.fullpage-video-matrix,
+.video-matrix-modal-dialog {
+  width: 100vw;
+  height: calc(100vh - 52px);
+  display: flex;
+  flex-direction: column;
+  background: rgba(6, 11, 18, 0.98);
+  overflow: hidden;
+  position: relative;
+}
+
+.video-matrix-header {
+  padding: 10px 16px;
+  background: rgba(13, 23, 35, 0.98);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.video-matrix-header .modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.video-seat-directory {
+  overflow: auto;
+  padding: 16px;
+}
+
+.video-seat-list {
+  max-width: 960px;
+  margin-inline: auto;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.video-seat-list .video-seat-button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 12px 14px;
+  text-align: left;
+}
+
+.video-seat-identity {
+  display: grid;
+  gap: 3px;
+  overflow-wrap: anywhere;
+}
+
+.video-seat-identity strong {
+  font-size: 14px;
+}
+
+.video-seat-identity span,
+.video-seat-count,
+.workspace-empty {
+  color: var(--text-muted);
+}
+
+.video-seat-status {
+  color: #fb923c;
+}
+
+.video-seat-status.online {
+  color: #34d399;
+}
+
+.workspace-empty {
+  padding: 36px 0;
+  text-align: center;
+}
+
+.matrix-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.matrix-header-meta .meta-tag {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.matrix-header-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.matrix-source-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.matrix-source-picker select {
+  width: min(220px, 55vw);
+  padding: 3px 6px;
+  font-size: 11px;
+  text-overflow: ellipsis;
+}
+
+.grid-layout-switcher {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(10, 18, 28, 0.8);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 4px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.btn-matrix-layout {
+  padding: 3px 8px;
+  font-size: 11px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-matrix-layout:hover {
+  color: #fff;
+  background: rgba(0, 240, 255, 0.1);
+}
+
+.btn-matrix-layout.active {
+  background: var(--cyan-glow);
+  color: #06121c;
+  font-weight: 600;
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.5);
+}
+
+.video-matrix-body {
+  flex: 1;
+  padding: 12px;
+  overflow: hidden;
+  display: flex;
+  background: #04080e;
+}
+
+.video-matrix-grid {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  gap: 10px;
+}
+
+.video-matrix-grid.layout-grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: 1fr;
+}
+
+.video-matrix-grid.layout-grid-1 {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+
+/* 单个视频流单元卡片 */
+.video-matrix-cell {
+  display: flex;
+  flex-direction: column;
+  background: rgba(11, 20, 31, 0.95);
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.video-matrix-cell:hover {
+  border-color: rgba(0, 240, 255, 0.55);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 12px rgba(0, 240, 255, 0.15);
+}
+
+.video-matrix-cell.is-cell-maximized {
+  grid-column: 1 / -1 !important;
+  grid-row: 1 / -1 !important;
+  border-color: var(--cyan-glow);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);
+}
+
+/* 单元卡片顶部栏 */
+.cell-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: rgba(16, 28, 42, 0.95);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.18);
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.cell-title-area {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.cell-uav-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  padding: 1px 6px;
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 3px;
+}
+
+.cell-stream-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cyan-glow);
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.cell-tags-area {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.cell-tag-ip {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.4);
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cell-status-pill {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cell-status-pill.live {
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.4);
+}
+
+.cell-status-pill.connecting {
+  background: rgba(0, 240, 255, 0.15);
+  color: var(--cyan-glow);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+}
+
+.cell-status-pill.standby {
+  background: rgba(251, 146, 60, 0.15);
+  color: #fb923c;
+  border: 1px solid rgba(251, 146, 60, 0.35);
+}
+
+.cell-status-pill.error {
+  background: rgba(248, 113, 113, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.4);
+}
+
+.dot-live {
+  color: #34d399;
+  animation: pulse-dot-live 1.6s infinite;
+}
+
+@keyframes pulse-dot-live {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* 单元视窗 */
+.cell-viewport {
+  flex: 1;
+  background: #000;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cell-video-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* 战术 HUD OSD 瞄准刻度层 */
+.cell-hud-osd {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 1px solid rgba(0, 240, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 10px 14px;
+}
+
+.hud-osd-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+.hud-live-tag {
+  color: #34d399;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.hud-live-tag .hud-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 6px #34d399;
+}
+
+.hud-stream-id {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.cell-reticle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  opacity: 0.65;
+}
+
+.reticle-crosshair-h {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(0, 240, 255, 0.7);
+}
+
+.reticle-crosshair-v {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(0, 240, 255, 0.7);
+}
+
+.reticle-center-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  border: 1px dashed rgba(0, 240, 255, 0.8);
+  border-radius: 50%;
+}
+
+.reticle-center-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 3px;
+  height: 3px;
+  background: var(--cyan-glow);
+  border-radius: 50%;
+}
+
+.hud-bracket-tl,
+.hud-bracket-tr,
+.hud-bracket-bl,
+.hud-bracket-br {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: rgba(0, 240, 255, 0.5);
+  border-style: solid;
+}
+
+.hud-bracket-tl { top: 8px; left: 8px; border-width: 1px 0 0 1px; }
+.hud-bracket-tr { top: 8px; right: 8px; border-width: 1px 1px 0 0; }
+.hud-bracket-bl { bottom: 8px; left: 8px; border-width: 0 0 1px 1px; }
+.hud-bracket-br { bottom: 8px; right: 8px; border-width: 0 1px 1px 0; }
+
+.hud-osd-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+  font-family: var(--font-mono);
+}
+
+.cell-fps-tag {
+  color: var(--cyan-glow);
+  font-weight: 600;
+}
+
+/* 单元状态提示浮层 */
+.cell-message-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(14, 25, 38, 0.95), rgba(6, 12, 18, 0.98));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  text-align: center;
+  z-index: 5;
+}
+
+.message-radar-icon {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  border-radius: 50%;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.message-radar-icon::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cyan-glow);
+  transform: translate(-50%, -50%);
+  animation: radar-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes radar-ping {
+  0% { transform: translate(-50%, -50%) scale(0.6); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2.8); opacity: 0; }
+}
+
+.cell-message-overlay[data-state="standby"] .message-radar-icon {
+  border-color: rgba(251, 146, 60, 0.4);
+}
+
+.cell-message-overlay[data-state="standby"] .message-radar-icon::after {
+  background: #fb923c;
+}
+
+.cell-message-overlay[data-state="error"] .message-radar-icon {
+  border-color: rgba(248, 113, 113, 0.4);
+}
+
+.cell-message-overlay[data-state="error"] .message-radar-icon::after {
+  background: #f87171;
+}
+
+.message-text {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.btn-cell-retry {
+  margin-top: 4px;
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid var(--cyan-glow);
+  color: var(--cyan-glow);
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 3px 10px;
+}
+
+.btn-cell-retry:hover {
+  background: var(--cyan-glow);
+  color: #000;
+}
+
+/* 单元底部状态条 */
+.cell-bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  background: rgba(12, 22, 34, 0.95);
+  border-top: 1px solid rgba(0, 240, 255, 0.15);
+  font-size: 10px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* 空状态 */
+.video-matrix-empty {
+  grid-area: 1 / 1 / -1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+  text-align: center;
+  padding: 40px;
+}
+
+.video-matrix-empty .empty-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+  color: var(--cyan-glow);
+  filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.5));
+}
+
+.video-matrix-empty .empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.video-matrix-empty .empty-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: 420px;
+  line-height: 1.6;
+}
+
+/* 矩阵页脚 */
+.video-matrix-footer {
+  padding: 8px 16px;
+  background: rgba(13, 23, 35, 0.95);
+  border-top: 1px solid rgba(0, 240, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.matrix-footer-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.footer-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.legend-dot.live {
+  background: #34d399;
+  box-shadow: 0 0 4px #34d399;
+}
+
+.legend-dot.standby {
+  background: #fb923c;
+}
+
+.legend-dot.note {
+  background: var(--cyan-glow);
+}
+
+/* 战术浮动提示 Toast */
+.matrix-tactical-toast {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(10, 20, 32, 0.96);
+  border: 1px solid var(--cyan-glow);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 240, 255, 0.4);
+  color: #ffffff;
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.matrix-tactical-toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.matrix-tactical-toast[data-type="warning"] {
+  border-color: #fb923c;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 0 12px rgba(251, 146, 60, 0.4);
+  color: #fbd38d;
+}
+
+/* ----------------------------------------------------
+   战术火力整备与编制隶属拓扑树状图 (Firepower Affiliation Tree)
+---------------------------------------------------- */
+.fullpage-firepower-affiliation,
+.firepower-affiliation-dialog {
+  width: 100vw;
+  height: calc(100vh - 52px);
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at 50% 20%, rgba(13, 30, 48, 0.45) 0%, rgba(6, 11, 17, 0.98) 100%);
+  overflow: hidden;
+  position: relative;
+}
+
+.affiliation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: rgba(13, 22, 34, 0.95);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.25);
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.affiliation-header-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tree-stat-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(0, 240, 255, 0.06);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.tree-stat-badge .stat-lbl {
+  color: #94a3b8;
+}
+
+.affiliation-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.affiliation-modal-body {
+  flex: 1;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 30%, rgba(13, 30, 48, 0.4) 0%, rgba(6, 11, 17, 0.9) 100%);
+}
+
+/* 树状拓扑图主画板 */
+.affiliation-tree-scroll-container {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tactical-tree-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-width: 760px;
+}
+
+/* 根节点: 战术指挥中枢 */
+.tree-root-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.tree-node-root {
+  background: linear-gradient(135deg, rgba(16, 36, 56, 0.95) 0%, rgba(9, 20, 32, 0.95) 100%);
+  border: 1.5px solid #00f0ff;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.25), inset 0 0 15px rgba(0, 240, 255, 0.1);
+  padding: 12px 28px;
+  border-radius: 8px;
+  text-align: center;
+  position: relative;
+  min-width: 380px;
+}
+
+.node-root-badge {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #00f0ff;
+  color: #060b11;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 3px;
+  letter-spacing: 1px;
+}
+
+.node-root-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 16px;
+  color: #f8fafc;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.node-root-meta {
+  font-size: 12px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.meta-sep {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* 拓扑连接线 */
+.tree-stem-vertical {
+  width: 2px;
+  height: 28px;
+  background: linear-gradient(to bottom, #00f0ff, rgba(0, 240, 255, 0.3));
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}
+
+.tree-stem-sub-vertical {
+  width: 2px;
+  height: 20px;
+  background: rgba(0, 240, 255, 0.35);
+  margin: 0 auto;
+}
+
+.tree-battalions-container {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  width: 100%;
+  position: relative;
+  padding-top: 14px;
+}
+
+.tree-battalions-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 2px;
+  background: rgba(0, 240, 255, 0.4);
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.3);
+}
+
+.tree-branch-battalion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  max-width: 900px;
+  position: relative;
+}
+
+.tree-connector-to-battalion {
+  width: 2px;
+  height: 14px;
+  background: rgba(0, 240, 255, 0.4);
+}
+
+/* 营级节点 */
+.tree-node-battalion {
+  background: rgba(15, 30, 48, 0.9);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  border-radius: 6px;
+  padding: 8px 18px;
+  text-align: center;
+  min-width: 200px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  position: relative;
+}
+
+.node-badge-level {
+  font-size: 9px;
+  font-weight: 700;
+  color: #00f0ff;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.node-badge-level.company-badge {
+  color: #38ef7d;
+}
+
+.node-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #f1f5f9;
+}
+
+.node-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 3px;
+}
+
+.tree-companies-container {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  width: 100%;
+  position: relative;
+  padding-top: 14px;
+}
+
+.tree-companies-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: rgba(56, 239, 125, 0.35);
+}
+
+.tree-branch-company {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+
+.tree-connector-to-company {
+  width: 2px;
+  height: 14px;
+  background: rgba(56, 239, 125, 0.35);
+}
+
+/* 连级节点 */
+.tree-node-company {
+  background: rgba(14, 26, 38, 0.88);
+  border: 1px solid rgba(56, 239, 125, 0.35);
+  border-radius: 6px;
+  padding: 6px 16px;
+  text-align: center;
+  min-width: 140px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.tree-points-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  position: relative;
+  padding-top: 14px;
+}
+
+.tree-points-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 25%;
+  right: 25%;
+  height: 2px;
+  background: rgba(255, 71, 87, 0.3);
+}
+
+/* 火力点阵位卡片 (Tree Leaf Node) */
+.tree-node-point {
+  width: 270px;
+  background: rgba(11, 20, 31, 0.95);
+  border: 1px solid rgba(255, 71, 87, 0.35);
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.tree-node-point.is-online {
+  border-color: rgba(56, 239, 125, 0.45);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 12px rgba(56, 239, 125, 0.15);
+}
+
+.tree-node-point:hover {
+  transform: translateY(-2px);
+  border-color: #00f0ff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(0, 240, 255, 0.2);
+}
+
+.point-node-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.point-node-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #f8fafc;
+}
+
+.point-affiliation-tag {
+  font-size: 10px;
+  padding: 1px 5px;
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  color: #00f0ff;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.point-status-pill {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.point-status-pill.online {
+  background: rgba(56, 239, 125, 0.15);
+  border: 1px solid rgba(56, 239, 125, 0.4);
+  color: #38ef7d;
+}
+
+.point-status-pill.offline {
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: #94a3b8;
+}
+
+/* 组播挂载设备框 */
+.point-mount-box {
+  padding: 8px 10px;
+  border-radius: 4px;
+  background: rgba(6, 12, 19, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.point-mount-box.has-mount {
+  background: rgba(0, 240, 255, 0.05);
+  border-color: rgba(0, 240, 255, 0.25);
+}
+
+.mount-box-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mount-label {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.mount-status-tag {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.mount-status-tag.active {
+  color: #38ef7d;
+}
+
+.mount-status-tag.inactive {
+  color: #94a3b8;
+}
+
+.mount-device-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.mount-dev-id {
+  font-size: 12px;
+}
+
+.mount-dev-name {
+  font-size: 10px;
+  color: #94a3b8;
+  max-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.point-specs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.spec-cell {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 4px 6px;
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+}
+
+.spec-cell.span-2 {
+  grid-column: span 2;
+}
+
+.spec-lbl {
+  font-size: 9px;
+  color: #64748b;
+}
+
+.coord-val {
+  font-size: 10px;
+  color: #cbd5e1;
+}
+
+.point-node-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.quick-mount-inline {
+  flex: 1;
+}
+
+.quick-mount-select {
+  width: 100%;
+}
+
+/* 右侧边栏：在线侦察席设备池 */
+.affiliation-recon-sidebar {
+  width: 320px;
+  border-left: 1px solid rgba(0, 240, 255, 0.2);
+  background: rgba(7, 13, 20, 0.95);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.recon-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #00f0ff;
+}
+
+.recon-pool-hint {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: #64748b;
+}
+
+.recon-pool-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.affiliation-recon-pool-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recon-pool-card {
+  background: rgba(14, 24, 37, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recon-pool-card.online {
+  border-color: rgba(56, 239, 125, 0.3);
+}
+
+.recon-pool-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.recon-pool-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #f8fafc;
+}
+
+.recon-pool-id {
+  font-size: 11px;
+  color: #00f0ff;
+}
+
+.recon-pool-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #64748b;
+}
+
+.recon-pool-mount-state {
+  margin-top: 4px;
+}
+
+.pool-mounted-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.mounted-target {
+  color: #00f0ff;
+  font-size: 11px;
+}
+
+.pool-unmounted-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pool-mount-select {
+  flex: 1;
+}
+
+/* 编制编辑抽屉 */
+.affiliation-edit-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 440px;
+  height: 100%;
+  background: rgba(10, 18, 28, 0.98);
+  border-left: 1px solid rgba(0, 240, 255, 0.4);
+  box-shadow: -8px 0 28px rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.drawer-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #00f0ff;
+}
+
+.btn-close-drawer {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.btn-close-drawer:hover {
+  color: #fff;
+}
+
+.drawer-form {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.drawer-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.drawer-helper-row {
+  border-color: rgba(0, 240, 255, 0.25);
+  background: rgba(0, 240, 255, 0.04);
+  margin-top: -4px;
+}
+
+.drawer-helper-row .btn-tactical-tool {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* 营连建制规模设置面板与抽屉 */
+.affiliation-org-drawer {
+  width: 460px;
+  right: 0;
+  z-index: 50;
+}
+
+.org-settings-form {
+  gap: 16px;
+}
+
+.org-quick-scale-panel {
+  background: rgba(0, 240, 255, 0.05);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 6px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.org-quick-scale-panel .panel-section-title,
+.org-detail-manage-panel .panel-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #fff;
+}
+
+.stepper-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stepper-input-row .text-input {
+  width: 80px;
+  text-align: center;
+}
+
+.input-unit {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.scale-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.org-helper-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.org-detail-manage-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.org-manage-tree-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.org-manage-bat-item {
+  background: rgba(14, 23, 36, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.15);
+  border-radius: 4px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bat-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bat-item-name {
+  font-weight: 700;
+  color: var(--theme-cyan);
+  font-size: 13px;
+}
+
+.comp-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.comp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 3px;
+  font-size: 11px;
+  color: #f1f5f9;
+}
+
+.btn-del-chip {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 0;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.btn-del-chip:hover {
+  color: #ff4757;
+}
+
+.org-add-battalion-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* 树节点动作栏 */
+.node-root-actions,
+.node-branch-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.node-branch-actions .btn {
+  font-size: 10px;
+  padding: 2px 6px;
+}
+
+/* 连级空状态占位 */
+.tree-node-empty-company {
+  padding: 14px;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 140px;
+}
+
+.tree-node-empty-company .empty-hint {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* 弹窗底部 */
+.affiliation-footer,
+.affiliation-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: rgba(10, 18, 28, 0.95);
+  border-top: 1px solid rgba(0, 240, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.affiliation-footer-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+/* 侧栏卡片挂载状态增强 */
+.card-affiliation-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+}
+
+.recon-mount-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.recon-mount-tag {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.recon-mount-tag.is-mounted {
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  color: #00f0ff;
+  font-weight: 600;
+}
+
+.recon-mount-tag.is-unmounted {
+  background: rgba(255, 255, 255, 0.04);
+  color: #64748b;
+}
+
+.btn-tactical-mount {
+  padding: 2px 6px;
+  font-size: 10px;
+  background: rgba(0, 240, 255, 0.1);
+  border-color: rgba(0, 240, 255, 0.3);
+  color: #00f0ff;
+}
+
+.btn-tactical-mount:hover {
+  background: #00f0ff;
+  color: #000;
+}
+
+.recon-mount-quick-picker {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 4px;
+  background: rgba(6, 12, 19, 0.9);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 4px;
+}
+
+.recon-quick-select {
+  flex: 1;
+}
+
+.management-page {
+  overflow: auto;
+  padding: 20px clamp(12px, 4vw, 48px);
+}
+
+.management-header, .management-tabs, .management-toolbar, .management-pages, .management-editor-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.management-header {
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.management-header h2 {
+  font-size: 18px;
+}
+
+.management-tabs [aria-pressed="true"] {
+  border-color: var(--cyan-glow);
+  color: var(--cyan-glow);
+}
+
+.management-toolbar input {
+  flex: 1;
+  min-width: 140px;
+  max-width: 360px;
+}
+
+.management-status {
+  color: var(--text-muted);
+  padding: 10px 0;
+}
+
+.management-table-wrap {
+  overflow-x: auto;
+}
+
+.management-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.management-table :is(th, td) {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  overflow-wrap: anywhere;
+}
+
+.management-table th {
+  background: var(--bg-dark-3);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.management-row-actions {
+  white-space: nowrap;
+}
+
+.management-row-actions button + button {
+  margin-inline-start: 6px;
+}
+
+.management-pages {
+  margin-top: 12px;
+  justify-content: flex-end;
+}
+
+.management-dialog {
+  margin: auto;
+  width: min(620px, calc(100% - 24px));
+  max-height: calc(100% - 24px);
+  padding: 18px;
+  background: var(--bg-dark-2);
+  border: 1px solid var(--border-medium);
+  border-radius: 6px;
+  color: var(--text-primary);
+}
+
+.management-dialog::backdrop {
+  background: #0009;
+}
+
+.management-editor, .management-fields, .management-fields label {
+  display: grid;
+  gap: 10px;
+}
+
+.management-fields {
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+}
+
+.management-fields label {
+  min-width: 0;
+  gap: 4px;
+  color: var(--text-muted);
+}
+
+.management-fields .text-input {
+  width: 100%;
+}
+
+.management-trajectory {
+  grid-column: 1 / -1;
+  color: var(--text-muted);
+}
+
+.management-trajectory ol {
+  max-height: 160px;
+  overflow: auto;
+  padding-inline-start: 26px;
+}
+
+.management-editor-actions {
+  justify-content: flex-end;
+}
+
+.management-error {
+  color: #ff8794;
+}

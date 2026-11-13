@@ -1,0 +1,973 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ScreenPushSetWidget</class>
+ <widget class="QWidget" name="ScreenPushSetWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>827</width>
+    <height>563</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget#widget_device,QWidget#widget_screen,QWidget#widget_fps,QWidget#widget_pixel,QWidget#widget_post,QWidget#widget_url
+{	
+	background-color: rgba(20, 56, 87, 0.8);
+	border-radius: 2px 2px 0px 2px;
+}
+
+QWidget#widget_height,QWidget#widget_width,QWidget#widget_fps_2,QWidget#widget_posX,QWidget#widget_posY
+{
+	background-color: rgba(14, 19, 25, 0.5);
+	border-radius: 3px;
+	border:1px solid #1b99f5;
+	border-color:#1b99f5
+}
+
+QLineEdit#lineEdit_url,QLineEdit#lineEdit_device
+{
+	background-color: rgba(14, 19, 25, 0.5);
+	border-radius: 3px;
+	border: 1px solid #1b99f5;
+	font-family: Alibaba PuHuiTi 2.0;
+	font-size: 20px;
+	color: #ffffff;
+}
+QLineEdit#lineEdit_height,QLineEdit#lineEdit_width,QLineEdit#lineEdit_fps
+{
+	background-color: transparent;
+	border: none;
+	font-family: Alibaba PuHuiTi 2.0;
+	font-size: 20px;
+	color: #ffffff;
+}
+QLabel#label_device,QLabel#label_screen,QLabel#label_url,QLabel#label_pixel,QLabel#label_fps,QLabel#label_pos,QLabel#label_width,QLabel#label_height,QLabel#label_fps_2,QLabel#label_posX,QLabel#label_posY
+{
+	font-family: Alibaba PuHuiTi 2.0;
+	font-size: 20px;
+	color: #b8c5d5;
+}
+QSpinBox#spinBox_posX,QSpinBox#spinBox_posY
+{
+	background-color:transparent;
+	border: none;
+	font-family: Alibaba PuHuiTi 2.0;
+	font-size: 20px;
+	color: #ffffff;
+}
+QSpinBox#spinBox_posX::up-button,QSpinBox#spinBox_posY::up-button
+{
+  border-image: url(:/resource/iconBtn_up-normal.png);
+  width:38;
+  height:20;
+}
+QSpinBox#spinBox_posX:up-button::pressed,QSpinBox#spinBox_posY:up-button::pressed
+{
+border-image: url(:/resource/iconBtn_up-hover-select.png);
+}
+QSpinBox#spinBox_posX:down-button,QSpinBox#spinBox_posY:down-button
+{
+	border-image: url(:/resource/iconBtn_down-normal.png);
+	width:38;
+	height:20;
+}
+QSpinBox#spinBox_posX:down-button::pressed,QSpinBox#spinBox_posY:down-button::pressed
+{
+border-image: url(:/resource/iconBtn_down-hover-select.png);
+}
+QRadioButton#radioButton_rtsp,QRadioButton#radioButton_rtmp
+{
+	font-family: Alibaba PuHuiTi 2.0;
+	font-size: 20px;
+	color: #ffffff;
+}
+QRadioButton#radioButton_rtsp::indicator::unchecked,QRadioButton#radioButton_rtmp::indicator::unchecked
+{
+	border-image: url(:/resource/checkBox0_normal.png);
+	width:38px;
+	height:38px;
+}
+QRadioButton#radioButton_rtsp::indicator::checked,QRadioButton#radioButton_rtmp::indicator::checked
+{
+	border-image: url(:/resource/checkBox0_select.png);
+	width:38px;
+	height:38px;
+}
+
+QComboBox#comboBox_screen
+{
+    combobox-popup:0;
+    font:20px "阿里巴巴普惠体";
+	color:white;
+	background-color: rgba(14, 19, 25, 0.5);
+	border-radius: 4px;
+	padding-right:1px;
+	border: 1px solid #1b99f5;
+}
+QComboBox#comboBox_screen::drop-down
+{
+	width:30px;
+	height:37px;
+	border-image: url(:/resource/下拉框-iconBtn_下拉-normal.png);
+}
+QComboBox#comboBox_screen::drop-down::hover
+{
+	width:30px;
+	height:37px;
+	border-image: url(:/resource/下拉框-iconBtn_下拉-hover-select.png);
+}
+QComboBox#comboBox_screen::drop-down::checked
+{
+	width:30px;
+	height:37px;
+	border-image: url(:/resource/下拉框-iconBtn_下拉-pressed.png);
+}
+QComboBox#comboBox_screen QAbstractItemView
+{
+	font:20px "阿里巴巴普惠体";
+	color:white;
+	background-color: #014268;
+	border:1px solid #1b99f5;
+	border-radius: 3px;
+}
+QComboBox#comboBox_screen QAbstractItemView::item
+{
+	height:38px;
+	padding:1px 1px 1px 1px;
+	font:20px "阿里巴巴普惠体";
+	color:white;
+}
+QComboBox#comboBox_screen QAbstractItemView::item::hover
+{
+	height:38px;
+	padding:1px 1px 1px 1px;
+	font:20px "阿里巴巴普惠体";
+	color:white;
+	background-color: #3cb0ea;
+}
+QComboBox#comboBox_screen QAbstractItemView::item::selected
+{
+	height:38px;
+	padding:1px 1px 1px 1px;
+	font:20px "阿里巴巴普惠体";
+	color:white;
+	background-color: #3cb0ea;
+}
+
+QComboBox#comboBox_screen:disabled
+{
+    color:gray;
+}
+
+QLineEdit#lineEdit_device:disabled
+{
+    color:gray;
+}
+</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>12</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>18</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QWidget" name="widget_device" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>60</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>60</height>
+      </size>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_device">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>20</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="label_device">
+        <property name="minimumSize">
+         <size>
+          <width>115</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>115</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>目标设备     </string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="lineEdit_device">
+        <property name="minimumSize">
+         <size>
+          <width>360</width>
+          <height>38</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>360</width>
+          <height>16777215</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_device">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="widget_url" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>60</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>60</height>
+      </size>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>20</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="label_url">
+        <property name="minimumSize">
+         <size>
+          <width>115</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>115</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>推流名称     </string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="lineEdit_url">
+        <property name="minimumSize">
+         <size>
+          <width>360</width>
+          <height>38</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>360</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>stream</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioButton_rtsp">
+        <property name="text">
+         <string>rtsp</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioButton_rtmp">
+        <property name="text">
+         <string>rtmp</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>1111111111</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="widget_screen" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>60</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>60</height>
+      </size>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_screen">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>20</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="label_screen">
+        <property name="minimumSize">
+         <size>
+          <width>115</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>115</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>采集屏幕     </string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="comboBox_screen">
+        <property name="minimumSize">
+         <size>
+          <width>360</width>
+          <height>38</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>360</width>
+          <height>16777215</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_screen">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="widget_pixel" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>60</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>60</height>
+      </size>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_10">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>20</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="label_pixel">
+        <property name="minimumSize">
+         <size>
+          <width>115</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>115</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>视频分辨率   </string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="widget" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>290</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>290</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_7">
+         <property name="spacing">
+          <number>10</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QWidget" name="widget_width" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>140</width>
+             <height>38</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>140</width>
+             <height>38</height>
+            </size>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <property name="spacing">
+             <number>10</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label_width">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>宽</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="lineEdit_width">
+              <property name="minimumSize">
+               <size>
+                <width>92</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>1920</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QWidget" name="widget_height" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>140</width>
+             <height>38</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>140</width>
+             <height>38</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <property name="spacing">
+             <number>10</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label_height">
+              <property name="minimumSize">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>高</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="lineEdit_height">
+              <property name="minimumSize">
+               <size>
+                <width>92</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string>1080</string>
+              </property>
+              <property name="frame">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>325</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="widget_fps" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>60</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>60</height>
+      </size>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_8">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>20</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="label_fps">
+        <property name="minimumSize">
+         <size>
+          <width>115</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>115</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>视频帧率  </string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="widget_fps_2" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>140</width>
+          <height>38</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>140</width>
+          <height>38</height>
+         </size>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLineEdit" name="lineEdit_fps">
+           <property name="minimumSize">
+            <size>
+             <width>87</width>
+             <height>38</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>25</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_fps_2">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>38</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>fps</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>1111111111</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="widget_post" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>60</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>60</height>
+      </size>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_11">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>20</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="label_pos">
+        <property name="minimumSize">
+         <size>
+          <width>115</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>115</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>视频位置  </string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="widget_2" native="true">
+        <layout class="QHBoxLayout" name="horizontalLayout_9">
+         <property name="spacing">
+          <number>10</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QWidget" name="widget_posX" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>140</width>
+             <height>38</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>140</width>
+             <height>38</height>
+            </size>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <property name="spacing">
+             <number>9</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label_posX">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>X</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="spinBox_posX">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>38</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>38</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>38</height>
+               </size>
+              </property>
+              <property name="maximum">
+               <number>4096</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QWidget" name="widget_posY" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>140</width>
+             <height>38</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>140</width>
+             <height>38</height>
+            </size>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_6">
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label_posY">
+              <property name="text">
+               <string>Y</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="spinBox_posY">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>38</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>38</height>
+               </size>
+              </property>
+              <property name="frame">
+               <bool>true</bool>
+              </property>
+              <property name="maximum">
+               <number>2160</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_6">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>1111111111</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>17</width>
+       <height>37</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,1010 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ParaContentWidget</class>
+ <widget class="QWidget" name="ParaContentWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>818</width>
+    <height>636</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget#StreamProtocol_widget,QWidget#StreamSet_widget,QWidget#EncodingFormat_widget,QWidget#PullStreamSet_widget
+{
+	background-color:rgba(20,56,87,80%);
+}
+
+QLabel#StreamProtocol_label,QLabel#StreamSet_label,QLabel#EncodingFormat_label,QLabel#PullStreamSet_label,
+QLabel#RTSP_label,QLabel#RTMP_label,QLabel#H264_label,QLabel#H265_label,QLabel#label_productNum
+{
+	font:20px Alibaba PuHuiTi 2.0;
+	color:#b8c5d5;
+}
+
+QPushButton#RTSP_pushButton,QPushButton#RTMP_pushButton,QPushButton#H264_pushButton,QPushButton#H265_pushButton
+{
+	border-image: url(:/resource/checkBox0_normal.png);
+}
+
+QPushButton#RTSP_pushButton::checked,QPushButton#RTMP_pushButton::checked,QPushButton#H264_pushButton::checked,QPushButton#H265_pushButton::checked
+{
+	border-image:url(:/resource/checkBox0_select.png);
+}
+
+QComboBox#ClientPullUrl_comboBox
+{
+	combobox-popup:0;
+	font:20px "阿里巴巴普惠体";
+	color:white;
+	background-color: rgba(14, 19, 25, 0.5);
+	border-radius: 4px;
+	padding-right:1px;
+	border: 1px solid #1b99f5;
+}
+
+QComboBox#ClientPullUrl_comboBox::drop-down
+{
+	width:37px;
+	height:37px;
+	border-image: url(:/resource/下拉框-iconBtn_下拉-normal.png);
+}
+QComboBox#ClientPullUrl_comboBox::drop-down::hover
+{
+	width:37px;
+	height:37px;
+	border-image: url(:/resource/下拉框-iconBtn_下拉-hover-select.png);
+}
+QComboBox#ClientPullUrl_comboBox::drop-down::checked
+{
+	width:37px;
+	height:37px;
+	border-image: url(:/resource/下拉框-iconBtn_下拉-pressed.png);
+}
+QComboBox#ClientPullUrl_comboBox QAbstractItemView
+{
+	font:20px "阿里巴巴普惠体";
+	color:white;
+	background-color: #014268;
+	border:1px solid #1b99f5;
+	border-radius: 3px;
+}
+QComboBox#ClientPullUrl_comboBox QAbstractItemView::item
+{
+	height:38px;
+	padding:1px 1px 1px 1px;
+	font:20px "阿里巴巴普惠体";
+	color:white;
+}
+QComboBox#ClientPullUrl_comboBox QAbstractItemView::item::hover
+{
+	height:38px;
+	padding:1px 1px 1px 1px;
+	font:20px "阿里巴巴普惠体";
+	color:white;
+	background-color: #3cb0ea;
+}
+QComboBox#ClientPullUrl_comboBox QAbstractItemView::item::selected
+{
+	height:38px;
+	padding:1px 1px 1px 1px;
+	font:20px "阿里巴巴普惠体";
+	color:white;
+	background-color: #3cb0ea;
+}
+
+QPushButton#StreamSet_pushButton,QPushButton#ClientPullUrl_pushButton
+{
+	font:20px Alibaba PuHuiTi 2.0;
+	color:white;
+	border-image: url(:/resource/btn-下发-normal.png);
+}
+QPushButton#StreamSet_pushButton::pressed,QPushButton#ClientPullUrl_pushButton::pressed
+{
+	font:20px Alibaba PuHuiTi 2.0;
+	color:white;
+	border-image: url(:/resource/btn-下发-pressed.png);
+}
+QPushButton#StreamSet_pushButton::checked,QPushButton#ClientPullUrl_pushButton::checked
+{
+	font:20px Alibaba PuHuiTi 2.0;
+	color:white;
+	border-image: url(:/resource/btn-下发-hover.png);
+}
+QPushButton#StreamSet_pushButton::disabled
+{
+	font:20px Alibaba PuHuiTi 2.0;
+	color:#66798f;
+	border-image: url(:/resource/btn-下发-disable.png);
+}
+
+QPushButton#UpFile_pushButton
+{
+	border-image: url(:/resource/iconbtn-上传文件-normal.png);
+}
+QPushButton#UpFile_pushButton::hover
+{
+	border-image: url(:/resource/iconbtn-上传文件-hover.png);
+}
+QPushButton#UpFile_pushButton::pressed
+{
+	border-image: url(:/resource/iconbtn-上传文件-pressed.png);
+}
+
+QPushButton#AddItem_pushButton
+{
+	font:20px Alibaba PuHuiTi 2.0;
+	color:white;
+	border-image: url(:/resource/目标列表-iconbtn-添加-normal.png);
+}
+QPushButton#AddItem_pushButton::hover
+{
+	font:20px Alibaba PuHuiTi 2.0;
+	color:white;
+	border-image: url(:/resource/目标列表-iconbtn-添加-hover.png);
+}
+QPushButton#AddItem_pushButton::pressed
+{
+	font:20px Alibaba PuHuiTi 2.0;
+	color:white;
+	border-image: url(:/resource/目标列表-iconbtn-添加-pressed.png);
+}
+
+QPushButton#Refresh_pushButton
+{
+	font:20px Alibaba PuHuiTi 2.0;
+	color:white;
+	border-image: url(:/resource/目标列表-iconbtn-添加-normal.png);
+}
+QPushButton#Refresh_pushButton::hover
+{
+	font:20px Alibaba PuHuiTi 2.0;
+	color:white;
+	border-image: url(:/resource/目标列表-iconbtn-添加-hover.png);
+}
+QPushButton#Refresh_pushButton::pressed
+{
+	font:20px Alibaba PuHuiTi 2.0;
+	color:white;
+	border-image: url(:/resource/目标列表-iconbtn-添加-pressed.png);
+}
+
+QComboBox#comboBox_product
+{
+    combobox-popup:0;
+    font:20px Alibaba PuHuiTi 2.0;
+	color:#b8c5d5;
+	background-color: rgba(14, 19, 25, 0.5);
+	border-radius: 4px;
+	padding-right:1px;
+	border: 1px solid #1b99f5;
+}
+QComboBox#comboBox_product::drop-down
+{
+	width:37px;
+	height:37px;
+	border-image: url(:/resource/下拉框-iconBtn_下拉-normal.png);
+}
+QComboBox#comboBox_product::drop-down::hover
+{
+	width:37px;
+	height:37px;
+	border-image: url(:/resource/下拉框-iconBtn_下拉-hover-select.png);
+}
+QComboBox#comboBox_product::drop-down::checked
+{
+	width:37px;
+	height:37px;
+	border-image: url(:/resource/下拉框-iconBtn_下拉-pressed.png);
+}
+QComboBox#comboBox_product QAbstractItemView
+{	
+	font:20px Alibaba PuHuiTi 2.0;
+	color:#b8c5d5;
+	background-color: #014268;
+	border:1px solid #1b99f5;
+	border-radius: 3px;
+}
+QComboBox#comboBox_product QAbstractItemView::item
+{
+	height:38px;
+	padding:1px 1px 1px 1px;
+	font:20px Alibaba PuHuiTi 2.0;
+	color:#b8c5d5;
+}
+QComboBox#comboBox_product QAbstractItemView::item::hover
+{
+	height:38px;
+	padding:1px 1px 1px 1px;
+	font:20px Alibaba PuHuiTi 2.0;
+	color:#b8c5d5;
+	background-color: #3cb0ea;
+}
+QComboBox#comboBox_product QAbstractItemView::item::selected
+{
+	height:38px;
+	padding:1px 1px 1px 1px;
+	font:20px Alibaba PuHuiTi 2.0;
+	color:#b8c5d5;
+	background-color: #3cb0ea;
+}
+
+QToolTip
+{
+  border:1px solid #1b99f5;
+  boder-radius:2px;
+  background-color:rgba(14, 19, 25, 50%);
+  font:18px Alibaba PuHuiTi 2.0;
+  color:white;
+} </string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_10">
+   <item row="0" column="0">
+    <widget class="QWidget" name="StreamProtocol_widget" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>800</width>
+       <height>60</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>800</width>
+       <height>60</height>
+      </size>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <property name="leftMargin">
+       <number>20</number>
+      </property>
+      <item row="0" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="spacing">
+         <number>15</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="StreamProtocol_label">
+          <property name="minimumSize">
+           <size>
+            <width>160</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>160</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>客户端拉流地址</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <property name="spacing">
+           <number>20</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <item>
+            <widget class="QComboBox" name="ClientPullUrl_comboBox">
+            <property name="minimumSize">
+             <size>
+              <width>300</width>
+              <height>38</height>
+             </size>
+            </property>
+             <property name="maximumSize">
+             <size>
+              <width>300</width>
+              <height>38</height>
+              </size>
+             </property>
+             <property name="editable">
+              <bool>true</bool>
+             </property>
+             <property name="duplicatesEnabled">
+              <bool>false</bool>
+             </property>
+            </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QPushButton" name="ClientPullUrl_pushButton">
+          <property name="minimumSize">
+           <size>
+            <width>110</width>
+            <height>38</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>110</width>
+            <height>38</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>    确认</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QWidget" name="StreamSet_widget" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>800</width>
+       <height>60</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>800</width>
+       <height>60</height>
+      </size>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <property name="leftMargin">
+       <number>20</number>
+      </property>
+      <item row="0" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <property name="spacing">
+         <number>15</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="StreamSet_label">
+          <property name="minimumSize">
+           <size>
+            <width>160</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>160</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>客户端拉流协议</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_11">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <property name="sizeConstraint">
+           <enum>QLayout::SetDefaultConstraint</enum>
+          </property>
+          <property name="leftMargin">
+           <number>25</number>
+          </property>
+          <property name="rightMargin">
+           <number>25</number>
+          </property>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QPushButton" name="RTSP_pushButton">
+              <property name="minimumSize">
+               <size>
+                <width>38</width>
+                <height>38</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>38</width>
+                <height>38</height>
+               </size>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="RTSP_label">
+              <property name="minimumSize">
+               <size>
+                <width>60</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>RTSP</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_4">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Fixed</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>54</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_6">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QPushButton" name="RTMP_pushButton">
+              <property name="minimumSize">
+               <size>
+                <width>38</width>
+                <height>38</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>38</width>
+                <height>38</height>
+               </size>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="RTMP_label">
+              <property name="minimumSize">
+               <size>
+                <width>60</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>RTMP</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QPushButton" name="StreamSet_pushButton">
+          <property name="minimumSize">
+           <size>
+            <width>110</width>
+            <height>38</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>110</width>
+            <height>38</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>    确认</string>
+          </property>
+          <property name="checkable">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QWidget" name="EncodingFormat_widget" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>800</width>
+       <height>60</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>800</width>
+       <height>60</height>
+      </size>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_3">
+      <property name="leftMargin">
+       <number>20</number>
+      </property>
+      <item row="0" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <property name="spacing">
+         <number>60</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="EncodingFormat_label">
+          <property name="minimumSize">
+           <size>
+            <width>140</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>编码格式</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QWidget" name="H264_widget" native="true">
+          <layout class="QGridLayout" name="gridLayout_8">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <item row="0" column="0">
+            <layout class="QHBoxLayout" name="horizontalLayout_7">
+             <item>
+              <widget class="QPushButton" name="H264_pushButton">
+               <property name="minimumSize">
+                <size>
+                 <width>38</width>
+                 <height>38</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>38</width>
+                 <height>38</height>
+                </size>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="H264_label">
+               <property name="text">
+                <string>H264</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QWidget" name="H265_widget" native="true">
+          <layout class="QGridLayout" name="gridLayout_9">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <item row="0" column="0">
+            <layout class="QHBoxLayout" name="horizontalLayout_8">
+             <item>
+              <widget class="QPushButton" name="H265_pushButton">
+               <property name="minimumSize">
+                <size>
+                 <width>38</width>
+                 <height>38</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>38</width>
+                 <height>38</height>
+                </size>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="H265_label">
+               <property name="text">
+                <string>H265</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QWidget" name="PullStreamSet_widget" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>800</width>
+       <height>60</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>800</width>
+       <height>60</height>
+      </size>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_6">
+      <property name="leftMargin">
+       <number>20</number>
+      </property>
+      <property name="rightMargin">
+       <number>20</number>
+      </property>
+      <item row="0" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout_9">
+        <property name="spacing">
+         <number>20</number>
+        </property>
+        <property name="rightMargin">
+         <number>16</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="PullStreamSet_label">
+          <property name="minimumSize">
+           <size>
+            <width>160</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>160</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>设备端拉流设置</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_6">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>214</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_10">
+          <property name="spacing">
+           <number>6</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="label_productNum">
+            <property name="minimumSize">
+             <size>
+              <width>90</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>90</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>设备名称</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="comboBox_product">
+            <property name="minimumSize">
+             <size>
+              <width>224</width>
+              <height>38</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>224</width>
+              <height>38</height>
+             </size>
+            </property>
+            <item>
+             <property name="text">
+              <string>全部</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QPushButton" name="Refresh_pushButton">
+          <property name="minimumSize">
+           <size>
+            <width>38</width>
+            <height>38</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>38</width>
+            <height>38</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="AddItem_pushButton">
+          <property name="minimumSize">
+           <size>
+            <width>38</width>
+            <height>38</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>38</width>
+            <height>38</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_8">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QStackedWidget" name="stackedWidget">
+     <property name="minimumSize">
+      <size>
+       <width>800</width>
+       <height>300</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>800</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <widget class="QWidget" name="VideoFormat_page">
+      <property name="minimumSize">
+       <size>
+        <width>800</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>800</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_7">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <item row="0" column="0">
+        <widget class="QScrollArea" name="scrollArea">
+         <property name="minimumSize">
+          <size>
+           <width>800</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>800</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="scrollAreaWidgetContents">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>800</width>
+            <height>284</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>800</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>800</width>
+            <height>16777215</height>
+           </size>
+          </property>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>45</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
