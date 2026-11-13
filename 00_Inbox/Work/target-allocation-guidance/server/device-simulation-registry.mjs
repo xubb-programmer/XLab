@@ -84,7 +84,10 @@ function changeError(status, message) {
 export function openRegistry(databasePath, onlineMs) {
   const database = new DatabaseSync(databasePath);
   const observations = new Map();
+  const received = new Set();
   database.exec(`
+    PRAGMA journal_mode = WAL;
+    PRAGMA busy_timeout = 3000;
     CREATE TABLE IF NOT EXISTS simulation_devices (
       key TEXT PRIMARY KEY,
       device_id TEXT NOT NULL,
@@ -95,6 +98,10 @@ export function openRegistry(databasePath, onlineMs) {
     );
     CREATE UNIQUE INDEX IF NOT EXISTS simulation_firepower_id
       ON simulation_devices(device_id) WHERE firepower = 1;
+    CREATE TABLE IF NOT EXISTS device_snapshots (
+      identity TEXT PRIMARY KEY,
+      report TEXT NOT NULL
+    );
   `);
   const columns = new Set(database.prepare("PRAGMA table_info(simulation_devices)").all().map(column => column.name));
   if (!columns.has("custom_name")) {
@@ -103,7 +110,19 @@ export function openRegistry(databasePath, onlineMs) {
   const select = database.prepare("SELECT * FROM simulation_devices WHERE key = ?");
   const selected = database.prepare("SELECT * FROM simulation_devices WHERE firepower = 1");
   const selectById = database.prepare("SELECT key FROM simulation_devices WHERE device_id = ? AND firepower = 1");
-  const updateReport = database.prepare("UPDATE simulation_devices SET last_report = ? WHERE key = ? AND firepower = 1");
+  const storeSnapshot = database.prepare(`
+    INSERT INTO device_snapshots (identity, report) VALUES (?, ?)
+    ON CONFLICT(identity) DO UPDATE SET report = excluded.report
+  `);
+  database.exec(`
+    INSERT OR IGNORE INTO device_snapshots (identity, report)
+    SELECT json_extract(last_report, '$.identity'), last_report FROM simulation_devices
+    WHERE json_extract(last_report, '$.identity') IS NOT NULL ORDER BY rowid DESC;
+  `);
+  for (const { report } of database.prepare("SELECT report FROM device_snapshots").all()) {
+    const restored = JSON.parse(report);
+    observations.set(restored.identity, restored);
+  }
   const setRole = database.prepare(`
     INSERT INTO simulation_devices (key, device_id, firepower, last_report) VALUES (?, ?, ?, ?)
     ON CONFLICT(key) DO UPDATE SET firepower = excluded.firepower, last_report = excluded.last_report
@@ -117,7 +136,7 @@ export function openRegistry(databasePath, onlineMs) {
     ON CONFLICT(key) DO UPDATE SET last_report = excluded.last_report, custom_name = excluded.custom_name
   `);
 
-  const online = (report, now) => now - report.lastSeen < onlineMs;
+  const online = (report, now) => received.has(report.identity) && now - report.lastSeen < onlineMs;
 
   function getObservation(key) {
     return [...observations.values()].find(report => report.key === key);
@@ -150,30 +169,66 @@ export function openRegistry(databasePath, onlineMs) {
     };
   }
 
-  function snapshot(now = Date.now()) {
+  function snapshot(now = Date.now(), mounts = new Set()) {
     const duplicates = duplicateIds(now);
     const assigned = selected.all();
-    const assignedKeys = new Set(assigned.map(row => row.key));
-    const firepower = assigned.map(row => display(getObservation(row.key) || JSON.parse(row.last_report), row, now, duplicates, "firepower"));
+    const assignedIds = new Set(assigned.map(row => row.device_id));
+    const firepower = assigned.filter(row => !mounts.has(row.device_id))
+      .map(row => display(getObservation(row.key) || JSON.parse(row.last_report), row, now, duplicates, "firepower"));
+    const mountedById = new Map();
+    for (const report of observations.values()) {
+      if (!mounts.has(report.deviceId)) continue;
+      const assignedKey = selectById.get(report.deviceId)?.key;
+      if (assignedKey && assignedKey !== report.key) continue;
+      const prior = mountedById.get(report.deviceId);
+      if (!prior || report.lastSeen > prior.lastSeen) mountedById.set(report.deviceId, report);
+    }
+    const mounted = [...mountedById.values()].map(report => display(report, select.get(report.key), now, duplicates, "firepower"));
     // 保留已发现但已超时的侦察设备，让前端能显示真实的离线状态；是否在线仍由心跳超时计算。
-    const uavs = [...observations.values()].filter(report => !assignedKeys.has(report.key))
+    const uavs = [...observations.values()].filter(report => !assignedIds.has(report.deviceId) && !mounts.has(report.deviceId))
       .map(report => display(report, select.get(report.key), now, duplicates, "recon"));
     const byId = (a, b) => a.deviceId.localeCompare(b.deviceId, "zh-CN", { numeric: true }) || a.key.localeCompare(b.key);
-    return { uavs: uavs.sort(byId), firepower: firepower.sort(byId) };
+    return { uavs: uavs.sort(byId), firepower: firepower.sort(byId), mounted: mounted.sort(byId) };
   }
 
   return {
+    isFirepower(deviceId) {
+      return Boolean(selectById.get(deviceId));
+    },
+    standaloneIds() {
+      return new Set(selected.all().map(row => row.device_id));
+    },
+    deviceIdForKey(key) {
+      return getObservation(key)?.deviceId ?? select.get(key)?.device_id;
+    },
+    importSnapshots(reports) {
+      const insert = database.prepare("INSERT OR IGNORE INTO device_snapshots (identity, report) VALUES (?, ?)");
+      database.exec("BEGIN IMMEDIATE");
+      try {
+        let imported = 0;
+        for (const report of reports) {
+          if (!report.identity || !report.key || !Number.isFinite(report.lastSeen)) continue;
+          imported += insert.run(report.identity, JSON.stringify(publicReport(report, false))).changes;
+        }
+        database.exec("COMMIT");
+        return imported;
+      } catch (error) {
+        database.exec("ROLLBACK");
+        throw error;
+      }
+    },
     ingest(report) {
+      storeSnapshot.run(report.identity, JSON.stringify(publicReport(report)));
       observations.set(report.identity, report);
-      updateReport.run(JSON.stringify(publicReport(report)), report.key);
+      received.add(report.identity);
     },
     expire() {
       // 不删除最后一份组播快照，以便离线设备仍可在卡片中显示为离线。
     },
     snapshot,
-    videoConfig(key) {
+    videoConfig(key, mounts = new Set()) {
       const report = getObservation(key);
-      const usable = report && online(report, Date.now()) && !select.get(key)?.firepower;
+      const usable = report && online(report, Date.now()) && !selectById.get(report.deviceId) && !mounts.has(report.deviceId);
       const streams = usable ? report.videoChannels.map(channel => ({ ...channel, uavId: key })) : [];
       return { state: streams.some(channel => channel.rtspUrl) ? "configured" : "unconfigured", streams };
     },

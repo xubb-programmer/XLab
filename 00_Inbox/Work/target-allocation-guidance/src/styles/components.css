@@ -4507,11 +4507,17 @@ button.artillery-card:hover {
 
 .management-header {
   justify-content: space-between;
-  margin-bottom: 16px;
+  padding: 12px clamp(12px, 4vw, 48px);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-dark-2);
 }
 
-.management-header h2 {
+.management-header .view-title {
   font-size: 18px;
+}
+
+.management-tabs {
+  margin-bottom: 12px;
 }
 
 .management-tabs [aria-pressed="true"] {

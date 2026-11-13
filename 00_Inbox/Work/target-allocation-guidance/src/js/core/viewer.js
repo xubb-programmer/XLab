@@ -47,10 +47,21 @@ export class CesiumViewerManager {
       skyBox: false,
       skyAtmosphere: false,
       scene3DOnly: true,
-      requestRenderMode: false // 保证在线底图瓦片顺畅流式加载
+      requestRenderMode: true,
+      maximumRenderTimeChange: Infinity
     });
 
     this.scene = this.viewer.scene;
+    const canvas = this.scene.canvas;
+    const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
+    const rendererInfo = gl?.getExtension("WEBGL_debug_renderer_info");
+    const renderer = rendererInfo ? gl.getParameter(rendererInfo.UNMASKED_RENDERER_WEBGL) : "";
+    // XRDP 等使用 CPU 渲染的会话降低绘图缓冲区分辨率，保留画布和控件的显示尺寸。
+    if (/llvmpipe|softpipe|swiftshader|software rasterizer|microsoft basic render/i.test(renderer)) {
+      this.viewer.resolutionScale = 0.5;
+      this.scene.msaaSamples = 1;
+      this.scene.postProcessStages.fxaa.enabled = false;
+    }
 
     // 强制清理布尔值或不完整的 skyAtmosphere / skyBox，彻底杜绝 Cesium 渲染循环内部类型崩溃
     if (!this.scene.skyAtmosphere || typeof this.scene.skyAtmosphere.setDynamicLighting !== "function") {
@@ -88,6 +99,7 @@ export class CesiumViewerManager {
       glowColor: Cesium.Color.TRANSPARENT,
       backgroundColor: Cesium.Color.fromCssColorString("#15202b")
     }));
+    this.requestRender();
     try {
       const result = mode === "offline"
         ? await this.loadOfflineImagery(signal)
@@ -95,6 +107,7 @@ export class CesiumViewerManager {
       if (signal.aborted) return;
       imagery.removeAll();
       for (const provider of result.providers) imagery.addImageryProvider(provider);
+      this.requestRender();
       return result;
     } catch (error) {
       if (signal.aborted) return;

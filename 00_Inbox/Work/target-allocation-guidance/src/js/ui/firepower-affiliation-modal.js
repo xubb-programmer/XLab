@@ -657,8 +657,7 @@ export class FirepowerAffiliationModal {
                     ` : comp.points.map(pt => {
                       const isOnline = Boolean(pt.online);
                       const mountedDevId = pt.mountedDeviceId || "";
-                      const mountedDevice = onlineRecons.find(u => u.deviceId === mountedDevId || u.id === mountedDevId);
-                      const isMulticastActive = mountedDevice && mountedDevice.online;
+                      const isMulticastActive = Boolean(mountedDevId && isOnline);
 
                       return `
                         <div class="tree-node tree-node-point ${isOnline ? 'is-online' : 'is-offline'}" data-point-id="${escapeHtml(pt.id)}">
@@ -687,7 +686,7 @@ export class FirepowerAffiliationModal {
                               </div>
                               <div class="mount-device-row">
                                 <strong class="mount-dev-id mono ${mountedDevId ? 'highlight-cyan' : ''}">${escapeHtml(mountedDevId || '无挂载设备 (火力点离线)')}</strong>
-                                ${mountedDevice ? `<span class="mount-dev-name">${escapeHtml(mountedDevice.name)}</span>` : ''}
+                                ${pt.mountedDeviceName ? `<span class="mount-dev-name">${escapeHtml(pt.mountedDeviceName)}</span>` : ''}
                               </div>
                             </div>
 
@@ -1070,11 +1069,10 @@ export class FirepowerAffiliationModal {
       port
     };
 
-    if (this.editingPointId) {
-      await dm.updatePointAffiliation(this.editingPointId, payload);
-    } else {
-      await dm.addFirepowerPoint(payload);
-    }
+    const saved = this.editingPointId
+      ? await dm.updatePointAffiliation(this.editingPointId, payload)
+      : await dm.addFirepowerPoint(payload);
+    if (!saved) return;
 
     this.closeDrawer();
     this.render();

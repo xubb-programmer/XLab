@@ -70,6 +70,12 @@ export function openOperationalStore(path) {
       deleted INTEGER NOT NULL DEFAULT 0, UNIQUE (target_type, target_number)
     );
     CREATE INDEX IF NOT EXISTS targets_visible ON targets(deleted, updated_at DESC);
+    CREATE TABLE IF NOT EXISTS live_targets (
+      id TEXT PRIMARY KEY, target_type TEXT NOT NULL, target_number INTEGER NOT NULL,
+      name TEXT NOT NULL, longitude REAL NOT NULL, latitude REAL NOT NULL, altitude REAL NOT NULL,
+      trajectory TEXT NOT NULL, updated_at INTEGER NOT NULL, ordinal INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS live_targets_recent ON live_targets(ordinal DESC);
   `);
 
   const pointRows = db.prepare("SELECT data FROM firepower_points ORDER BY sort_order, id");
@@ -95,6 +101,21 @@ export function openOperationalStore(path) {
       source = excluded.source, updated_at = excluded.updated_at, deleted = 0
   `);
   const deleteTarget = db.prepare("UPDATE targets SET deleted = 1, trajectory = '[]' WHERE id = ? AND deleted = 0");
+  const liveTargetRow = db.prepare("SELECT * FROM live_targets WHERE id = ?");
+  const listLiveTargetRows = db.prepare(`
+    SELECT * FROM live_targets WHERE instr(lower(name || ' ' || target_number || ' ' || id), lower(?)) > 0
+    ORDER BY ordinal DESC LIMIT ? OFFSET ?
+  `);
+  const countLiveTargets = db.prepare(`
+    SELECT count(*) AS total FROM live_targets WHERE instr(lower(name || ' ' || target_number || ' ' || id), lower(?)) > 0
+  `);
+  const putLiveTarget = db.prepare(`
+    INSERT INTO live_targets (id, target_type, target_number, name, longitude, latitude, altitude, trajectory, updated_at, ordinal)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(ordinal), 0) + 1 FROM live_targets))
+    ON CONFLICT(id) DO UPDATE SET name = excluded.name, longitude = excluded.longitude,
+      latitude = excluded.latitude, altitude = excluded.altitude, trajectory = excluded.trajectory,
+      updated_at = excluded.updated_at, ordinal = excluded.ordinal
+  `);
 
   function transaction(work) {
     db.exec("BEGIN IMMEDIATE");
@@ -152,6 +173,8 @@ export function openOperationalStore(path) {
     return toTarget(targetRow.get(target.id));
   }
 
+  const toLiveTarget = row => ({ ...toTarget(row), source: "udp", live: true });
+
   return {
     listPoints: points,
     savePoint,
@@ -159,7 +182,42 @@ export function openOperationalStore(path) {
       if (!deletePoint.run(id).changes) throw dataError(404, "火力点不存在");
     },
     listTargets(query, limit, offset) {
-      return { records: listTargetRows.all(query, limit, offset).map(toTarget), total: countTargets.get(query).total };
+      const liveTotal = countLiveTargets.get(query).total;
+      const records = listLiveTargetRows.all(query, limit, offset).map(toLiveTarget);
+      if (records.length < limit) {
+        records.push(...listTargetRows.all(query, limit - records.length, Math.max(0, offset - liveTotal)).map(toTarget));
+      }
+      return { records, total: liveTotal + countTargets.get(query).total };
+    },
+    recentLiveTargets(limit) {
+      return listLiveTargetRows.all("", limit, 0).map(toLiveTarget);
+    },
+    getLiveTarget(id) {
+      const row = liveTargetRow.get(id);
+      return row && toLiveTarget(row);
+    },
+    importLiveTargets(targets) {
+      return transaction(() => {
+        let imported = 0;
+        for (const target of [...targets].reverse()) {
+          if (liveTargetRow.get(target.id)) continue;
+          const id = targetIdentity(target.type, target.targetNumber);
+          if (id !== target.id) throw dataError(400, "目标编号无效");
+          const { longitude, latitude, altitude } = readPosition(target);
+          const trajectory = (target.trajectory ?? []).slice(-60);
+          putLiveTarget.run(id, target.type, target.targetNumber, target.name, longitude, latitude,
+            altitude, JSON.stringify(trajectory.length ? trajectory : [[longitude, latitude, altitude]]),
+            target.updatedAt ?? Date.now());
+          imported++;
+        }
+        return imported;
+      });
+    },
+    saveLiveTarget(target, trajectory) {
+      const updatedAt = Date.now();
+      putLiveTarget.run(target.id, target.type, target.targetNumber, target.name, target.longitude, target.latitude,
+        target.altitude, JSON.stringify(trajectory), updatedAt);
+      return { ...target, trajectory, updatedAt, source: "udp", live: true };
     },
     saveTarget(value, id) {
       const row = id ? targetRow.get(id) : null;

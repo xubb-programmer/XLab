@@ -145,20 +145,23 @@ export class ArtilleryPanel {
       }
     });
 
-    confirmBtn?.addEventListener("click", e => {
+    confirmBtn?.addEventListener("click", async e => {
       e.stopPropagation();
       const ptId = select.value;
       if (ptId && simulation?.mount) {
-        simulation.mount(ptId, deviceId || uav.id);
-        picker.hidden = true;
+        confirmBtn.disabled = true;
+        try {
+          if (await simulation.mount(ptId, deviceId || uav.id)) picker.hidden = true;
+        } finally {
+          confirmBtn.disabled = false;
+        }
       }
     });
 
-    unmountBtn?.addEventListener("click", e => {
+    unmountBtn?.addEventListener("click", async e => {
       e.stopPropagation();
       if (mounted?.id && simulation?.mount) {
-        simulation.mount(mounted.id, "");
-        picker.hidden = true;
+        if (await simulation.mount(mounted.id, "")) picker.hidden = true;
       }
     });
 

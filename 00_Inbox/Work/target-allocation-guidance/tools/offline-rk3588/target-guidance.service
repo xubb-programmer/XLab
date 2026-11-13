@@ -14,6 +14,7 @@ Environment=TARGET_GUIDANCE_VIDEO_CONFIG=/etc/target-guidance/video.json
 Environment=TARGET_GUIDANCE_TARGETS_CONFIG=/etc/target-guidance/targets.json
 Environment=TARGET_GUIDANCE_REPORTING_CONFIG=/etc/target-guidance/reporting.json
 Environment=TARGET_GUIDANCE_REPORTING_DB=/var/lib/target-guidance/reporting.sqlite
+Environment=TARGET_GUIDANCE_MANAGEMENT_DB=/var/lib/target-guidance/management/records.sqlite
 Environment=DEVICE_SIM_STATE_DIR=/var/lib/target-guidance/device-simulation
 ExecStart=/opt/jw/uav/current/node/bin/node server/serve.mjs
 Restart=on-failure

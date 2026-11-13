@@ -16,6 +16,7 @@ import { TargetReportModal } from "./ui/target-report-modal.js";
 import { initDeviceManager } from "./ui/device-simulation.js";
 import { ReconVideoMatrixModal } from "./ui/recon-video-matrix-modal.js";
 import { FirepowerAffiliationModal } from "./ui/firepower-affiliation-modal.js";
+import { initDataManagement } from "./ui/data-management.js";
 
 const targetFeedLabels = {
   unconfigured: "未配置",
@@ -30,6 +31,7 @@ const targetFeedLabels = {
 };
 
 let viewerManager = null;
+let deviceManager = null;
 let targetPanel = null;
 let reconVideoMatrixModal = null;
 let firepowerAffiliationModal = null;
@@ -49,17 +51,19 @@ function switchMainPage(pageName, options = {}) {
   const pageVideo = document.getElementById("page-video-matrix");
   const pageFirepower = document.getElementById("page-firepower-affiliation");
   const pageTools = document.getElementById("page-tools");
+  const pageDataManagement = document.getElementById("page-data-management");
 
   navBtnTactical?.classList.toggle("active", pageName === "tactical");
   navBtnVideoMatrix?.classList.toggle("active", pageName === "video-matrix");
   navBtnBatteryConfig?.classList.toggle("active", pageName === "firepower");
-  navBtnTools?.classList.toggle("active", pageName === "tools");
+  navBtnTools?.classList.toggle("active", pageName === "tools" || pageName === "data-management");
 
   for (const [page, visible] of [
     [pageTactical, pageName === "tactical"],
     [pageVideo, pageName === "video-matrix"],
     [pageFirepower, pageName === "firepower"],
-    [pageTools, pageName === "tools"]
+    [pageTools, pageName === "tools"],
+    [pageDataManagement, pageName === "data-management"]
   ]) {
     if (!page) continue;
     page.hidden = !visible;
@@ -77,6 +81,9 @@ function switchMainPage(pageName, options = {}) {
   } else if (pageName === "firepower") {
     firepowerAffiliationModal?.open(options?.keepDrawer);
     if (options?.openNew) firepowerAffiliationModal?.openDrawerForNew();
+  } else if (pageName === "data-management") {
+    document.getElementById("management-title")?.focus();
+    eventBus.emit("management:open");
   }
 }
 
@@ -85,6 +92,12 @@ function bindMainPageNavigation() {
   document.getElementById("nav-btn-video-matrix")?.addEventListener("click", () => switchMainPage("video-matrix"));
   document.getElementById("nav-btn-battery-config")?.addEventListener("click", () => switchMainPage("firepower"));
   document.getElementById("nav-btn-tools")?.addEventListener("click", () => switchMainPage("tools"));
+  const dataManagementButton = document.getElementById("btn-open-data-management");
+  dataManagementButton?.addEventListener("click", () => switchMainPage("data-management"));
+  document.getElementById("btn-data-management-back")?.addEventListener("click", () => {
+    switchMainPage("tools");
+    dataManagementButton?.focus();
+  });
   document.getElementById("btn-uav-recon-video-matrix")?.addEventListener("click", () => switchMainPage("video-matrix"));
   document.getElementById("btn-tactical-add-firepower")?.addEventListener("click", () =>
     switchMainPage("firepower", { keepDrawer: true, openNew: true }));
@@ -221,12 +234,13 @@ async function bootstrap() {
   // 6. 初始化 UI 交互控制台
   const statsPanel = new StatsPanel();
   // 6.0 初始化在线设备发现与角色台账 (EdgeAgent转发状态 + 在线无人机与地面火力阵位分类)
-  const deviceManager = initDeviceManager(viewerManager, artilleryPanel, {
+  deviceManager = initDeviceManager(viewerManager, artilleryPanel, {
     artilleryLayer,
     statsPanel,
     targetService,
     scenarioPoints: points
   });
+  if (activeMainPage === "data-management") eventBus.emit("management:open");
 
   // 6.1 初始化地面火力点手动配置弹窗
   const firepowerModal = new FirepowerConfigModal(
@@ -489,6 +503,10 @@ async function bootstrap() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
+  initDataManagement(() => ({
+    recon: deviceManager?.getUavs() ?? [],
+    firepower: deviceManager?.getFixedPoints() ?? []
+  }));
   bindMainPageNavigation();
   targetPanel = new TargetPanel(targetService, viewerManager);
   targetPanel.update(targetService.getAllTargets());

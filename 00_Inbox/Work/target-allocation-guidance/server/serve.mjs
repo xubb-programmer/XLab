@@ -11,25 +11,43 @@ import { loadTargetsConfig, openTargetFeed } from "./targets.mjs";
 import { ReportError, loadReportingConfig, prepareReportItems, readReportRequest, reportCapacity, reportIdPattern } from "./reporting.mjs";
 import { openReportBatches } from "./report-batches.mjs";
 import { edgeDeviceIdPattern } from "./edge-actions.mjs";
+import { readDataJson, serveDataManagement, writeDataError } from "./data-management.mjs";
+import { openOperationalStore } from "./operational-store.mjs";
+import { openPreviewRegistry } from "./preview-device-registry.mjs";
+import { mountedDeviceId, mountedDeviceIds, validateMounts } from "./device-mounts.mjs";
 import { hasGeographicPosition } from "../src/js/core/coordinates.js";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
-const scenarioPath = resolve(root, "public/scenarios/scenario-default.json");
+const scenarioPath = process.env.TARGET_GUIDANCE_SCENARIO || resolve(root, "public/scenarios/scenario-default.json");
 const port = Number(process.env.PORT ?? 4177);
 const host = process.env.TARGET_GUIDANCE_BIND_HOST || "127.0.0.1";
 const videoConfig = await loadVideoConfig(process.env.TARGET_GUIDANCE_VIDEO_CONFIG || resolve(root, "config/video.json"));
 let deviceSimulation;
+const managementDb = process.env.TARGET_GUIDANCE_MANAGEMENT_DB || resolve(root, "dist/data-preview/records.sqlite");
+const operations = openOperationalStore(managementDb);
+const managementRegistry = openPreviewRegistry(managementDb);
 const highresDir = resolve(root, "dist/offline-maps/highres-satellite");
 let highresDb;
 let highresTileQuery;
 const targetsConfig = await loadTargetsConfig(
   process.env.TARGET_GUIDANCE_TARGETS_CONFIG || resolve(root, "config/targets.json")
 );
-const targetFeed = await openTargetFeed(targetsConfig);
+const targetFeed = await openTargetFeed(targetsConfig, operations);
 const reportBatches = openReportBatches(
   process.env.TARGET_GUIDANCE_REPORTING_DB || resolve(root, "dist/reporting/reporting.sqlite"),
   targetFeed.sendEdgeAction
 );
+
+function getDeviceSimulation() {
+  deviceSimulation ??= openDeviceSimulation(videoConfig.rtspTimeoutOption, targetsConfig, {
+    readPoints: readFirepowerPoints,
+    enqueue: queueFirepowerWrite
+  }).catch(error => {
+    deviceSimulation = undefined;
+    throw error;
+  });
+  return deviceSimulation;
+}
 
 function writeReportJson(res, status, body) {
   res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
@@ -163,6 +181,27 @@ function parseRange(rangeHeader, size) {
 
 let pendingFirepowerWrite = Promise.resolve();
 
+function queueFirepowerWrite(write) {
+  const result = pendingFirepowerWrite.then(write);
+  pendingFirepowerWrite = result.catch(() => {});
+  return result;
+}
+
+async function saveFirepowerScenario(scenario) {
+  const devices = targetsConfig.state === "connecting" ? await getDeviceSimulation() : null;
+  validateMounts(scenario.firepowerPoints, devices?.standaloneIds() ?? new Set());
+  const temporaryPath = `${scenarioPath}.${randomUUID()}.tmp`;
+  try {
+    await writeFile(temporaryPath, JSON.stringify(scenario, null, 2) + "\n", "utf-8");
+    await rename(temporaryPath, scenarioPath);
+  } catch (error) {
+    await unlink(temporaryPath).catch(() => {});
+    throw error;
+  }
+  return { ...devices?.snapshot(Date.now(), mountedDeviceIds(scenario.firepowerPoints)),
+    firepowerPoints: scenario.firepowerPoints };
+}
+
 async function saveFirepowerPoint(point) {
   const raw = await readFile(scenarioPath, "utf-8");
   const scenario = JSON.parse(raw);
@@ -176,14 +215,7 @@ async function saveFirepowerPoint(point) {
   if (idx < 0) scenario.firepowerPoints.push(saved);
   else scenario.firepowerPoints[idx] = saved;
 
-  const temporaryPath = `${scenarioPath}.${randomUUID()}.tmp`;
-  try {
-    await writeFile(temporaryPath, JSON.stringify(scenario, null, 2) + "\n", "utf-8");
-    await rename(temporaryPath, scenarioPath);
-  } catch (error) {
-    await unlink(temporaryPath).catch(() => {});
-    throw error;
-  }
+  await saveFirepowerScenario(scenario);
   return saved;
 }
 
@@ -192,16 +224,66 @@ const server = createServer(async (req, res) => {
     const parsedUrl = new URL(req.url, "http://localhost");
     const pathname = decodeURIComponent(parsedUrl.pathname);
 
+    if (pathname.startsWith("/api/management/")) {
+      if (/^\/api\/management\/recon(?:\/|$)/.test(pathname)) {
+        return await queueFirepowerWrite(async () => {
+          const devices = targetsConfig.state === "connecting" ? await getDeviceSimulation() : null;
+          const mounts = mountedDeviceIds(await readFirepowerPoints());
+          return serveDataManagement(req, res, parsedUrl, pathname, operations, managementRegistry,
+            id => mounts.has(id) || devices?.isFirepower(id));
+        });
+      }
+      return await serveDataManagement(req, res, parsedUrl, pathname, operations, managementRegistry);
+    }
+
     if (pathname.startsWith("/api/device-simulation/")) {
-      deviceSimulation ??= openDeviceSimulation(videoConfig.rtspTimeoutOption, targetsConfig).catch(error => {
-        deviceSimulation = undefined;
-        throw error;
-      });
       try {
-        return await (await deviceSimulation).serve(req, res, parsedUrl);
+        return await (await getDeviceSimulation()).serve(req, res, parsedUrl);
       } catch (error) {
         console.error("设备管理监听不可用", error.message);
         return writeReportJson(res, 503, { error: "EdgeAgent设备状态通道不可用，请检查代理和MQTT配置" });
+      }
+    }
+
+    if (req.method === "POST" && pathname === "/api/scenario/firepower/mount") {
+      try {
+        const { pointId, deviceId } = await readDataJson(req);
+        if (typeof pointId !== "string" || !pointId || typeof deviceId !== "string" || deviceId.length > 500) {
+          return writeReportJson(res, 400, { error: "请选择火力点和挂载设备" });
+        }
+        const result = await queueFirepowerWrite(async () => {
+          const scenario = JSON.parse(await readFile(scenarioPath, "utf8"));
+          const points = scenario.firepowerPoints ?? [scenario.firepowerPoint].filter(Boolean);
+          const point = points.find(item => item.id === pointId);
+          if (!point) return { status: 404, error: "火力点不存在" };
+          const id = mountedDeviceId(deviceId);
+          if (deviceId.trim() && !id) return { status: 400, error: "挂载设备 ID 无效" };
+          const devices = targetsConfig.state === "connecting" ? await getDeviceSimulation() : null;
+          const state = devices?.snapshot(Date.now(), mountedDeviceIds(points));
+          const device = [...(state?.uavs ?? []), ...(state?.mounted ?? [])].find(item => item.deviceId === id);
+          if (id && mountedDeviceId(point.mountedDeviceId) !== id && (!device?.online || device.duplicateId)) {
+            return { status: 409, error: "设备离线、ID 重复或角色已变更，请刷新后重试" };
+          }
+          for (const other of points) {
+            if (other !== point && (!id || mountedDeviceId(other.mountedDeviceId) !== id)) continue;
+            const nextId = other === point ? id : "";
+            if (mountedDeviceId(other.mountedDeviceId) === nextId) continue;
+            if (other.mountedDeviceId) {
+              other.ip = other.unmountedIp ?? "127.0.0.1";
+              delete other.unmountedIp;
+            }
+            other.mountedDeviceId = nextId;
+            if (nextId) {
+              other.unmountedIp = other.ip || "127.0.0.1";
+              if (device?.deviceIp) other.ip = device.deviceIp;
+            }
+          }
+          scenario.firepowerPoints = points;
+          return saveFirepowerScenario(scenario);
+        });
+        return writeReportJson(res, result.status ?? 200, result);
+      } catch (error) {
+        return writeDataError(res, error);
       }
     }
 
@@ -213,20 +295,19 @@ const server = createServer(async (req, res) => {
         try {
           const payload = JSON.parse(body);
           if (Array.isArray(payload?.firepowerPoints)) {
-            const raw = await readFile(scenarioPath, "utf-8");
-            const scenario = JSON.parse(raw);
-            scenario.firepowerPoints = payload.firepowerPoints;
-            const temporaryPath = `${scenarioPath}.${randomUUID()}.tmp`;
-            await writeFile(temporaryPath, JSON.stringify(scenario, null, 2) + "\n", "utf-8");
-            await rename(temporaryPath, scenarioPath);
+            const result = await queueFirepowerWrite(async () => {
+              const scenario = JSON.parse(await readFile(scenarioPath, "utf-8"));
+              scenario.firepowerPoints = payload.firepowerPoints;
+              return saveFirepowerScenario(scenario);
+            });
             res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
-            res.end(JSON.stringify({ ok: true, firepowerPoints: scenario.firepowerPoints }));
+            res.end(JSON.stringify({ ok: true, ...result }));
             return;
           }
           res.writeHead(400, { "Content-Type": "application/json; charset=utf-8" });
           res.end(JSON.stringify({ ok: false, error: "缺少火力点列表。" }));
         } catch (e) {
-          res.writeHead(500, { "Content-Type": "application/json; charset=utf-8" });
+          res.writeHead(e.status || 500, { "Content-Type": "application/json; charset=utf-8" });
           res.end(JSON.stringify({ ok: false, error: e.message }));
         }
       });
@@ -275,16 +356,14 @@ const server = createServer(async (req, res) => {
         if (battalion !== undefined) updatedPoint.battalion = String(battalion).trim();
         if (company !== undefined) updatedPoint.company = String(company).trim();
         if (mountedDeviceId !== undefined) updatedPoint.mountedDeviceId = String(mountedDeviceId).trim();
-        const saving = pendingFirepowerWrite.then(() => saveFirepowerPoint(updatedPoint));
-        pendingFirepowerWrite = saving.catch(() => {});
         try {
-          const savedPoint = await saving;
+          const savedPoint = await queueFirepowerWrite(() => saveFirepowerPoint(updatedPoint));
           res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
           res.end(JSON.stringify({ ok: true, firepowerPoint: savedPoint }));
         } catch (err) {
-          console.error("无法保存阵位配置:", err);
-          res.writeHead(500, { "Content-Type": "application/json; charset=utf-8" });
-          res.end(JSON.stringify({ ok: false, error: "无法写入场景配置，请重试。" }));
+          if (!err.status) console.error("无法保存阵位配置:", err);
+          res.writeHead(err.status || 500, { "Content-Type": "application/json; charset=utf-8" });
+          res.end(JSON.stringify({ ok: false, error: err.status ? err.message : "无法写入场景配置，请重试。" }));
         }
       });
       return;
@@ -398,10 +477,15 @@ server.listen(port, host, () => {
   const { address, port } = server.address();
   const urlHost = address.includes(":") ? `[${address}]` : address;
   console.log(`[Target Allocation & Guidance] Server listening at http://${urlHost}:${port}/`);
+  if (targetsConfig.state === "connecting") {
+    void getDeviceSimulation().catch(error => console.error("设备状态订阅启动失败", error));
+  }
 });
 server.on("close", () => {
   targetFeed.close();
   reportBatches.close();
+  managementRegistry.close();
+  operations.close();
   void deviceSimulation?.then(simulation => simulation.close()).catch(() => {});
   highresDb?.close();
 });

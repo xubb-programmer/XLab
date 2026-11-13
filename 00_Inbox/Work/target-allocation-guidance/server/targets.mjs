@@ -69,12 +69,12 @@ export function decode1501Envelope(message) {
   };
 }
 
-export async function openTargetFeed(config) {
+export async function openTargetFeed(config, operations) {
   const instance = randomUUID();
   let state = config.state;
   let revision = 0;
   let client;
-  const records = new Map();
+  const records = new Map(operations.recentLiveTargets(MAX_RECORDS).reverse().map(target => [target.id, target]));
   const feed = {
     snapshot: () => ({
       state, instance, revision, targets: [...records.values()].reverse()
@@ -106,13 +106,19 @@ export async function openTargetFeed(config) {
     if (receivedTopic !== topic || packet.retain) return;
     const target = decode1501Envelope(message);
     if (!target) return;
-    const previousTrajectory = records.get(target.id)?.trajectory;
-    const trajectory = appendTrajectoryPoint(previousTrajectory, target);
-    if (trajectory === previousTrajectory) return;
-    records.delete(target.id);
-    records.set(target.id, { ...target, trajectory });
-    if (records.size > MAX_RECORDS) records.delete(records.keys().next().value);
-    revision++;
+    try {
+      const cached = records.get(target.id);
+      const previousTrajectory = (cached ?? operations.getLiveTarget(target.id))?.trajectory;
+      const trajectory = appendTrajectoryPoint(previousTrajectory, target);
+      if (cached && trajectory === previousTrajectory) return;
+      const saved = operations.saveLiveTarget(target, trajectory);
+      records.delete(target.id);
+      records.set(target.id, saved);
+      if (records.size > MAX_RECORDS) records.delete(records.keys().next().value);
+      revision++;
+    } catch (error) {
+      console.error("实时目标入库失败", error);
+    }
   });
   client.on("error", () => { state = "connection_error"; });
   client.on("offline", () => { state = "disconnected"; });

@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { decodeReport, openRegistry } from "./device-simulation-registry.mjs";
 import { serveVideo } from "./video.mjs";
+import { mountedDeviceIds } from "./device-mounts.mjs";
 
 const namespace = "/api/device-simulation";
 const MAX_UDP_BYTES = 65_507;
@@ -20,7 +21,7 @@ function json(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
-export async function openDeviceSimulation(rtspTimeoutOption = "timeout", mqttConfig = {}) {
+export async function openDeviceSimulation(rtspTimeoutOption, mqttConfig, scenario) {
   const source = process.env.DEVICE_SIM_SOURCE_IP || "192.168.10.130";
   const relaySource = process.env.DEVICE_SIM_RELAY_IP || mqttConfig.deviceStatusRelayIp || "";
   const onlineMs = integerSetting("DEVICE_SIM_ONLINE_MS", 5000, 1000, 300000);
@@ -86,14 +87,19 @@ export async function openDeviceSimulation(rtspTimeoutOption = "timeout", mqttCo
   console.log(`[Device Simulation] MQTT订阅 ${topic}，设备来源 ${source}，转发来源 ${relaySource}`);
 
   return {
+    isFirepower: registry.isFirepower,
+    standaloneIds: registry.standaloneIds,
+    snapshot: registry.snapshot,
     async serve(req, res, url) {
       const path = url.pathname.slice(namespace.length);
       if (req.method === "GET" && path === "/devices") {
-        return json(res, 200, { state, source, relaySource, topic, onlineMs, receiveError, ...registry.snapshot() });
+        const firepowerPoints = await scenario.readPoints();
+        return json(res, 200, { state, source, relaySource, topic, onlineMs, receiveError,
+          ...registry.snapshot(Date.now(), mountedDeviceIds(firepowerPoints)), firepowerPoints });
       }
       if (["GET", "HEAD"].includes(req.method) && ["/video/status", "/video/stream"].includes(path)) {
         const key = url.searchParams.get("uav");
-        const config = { ...registry.videoConfig(key), ffmpegPath, rtspTimeoutOption };
+        const config = { ...registry.videoConfig(key, mountedDeviceIds(await scenario.readPoints())), ffmpegPath, rtspTimeoutOption };
         return serveVideo(req, res, config, `/api${path}`, url.searchParams.get("id"), key);
       }
       if (req.method !== "POST" || !["/role", "/coordinates"].includes(path)) {
@@ -115,8 +121,18 @@ export async function openDeviceSimulation(rtspTimeoutOption = "timeout", mqttCo
         let body;
         try { body = JSON.parse(content); } catch { return json(res, 400, { error: "请求内容无效" }); }
         if (typeof body?.key !== "string" || !body.key) return json(res, 400, { error: "请选择一个设备" });
-        const result = path === "/role" ? registry.changeRole(body.key, body.role)
-          : registry.saveCoordinates(body.key, body.coordinates, body.name);
+        const result = await scenario.enqueue(async () => {
+          const firepowerPoints = await scenario.readPoints();
+          const mounts = mountedDeviceIds(firepowerPoints);
+          const deviceId = registry.deviceIdForKey(body.key);
+          if (path === "/role" && mounts.has(deviceId)) {
+            return { status: 409, error: "该设备已挂载到火力点，请在阵位上解除挂载后再转换角色" };
+          }
+          if (path === "/role") registry.changeRole(body.key, body.role);
+          else registry.saveCoordinates(body.key, body.coordinates, body.name);
+          return { ...registry.snapshot(Date.now(), mounts), firepowerPoints };
+        });
+        if (result.status) return json(res, result.status, { error: result.error });
         return json(res, 200, result);
       } catch (error) {
         if (!error.status) console.error(error);

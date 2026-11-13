@@ -122,7 +122,7 @@ JS
   npm run check
 )
 
-cp "$here"/{README.md,install.sh,runtime-packages.txt,migrate-edge-reporting.mjs} "$bundle/"
+cp "$here"/{README.md,install.sh,launch-map.sh,runtime-packages.txt,migrate-edge-reporting.mjs} "$bundle/"
 cp "$here"/*.service "$bundle/services/"
 printf 'os_id=%s\nos_version_id=%s\nos_version_codename=%s\narchitecture=%s\npackage_format=deb\nnode=%s\n' \
   "$ID" "$VERSION_ID" "${VERSION_CODENAME:-}" "$architecture" "$node_version" > "$bundle/BUILD.txt"

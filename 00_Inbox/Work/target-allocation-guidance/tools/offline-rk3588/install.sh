@@ -80,6 +80,7 @@ release="$prefix/releases/$release_id"
 if [[ ! -d "$release" ]]; then
   staging=$(mktemp -d "$prefix/releases/.stage.XXXXXX")
   cp -a "$bundle"/{bin,node,web} "$staging/"
+  install -m 0755 "$bundle/launch-map.sh" "$staging/launch-map.sh"
   ln -s "$state/scenarios" "$staging/web/public/scenarios"
   chown -R root:root "$staging"
   chmod -R go-w "$staging"

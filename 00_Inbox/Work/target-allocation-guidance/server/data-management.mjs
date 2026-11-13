@@ -33,7 +33,7 @@ export function writeDataError(res, error) {
   return writeJson(res, error.status ?? 500, { ok: false, error: error.status ? error.message : "数据管理操作失败" });
 }
 
-export async function serveDataManagement(req, res, url, pathname, operations, registry) {
+export async function serveDataManagement(req, res, url, pathname, operations, registry, deviceRoles) {
   try {
     const route = /^\/api\/management\/(recon|firepower|targets)(?:\/(.+))?$/.exec(pathname);
     if (!route) throw dataError(404, "找不到该管理入口");
@@ -45,9 +45,8 @@ export async function serveDataManagement(req, res, url, pathname, operations, r
       const offset = Math.min(1_000_000, Math.max(0, Math.trunc(Number(url.searchParams.get("offset"))) || 0));
       const limit = 30;
       if (type === "targets") return writeJson(res, 200, operations.listTargets(query, limit, offset));
-      const devices = registry.snapshot();
       const rows = type === "recon"
-        ? devices.uavs.map(deviceRecord)
+        ? registry.snapshot().uavs.filter(device => !deviceRoles?.(device.deviceId)).map(deviceRecord)
         : operations.listPoints().map(point => ({ ...point, origin: "point", online: false }));
       const matched = rows.filter(row => [row.id, row.name, row.deviceId, row.ip, row.battalion, row.company, row.mountedDeviceId]
         .some(value => String(value ?? "").toLowerCase().includes(query)));
@@ -67,6 +66,10 @@ export async function serveDataManagement(req, res, url, pathname, operations, r
       else record = operations.savePoint(value, id);
     } else {
       const device = id ? registry.managedDevice(id) : null;
+      const deviceId = value?.deviceId ?? device?.deviceId;
+      if (!remove && typeof deviceId === "string" && deviceRoles?.(deviceId.trim())) {
+        throw dataError(409, "该设备 ID 已是火力点，请先转回侦察席");
+      }
       if (device && (remove || (value.deviceId !== undefined && value.deviceId !== device.deviceId))) {
         const mounted = operations.listPoints().some(point =>
           point.mountedDeviceId === id || point.mountedDeviceId === device.deviceId);

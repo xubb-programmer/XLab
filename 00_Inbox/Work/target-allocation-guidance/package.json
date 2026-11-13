@@ -6,7 +6,6 @@
   "type": "module",
   "scripts": {
     "start": "node server/serve.mjs",
-    "preview:data": "node server/data-preview.mjs",
     "relay:edgeagent": "node tools/edgeagent-multicast-relay.mjs",
     "check": "node --check src/js/main.js && node --check server/serve.mjs"
   },

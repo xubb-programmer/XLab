@@ -60,6 +60,17 @@ sudo bash install.sh
 | 无人机实时经纬高 | 位置来源及设备标识仍待确定，安装后显示空值。 |
 | 目标上报 | 在 `edgeagent.json` 填写外部接收端的 IP 和端口。设备 `FIRE-01` 的示例地址为 `127.0.0.1:5567`。 |
 | 离线底图 | 页面默认离线，地图左上角可切换在线或离线。用 `/var/lib/target-guidance/scenarios/scenario-default.json` 中的 `mapMode` 配置初始模式。厦门细图从随包 SQLite 库读取，覆盖外使用概览。影像瓦片只提供底图，实际地面高程需另有数据来源。 |
+| 数据管理 | 从主界面的「工具 → 数据管理」查看实时记录和手工台账。设备上报目标及手工记录保存在 `/var/lib/target-guidance/management/records.sqlite`，设备最新快照保存在 `/var/lib/target-guidance/device-simulation/devices.sqlite`。重启后可恢复，设备收到新心跳后恢复在线。 |
+
+### 鲁班猫板上的地图显示
+
+从板卡桌面会话运行 `/opt/jw/uav/current/launch-map.sh`（源码目录中为 `bash tools/offline-rk3588/launch-map.sh`）。脚本在本地 X11 `:0` 会话使用板载 Mali EGL，在 XRDP 虚拟桌面使用 Mesa GLX。可在 `chrome://gpu` 查看 WebGL 渲染器。远程桌面里检测到软件渲染时，地图会降低绘图分辨率以改善交互。
+
+也可从 Windows PowerShell 建立 SSH 转发，让 Windows 浏览器使用本机显卡渲染。保持终端开启，在浏览器打开 `http://127.0.0.1:14177/`：
+
+```powershell
+ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:14177:127.0.0.1:4177 cat@192.168.0.201
+```
 
 ## 目标上报协议
 

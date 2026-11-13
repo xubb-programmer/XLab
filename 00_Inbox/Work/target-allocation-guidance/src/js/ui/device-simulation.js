@@ -31,6 +31,7 @@ export function initDeviceManager(viewer, panel, options = {}) {
   let saving = false;
   let currentUavs = [];
   let currentFixedPoints = [];
+  let currentMountedDevices = [];
   const modelPoint = p => ({
     ...p,
     battalion: p.battalion || "1营",
@@ -46,7 +47,8 @@ export function initDeviceManager(viewer, panel, options = {}) {
   });
   const scenarioFirepower = scenarioPoints.map(modelPoint);
   const scenarioUavs = [];
-  let lastDeviceResult = { uavs: [], firepower: [] };
+  let lastDeviceResult = { uavs: [], firepower: [], mounted: [] };
+  let savedScenarioPoints = scenarioFirepower.map(point => ({ ...point }));
 
   const ORG_STORAGE_KEY = "tactical_org_structure";
 
@@ -188,9 +190,11 @@ export function initDeviceManager(viewer, panel, options = {}) {
   }
 
   async function saveBatchFirepower() {
+    saving = true;
+    revision++;
     try {
       const firepowerPoints = scenarioFirepower.map(p => ({
-        id: p.id, name: p.name, battalion: p.battalion, company: p.company,
+        id: p.id, name: p.name, battalion: p.battalion, company: p.company, deviceId: p.deviceId,
         mountedDeviceId: p.mountedDeviceId || "", unmountedIp: p.unmountedIp,
         longitude: p.longitude, latitude: p.latitude, altitude: p.altitude,
         strikeRange: p.strikeRange, maxTargets: p.maxTargets, ip: p.ip, port: p.port
@@ -200,18 +204,24 @@ export function initDeviceManager(viewer, panel, options = {}) {
         body: JSON.stringify({ firepowerPoints })
       });
       const result = await response.json();
-      return response.ok && result.ok;
+      if (!response.ok || !result.ok) throw new Error(result.error || "保存火力点配置失败");
+      render({ ...lastDeviceResult, ...result });
+      return true;
     } catch (error) {
-      console.warn("[Scenario] 批量保存阵位隶属失败:", error);
+      render({ ...lastDeviceResult, firepowerPoints: savedScenarioPoints });
+      if (status) status.textContent = error.message;
       return false;
+    } finally {
+      saving = false;
     }
   }
 
   function findMountedDevice(deviceId) {
     if (!deviceId) return undefined;
-    return currentUavs.find(u => u.id === deviceId)
-      ?? currentUavs.find(u => extractDeviceId(u) === deviceId && u.online)
-      ?? currentUavs.find(u => extractDeviceId(u) === deviceId);
+    const devices = [...currentMountedDevices, ...currentUavs];
+    return devices.find(u => u.id === deviceId)
+      ?? devices.find(u => extractDeviceId(u) === deviceId && u.online)
+      ?? devices.find(u => extractDeviceId(u) === deviceId);
   }
 
   function getMountedDeviceIp(deviceId) {
@@ -247,15 +257,28 @@ export function initDeviceManager(viewer, panel, options = {}) {
 
   async function mountDevice(firepowerId, deviceId) {
     const pt = scenarioFirepower.find(p => p.id === firepowerId);
-    if (!pt) return;
-    assignPointMount(pt, deviceId);
-    await saveBatchFirepower();
-    previous = null;
-    render(lastDeviceResult);
-    eventBus.emit("firepower:affiliationChanged", getAffiliationTree());
+    if (!pt || saving) return false;
+    saving = true;
+    revision++;
+    try {
+      const response = await fetch("/api/scenario/firepower/mount", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pointId: firepowerId, deviceId })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "保存挂载失败");
+      render(result);
+      return true;
+    } catch (error) {
+      if (status) status.textContent = error.message;
+      return false;
+    } finally {
+      saving = false;
+    }
   }
 
   async function updatePointAffiliation(firepowerId, updates = {}) {
+    if (saving) return false;
     const pt = scenarioFirepower.find(p => p.id === firepowerId);
     if (pt) {
       if (updates.battalion !== undefined) pt.battalion = updates.battalion.trim();
@@ -270,14 +293,12 @@ export function initDeviceManager(viewer, panel, options = {}) {
       if (updates.longitude !== undefined) pt.longitude = updates.longitude;
       if (updates.latitude !== undefined) pt.latitude = updates.latitude;
       if (updates.altitude !== undefined) pt.altitude = updates.altitude;
-      await saveBatchFirepower();
-      previous = null;
-      render(lastDeviceResult);
-      eventBus.emit("firepower:affiliationChanged", getAffiliationTree());
+      return saveBatchFirepower();
     }
   }
 
   async function addFirepowerPoint(data = {}) {
+    if (saving) return null;
     const nextIdx = scenarioFirepower.length + 1;
     const randomId = Array.from(crypto.getRandomValues(new Uint8Array(12)), byte => byte.toString(16).padStart(2, "0")).join("");
     const newId = `FIRE-${randomId}`;
@@ -300,14 +321,11 @@ export function initDeviceManager(viewer, panel, options = {}) {
     };
     assignPointMount(newPt, data.mountedDeviceId);
     scenarioFirepower.push(newPt);
-    await saveBatchFirepower();
-    previous = null;
-    render(lastDeviceResult);
-    eventBus.emit("firepower:affiliationChanged", getAffiliationTree());
-    return newPt;
+    return await saveBatchFirepower() ? newPt : null;
   }
 
   async function removeFirepowerPoint(firepowerId) {
+    if (saving) return false;
     let removed = false;
     const idx = scenarioFirepower.findIndex(p => p.id === firepowerId);
     if (idx >= 0) {
@@ -320,17 +338,14 @@ export function initDeviceManager(viewer, panel, options = {}) {
       removed = true;
     }
     if (removed) {
-      await saveBatchFirepower();
-      previous = null;
-      render(lastDeviceResult);
-      eventBus.emit("firepower:affiliationChanged", getAffiliationTree());
-      return true;
+      return saveBatchFirepower();
     }
     return false;
   }
 
   async function autoMountAvailableDevices() {
-    const availableUavs = currentUavs.filter(u => u.online && !u.mountedTo);
+    if (saving) return 0;
+    const availableUavs = currentUavs.filter(u => u.online && !u.duplicateId && !u.mountedTo && !u.isScenario);
     let uavIdx = 0;
     let mountedCount = 0;
     for (const pt of scenarioFirepower) {
@@ -341,10 +356,7 @@ export function initDeviceManager(viewer, panel, options = {}) {
       }
     }
     if (mountedCount > 0) {
-      await saveBatchFirepower();
-      previous = null;
-      render(lastDeviceResult);
-      eventBus.emit("firepower:affiliationChanged", getAffiliationTree());
+      if (!await saveBatchFirepower()) return 0;
     }
     return mountedCount;
   }
@@ -515,12 +527,16 @@ export function initDeviceManager(viewer, panel, options = {}) {
   const callbacks = {
     edit: (device, role) => editor.open(device, false, role),
     mount: (firepowerId, deviceId) => mountDevice(firepowerId, deviceId),
-    getFirepowerPoints: () => [...scenarioFirepower, ...currentFixedPoints],
+    getFirepowerPoints: () => [...scenarioFirepower],
     openAffiliation: () => eventBus.emit("firepower:openAffiliationModal"),
     async changeRole(device, role) {
-      if (saving) return;
+      if (saving) throw new Error("设备配置正在保存，请稍后重试");
       if (device.isScenario) {
         if (role === "uav") {
+          if (device.mountedDeviceId) {
+            if (!await mountDevice(device.id, "")) throw new Error("解除挂载失败");
+            return;
+          }
           const idx = scenarioFirepower.findIndex(p => p.id === device.id);
           if (idx >= 0) {
             const pt = scenarioFirepower.splice(idx, 1)[0];
@@ -548,11 +564,7 @@ export function initDeviceManager(viewer, panel, options = {}) {
         }
         return;
       }
-      try {
-        await save("role", { key: device.id, role });
-      } catch (error) {
-        if (status) status.textContent = error.message;
-      }
+      await save("role", { key: device.id, role });
     }
   };
   const editor = new FirepowerConfigModal(
@@ -581,8 +593,14 @@ export function initDeviceManager(viewer, panel, options = {}) {
     (device, role) => callbacks.changeRole(device, role)
   );
 
-  function render({ uavs = [], firepower = [] }) {
-    lastDeviceResult = { uavs, firepower };
+  function render({ uavs = [], firepower = [], mounted = [], firepowerPoints }) {
+    lastDeviceResult = { uavs, firepower, mounted };
+    if (firepowerPoints) {
+      savedScenarioPoints = firepowerPoints.map(modelPoint);
+      const localReconIds = new Set(scenarioUavs.map(point => point.id));
+      scenarioFirepower.splice(0, scenarioFirepower.length,
+        ...savedScenarioPoints.filter(point => !localReconIds.has(point.id)).map(point => ({ ...point })));
+    }
     const model = devices => devices.map(({ key, name, customName, deviceId, online, coordinates, videoSources, videoChannels, canAssign, duplicateId, staleSnapshot, deviceIp }) => ({
       id: key, name, customName, deviceId, online, ...coordinates, videoSources,
       videoChannels: Array.isArray(videoChannels) ? videoChannels : [],
@@ -593,8 +611,12 @@ export function initDeviceManager(viewer, panel, options = {}) {
       port: coordinates?.port || 5567,
       simulation: true, device: true
     }));
-    currentUavs = [...scenarioUavs, ...model(uavs)];
-    currentFixedPoints = model(firepower);
+    const mountIds = new Set(scenarioFirepower.map(point => point.mountedDeviceId).filter(Boolean));
+    const devices = model([...uavs, ...mounted]);
+    const isMounted = device => mountIds.has(device.deviceId) || mountIds.has(device.id);
+    currentMountedDevices = devices.filter(isMounted);
+    currentUavs = [...scenarioUavs.filter(device => !isMounted(device)), ...devices.filter(device => !isMounted(device))];
+    currentFixedPoints = model(firepower).filter(device => !isMounted(device));
     const allFirepowerPoints = [...scenarioFirepower, ...currentFixedPoints];
 
     // 动态依据EdgeAgent转发的在线侦察设备计算火力点在线状态
@@ -604,6 +626,7 @@ export function initDeviceManager(viewer, panel, options = {}) {
       if (pt.mountedDeviceId) {
         const mountedDevice = findMountedDevice(pt.mountedDeviceId);
         pt.online = Boolean(mountedDevice && mountedDevice.online !== false);
+        pt.mountedDeviceName = mountedDevice?.name || "";
         if (mountedDevice?.deviceIp && pt.isScenario) {
           if (pt.ip !== mountedDevice.deviceIp) pt.unmountedIp ??= pt.ip;
           pt.ip = mountedDevice.deviceIp;
