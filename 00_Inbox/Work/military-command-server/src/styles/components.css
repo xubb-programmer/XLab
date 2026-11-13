@@ -1,5 +1,6 @@
 /* 按钮与交互控件 */
 .btn {
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4387,6 +4388,7 @@ button.artillery-card:hover {
 }
 
 .node-branch-actions .btn {
+  text-decoration: none;
   font-size: 10px;
   padding: 2px 6px;
 }

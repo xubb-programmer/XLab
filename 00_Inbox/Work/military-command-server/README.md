@@ -4,7 +4,60 @@
 
 界面与接入范围见 [当前需求](REQUIREMENTS.md)。
 
-RK3588 Ubuntu 20.04 ARM64 的打包、安装及现场配置见 [离线部署](tools/offline-rk3588/README.md)。
+## 工程结构
+
+- `src/` 存放浏览器入口、样式和 JavaScript。地图图层在 `src/js/layers/`，界面模块在 `src/js/ui/`。
+- `server/` 存放 Node.js HTTP 入口、设备通信和数据存储模块。
+- `public/` 存放场景和浏览器可读取的静态资源。
+- `config/` 存放本地配置和示例。
+- `tools/` 存放开发辅助脚本和 RK3588 离线部署工具。
+- `dist/` 存放生成的离线地图和本地运行数据。
+
+## 在新 RK3588 上离线部署
+
+目标板需运行 Ubuntu 20.04 ARM64 或 Debian 11 ARM64，并使用 systemd。先在目标板确认发行版和架构。
+
+```bash
+. /etc/os-release
+printf '%s %s\n' "$ID" "$VERSION_ID"
+dpkg --print-architecture
+```
+
+从现有开发板 `cat@192.168.0.201` 的 `/opt/jw/military-command-server/` 获取对应部署包及同名的 `.sha256` 文件，用 U 盘或局域网拷贝到新板的同一目录。
+
+| 系统检查结果 | 部署包 |
+| --- | --- |
+| `ubuntu 20.04`、`arm64` | `military-command-server-ubuntu20.04-arm64.tar.gz` |
+| `debian 11`、`arm64` | `military-command-server-debian11-arm64.tar.gz` |
+
+进入文件所在目录，按系统设置 `package` 并执行。安装脚本会核对发行版、版本和架构，使用包内 APT 仓库安装依赖。
+
+```bash
+package=military-command-server-ubuntu20.04-arm64.tar.gz
+# Debian 11 使用 package=military-command-server-debian11-arm64.tar.gz
+sha256sum -c "$package.sha256" &&
+tar --touch -xzf "$package" &&
+cd target-guidance-offline &&
+sudo bash install.sh
+```
+
+安装后检查服务。三项应分别显示 `enabled` 和 `active`，目标接口应返回 `"state":"subscribed"`。
+
+```bash
+systemctl is-enabled mosquitto server-edge military-command-server
+systemctl is-active mosquitto server-edge military-command-server
+curl -fsS http://127.0.0.1:4177/api/targets
+```
+
+在已安装 Chromium 的板卡桌面终端打开指挥界面。
+
+```bash
+/opt/jw/military-command-server/current/launch-military-command.sh
+```
+
+现场接入时，在 `/etc/target-guidance/edgeagent.json` 配置 UDP 发送端白名单、组播来源及 `fire-01-tcp` 的接收地址和端口，修改后重启 `server-edge.service`。在同目录的 `video.json` 配置 RTSP，修改后重启 `military-command-server.service`。「即时通讯」和「侦察车智能助手」分别依赖板上已有的 LANChat 和语音助手服务。
+
+Ubuntu 包已通过完整性校验，原生 Ubuntu 20.04 ARM64 板上的断网首装待现场验证。打包及更多现场配置见 [离线部署](tools/offline-rk3588/README.md)。
 
 ## 切换卫星底图
 
@@ -24,7 +77,7 @@ RK3588 Ubuntu 20.04 ARM64 的打包、安装及现场配置见 [离线部署](to
 
 ## 数据管理
 
-执行 `npm start`，从主界面的「工具 → 数据管理」打开。页面支持新增、按名称或编号查询、编辑和删除三类手动录入的资料。Windows 开发环境沿用原有的 `dist/data-preview/records.sqlite`，离线板端保存在 `/var/lib/target-guidance/management/records.sqlite`。
+执行 `npm start`，从主界面的「设置 → 数据管理」打开。页面支持新增、按名称或编号查询、编辑和删除三类手动录入的资料。Windows 开发环境沿用原有的 `dist/data-preview/records.sqlite`，离线板端保存在 `/var/lib/target-guidance/management/records.sqlite`。
 
 数据管理同时显示战术大厅的侦察席、火力点、已入库目标和手工台账。设备上报记录支持查看详情及目标轨迹，手工记录支持编辑和删除。恢复已删除的手工目标时，可用相同类型和编号重新新增。
 
@@ -32,7 +85,7 @@ RK3588 Ubuntu 20.04 ARM64 的打包、安装及现场配置见 [离线部署](to
 
 ## 地图目标
 
-从 `config/targets.example.json` 复制出 `config/targets.json`，填写 EdgeAgent 使用的 `brokerUrl`（`mqtt://` 或 `mqtts://`），按需填写 `username` 和 `password`。目标主题默认为 `edge/v1/devices/plc_udp_dev/data`，设备状态主题默认为 `edge/v1/devices/plc_udp_multicast_dev/data`。
+从 `config/targets.example.json` 复制出 `config/targets.json`，填写 EdgeAgent 使用的 `brokerUrl`（`mqtt://` 或 `mqtts://`），按需填写 `username` 和 `password`。目标主题默认为 `edge/v1/devices/target-input-device/data`，设备状态主题默认为 `edge/v1/devices/device-status-device/data`。
 
 Windows + WSL 开发时，设备状态的 Windows 组播转发器接收 `239.255.0.1:5678`，把原始报文单播送入 WSL EdgeAgent 的 `18082` 端口；EdgeAgent 再通过 MQTT 发布到设备状态主题。启动 EdgeAgent 和网页后，在项目目录另开终端运行 `npm run relay:edgeagent`。RK3588 部署包中的 EdgeAgent 则直接加入该组播并发布到 MQTT。平台只订阅 MQTT。目标报文仍由 EdgeAgent 通过 MQTT 转发。服务解析 ScoutMonitor 033（1501）报文，在地图和右侧列表显示侦察目标与炸点目标。配置和连接状态在顶部显示。没有收到有效报文时，目标列表为空。
 

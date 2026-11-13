@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Military Command Desktop Tools
+Exec=/opt/jw/military-command-server/current/open-desktop-tool.sh %u
+NoDisplay=true
+Terminal=false
+MimeType=x-scheme-handler/military-command;

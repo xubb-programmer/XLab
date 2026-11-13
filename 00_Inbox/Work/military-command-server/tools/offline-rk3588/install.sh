@@ -24,7 +24,7 @@ architecture=$(dpkg --print-architecture 2>/dev/null || true)
   die "此系统包要求 ${build[architecture]:-未知} ARM64，当前架构为 ${architecture:-未知}。"
 [[ $("$bundle/node/bin/node" -p 'process.arch') == arm64 ]] || die '包内 Node.js 无法在本机运行。'
 
-prefix=/opt/jw/uav
+prefix=/opt/jw/military-command-server
 conf=/etc/target-guidance
 state=/var/lib/target-guidance
 tmp=$(mktemp -d /var/tmp/target-guidance-apt.XXXXXX)
@@ -80,7 +80,9 @@ release="$prefix/releases/$release_id"
 if [[ ! -d "$release" ]]; then
   staging=$(mktemp -d "$prefix/releases/.stage.XXXXXX")
   cp -a "$bundle"/{bin,node,web} "$staging/"
-  install -m 0755 "$bundle/launch-map.sh" "$staging/launch-map.sh"
+  install -m 0755 "$bundle/launch-military-command.sh" "$staging/launch-military-command.sh"
+  install -m 0755 "$bundle/open-desktop-tool.sh" "$staging/open-desktop-tool.sh"
+  install -m 0644 "$bundle/military-command-tools.desktop" "$staging/military-command-tools.desktop"
   ln -s "$state/scenarios" "$staging/web/public/scenarios"
   chown -R root:root "$staging"
   chmod -R go-w "$staging"
@@ -90,7 +92,7 @@ if [[ ! -d "$release" ]]; then
 fi
 ldd "$release/bin/edgeagent" > "$tmp/edge-ldd"
 if grep -q 'not found' "$tmp/edge-ldd"; then cat "$tmp/edge-ldd" >&2; die 'EdgeAgent 运行库不齐。'; fi
-for service in target-guidance target-guidance-edge; do
+for service in military-command-server server-edge; do
   install -m 0644 "$bundle/services/$service.service" "/etc/systemd/system/$service.service"
 done
 
@@ -116,8 +118,8 @@ switch_release() {
 switch_release "$release"
 systemctl daemon-reload
 systemctl enable --now mosquitto.service
-systemctl enable target-guidance-edge.service target-guidance.service
-restart_services() { systemctl restart target-guidance-edge.service target-guidance.service; }
+systemctl enable server-edge.service military-command-server.service
+restart_services() { systemctl restart server-edge.service military-command-server.service; }
 service_ready() (
   set -a
   . "$conf/web.env"
@@ -137,7 +139,7 @@ for (let i = 0; i < 15; i++) {
 process.exit(1);
 JS
 )
-if ! restart_services || ! service_ready || ! systemctl is-active --quiet target-guidance-edge.service; then
+if ! restart_services || ! service_ready || ! systemctl is-active --quiet server-edge.service; then
   if [[ -f "$tmp/edgeagent-previous.json" ]]; then
     replace_edge_config "$tmp/edgeagent-previous.json"
   fi
@@ -145,7 +147,7 @@ if ! restart_services || ! service_ready || ! systemctl is-active --quiet target
     switch_release "$previous"
     restart_services || true
   fi
-  die '启动检查未通过，请查看 journalctl -u target-guidance -u target-guidance-edge -u mosquitto。'
+  die '启动检查未通过，请查看 journalctl -u military-command-server -u server-edge -u mosquitto。'
 fi
 
 printf '离线部署完成。网页端口和监听地址见 %s/web.env。\n' "$conf"

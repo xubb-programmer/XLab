@@ -96,8 +96,8 @@ const read = file => JSON.parse(readFileSync(join(dir, file), "utf8"));
 const write = (file, data) => writeFileSync(join(dir, file), JSON.stringify(data, null, 2) + "\n");
 write("targets.json", {
   brokerUrl: "mqtt://127.0.0.1:1883",
-  topic: "edge/v1/devices/plc_udp_dev/data",
-  deviceStatusTopic: "edge/v1/devices/plc_udp_multicast_dev/data",
+  topic: "edge/v1/devices/target-input-device/data",
+  deviceStatusTopic: "edge/v1/devices/device-status-device/data",
   deviceStatusRelayIp: ""
 });
 write("video.json", { ...read("video.json"), rtspTimeoutOption: "stimeout" });
@@ -108,7 +108,7 @@ write(file, {
   center: source.center,
   mapMode: "offline",
   uavs: [{ id: "UAV-RECON-01" }],
-  firepowerPoints: [{ id: "FIRE-01", name: "地面火力点" }]
+  firepowerPoints: [{ id: "FIRE-01", deviceId: "fire-01-device", name: "地面火力点" }]
 });
 JS
 (
@@ -122,7 +122,8 @@ JS
   npm run check
 )
 
-cp "$here"/{README.md,install.sh,launch-map.sh,runtime-packages.txt,migrate-edge-reporting.mjs} "$bundle/"
+cp "$here"/{README.md,install.sh,launch-military-command.sh,open-desktop-tool.sh,military-command-tools.desktop,runtime-packages.txt,migrate-edge-reporting.mjs} "$bundle/"
+cp "$web/README.md" "$bundle/PROJECT-README.md"
 cp "$here"/*.service "$bundle/services/"
 printf 'os_id=%s\nos_version_id=%s\nos_version_codename=%s\narchitecture=%s\npackage_format=deb\nnode=%s\n' \
   "$ID" "$VERSION_ID" "${VERSION_CODENAME:-}" "$architecture" "$node_version" > "$bundle/BUILD.txt"
@@ -130,7 +131,7 @@ printf 'os_id=%s\nos_version_id=%s\nos_version_codename=%s\narchitecture=%s\npac
   cd "$bundle"
   find . -type f ! -path ./SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
 )
-archive="$output/target-guidance-${ID}${VERSION_ID}-${architecture}.tar.gz"
+archive="$output/military-command-server-${ID}${VERSION_ID}-${architecture}.tar.gz"
 tar -C "$work" -czf "$work/bundle.tar.gz" target-guidance-offline
 mv "$work/bundle.tar.gz" "$archive"
 (cd "$output" && sha256sum "$(basename "$archive")" > "$(basename "$archive").sha256")

@@ -44,10 +44,10 @@ for (const point of points) {
 }
 
 if (edge.config_version === 2 && template?.config_version === 2) {
-  const targetChannelId = "udp_plc_dev";
-  const targetDeviceId = "plc_udp_dev";
-  const statusChannelId = "udp_multicast_dev";
-  const statusDeviceId = "plc_udp_multicast_dev";
+  const targetChannelId = "target-input-udp";
+  const targetDeviceId = "target-input-device";
+  const statusChannelId = "device-status-udp";
+  const statusDeviceId = "device-status-device";
   const templateTargetChannel = template.channels.find(channel => channel.channel_id === targetChannelId);
   const currentTargetChannel = edge.channels.find(channel => channel.channel_id === targetChannelId);
   if (!currentTargetChannel && templateTargetChannel) {

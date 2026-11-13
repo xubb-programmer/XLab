@@ -10,7 +10,7 @@
 sudo bash tools/offline-rk3588/prepare.sh /path/to/output
 ```
 
-按 XLab 现有目录结构，脚本会定位 EdgeAgent 源码。若源码位置不同，可传入 `EDGEAGENT_SOURCE`（含 `EdgeAgent.pro` 的目录）。可用 `NODE_VERSION` 固定要构建的 Node.js 24 发行版本。输出文件名按构建环境自动生成，例如 Debian 11 ARM64 为 `target-guidance-debian11-arm64.tar.gz`，并同时生成 `.sha256` 文件。
+按 XLab 现有目录结构，脚本会定位 EdgeAgent 源码。若源码位置不同，可传入 `EDGEAGENT_SOURCE`（含 `EdgeAgent.pro` 的目录）。可用 `NODE_VERSION` 固定要构建的 Node.js 24 发行版本。输出文件名按构建环境自动生成，例如 Debian 11 ARM64 为 `military-command-server-debian11-arm64.tar.gz`，并同时生成 `.sha256` 文件。
 
 全球和中国概览放在项目的 `public/offline-satellite/`。MapTileGenerator 的 `tiles.db` 和 `manifest.json` 放在 `dist/offline-maps/highres-satellite/`。打包脚本为 SQLite 库生成独立快照并检查完整性，安装时随网页一起复制。板上由随包 Node.js 24 读取数据库。
 
@@ -20,7 +20,7 @@ sudo bash tools/offline-rk3588/prepare.sh /path/to/output
 mkdir -p dist/rk3588
 docker run --rm --platform linux/arm64 \
   -v "$PWD:/workspace:ro" -v "$PWD/dist/rk3588:/out" ubuntu:20.04 \
-  bash /workspace/00_Inbox/Work/target-allocation-guidance/tools/offline-rk3588/prepare.sh /out
+  bash /workspace/00_Inbox/Work/military-command-server/tools/offline-rk3588/prepare.sh /out
 ```
 
 Debian 11 目标板应使用 Debian 11 ARM64 构建环境，例如在 Debian 11 ARM64 板上直接执行；也可以把上面的镜像替换为内部可用的 `debian:11` ARM64 镜像。不要用 Ubuntu 生成的 DEB 包安装到 Debian，反之亦然。
@@ -42,29 +42,31 @@ sudo env OFFLINE_BUILD=1 \
 确认板卡系统时间正确。现场没有公网授时时，可使用板卡 RTC 或现场内网 NTP。把两个输出文件拷到目标板，在同一个目录执行。
 
 ```bash
-sha256sum -c target-guidance-debian11-arm64.tar.gz.sha256
-tar --touch -xzf target-guidance-debian11-arm64.tar.gz
+sha256sum -c military-command-server-debian11-arm64.tar.gz.sha256
+tar --touch -xzf military-command-server-debian11-arm64.tar.gz
 cd target-guidance-offline
 sudo bash install.sh
 ```
 
-安装器检查系统发行版、版本和架构，只从包内的 APT 仓库装依赖。Mosquitto、EdgeAgent 和网页服务由 systemd 启动。程序装在 `/opt/jw/uav`，站点配置在 `/etc/target-guidance`，阵位数据在 `/var/lib/target-guidance/scenarios`。重复安装会保留已配置的站点参数和阵位文件，并为旧 EdgeAgent 配置补上设备状态组播通道。初次安装默认启用离线底图。实际 RTSP 地址和现场来源需要配置。
+安装器检查系统发行版、版本和架构，只从包内的 APT 仓库装依赖。Mosquitto、EdgeAgent 和网页服务由 systemd 启动。程序装在 `/opt/jw/military-command-server`，站点配置在 `/etc/target-guidance`，阵位数据在 `/var/lib/target-guidance/scenarios`。重复安装会保留已配置的站点参数和阵位文件，并为旧 EdgeAgent 配置补上设备状态组播通道。初次安装默认启用离线底图。实际 RTSP 地址和现场来源需要配置。
 
 | 现场项 | 初始值与后续配置 |
 | --- | --- |
-| 网页 | 默认在板上访问 `http://127.0.0.1:4177/`。用内网电脑访问时，把 `web.env` 的 `TARGET_GUIDANCE_BIND_HOST` 改为板卡的内网 IP，并限制访问来源，再重启 `target-guidance`。 |
+| 网页 | 默认在板上访问 `http://127.0.0.1:4177/`。用内网电脑访问时，把 `web.env` 的 `TARGET_GUIDANCE_BIND_HOST` 改为板卡的内网 IP，并限制访问来源，再重启 `military-command-server`。 |
 | MQTT | 默认使用本机 `127.0.0.1:1883`。若板上已有 Broker，沿用其配置，并核对网页和 EdgeAgent 的账号及主题。 |
-| ScoutMonitor | UDP 目标端口为 `28080`。将 ScoutMonitor 的内网 IP 以 `IP:0` 形式加入 `edgeagent.json` 中的 `allowed_peers`，再重启 `target-guidance-edge`。 |
-| 侦察与火力设备状态 | EdgeAgent 直接加入 `239.255.0.1:5678` 组播并发布到 `edge/v1/devices/plc_udp_multicast_dev/data`。包内默认只接收 `192.168.10.130`；设备源 IP 不同时，修改 `edgeagent.json` 对应通道的 `allowed_peers` 后重启 `target-guidance-edge`。网页从本机 MQTT 订阅该主题。 |
+| ScoutMonitor | UDP 目标端口为 `28080`。将 ScoutMonitor 的内网 IP 以 `IP:0` 形式加入 `edgeagent.json` 中的 `allowed_peers`，再重启 `server-edge`。 |
+| 侦察与火力设备状态 | EdgeAgent 直接加入 `239.255.0.1:5678` 组播并发布到 `edge/v1/devices/device-status-device/data`。包内默认只接收 `192.168.10.130`；设备源 IP 不同时，修改 `edgeagent.json` 对应通道的 `allowed_peers` 后重启 `server-edge`。网页从本机 MQTT 订阅该主题。 |
 | RTSP 视频 | 在 `video.json` 按无人机填写内网 RTSP 地址。随目标发行版打包的 FFmpeg 使用 `stimeout`，更换 FFmpeg 版本时按实际支持的选项调整。 |
 | 无人机实时经纬高 | 位置来源及设备标识仍待确定，安装后显示空值。 |
-| 目标上报 | 在 `edgeagent.json` 填写外部接收端的 IP 和端口。设备 `FIRE-01` 的示例地址为 `127.0.0.1:5567`。 |
+| 目标上报 | 在 `edgeagent.json` 填写外部接收端的 IP 和端口。设备 `fire-01-device` 的示例地址为 `127.0.0.1:5567`。 |
 | 离线底图 | 页面默认离线，地图左上角可切换在线或离线。用 `/var/lib/target-guidance/scenarios/scenario-default.json` 中的 `mapMode` 配置初始模式。厦门细图从随包 SQLite 库读取，覆盖外使用概览。影像瓦片只提供底图，实际地面高程需另有数据来源。 |
-| 数据管理 | 从主界面的「工具 → 数据管理」查看实时记录和手工台账。设备上报目标及手工记录保存在 `/var/lib/target-guidance/management/records.sqlite`，设备最新快照保存在 `/var/lib/target-guidance/device-simulation/devices.sqlite`。重启后可恢复，设备收到新心跳后恢复在线。 |
+| 数据管理 | 从主界面的「设置 → 数据管理」查看实时记录和手工台账。设备上报目标及手工记录保存在 `/var/lib/target-guidance/management/records.sqlite`，设备最新快照保存在 `/var/lib/target-guidance/device-simulation/devices.sqlite`。重启后可恢复，设备收到新心跳后恢复在线。 |
 
-### 鲁班猫板上的地图显示
+### 鲁班猫板上的指挥界面
 
-从板卡桌面会话运行 `/opt/jw/uav/current/launch-map.sh`（源码目录中为 `bash tools/offline-rk3588/launch-map.sh`）。脚本在本地 X11 `:0` 会话使用板载 Mali EGL，在 XRDP 虚拟桌面使用 Mesa GLX。可在 `chrome://gpu` 查看 WebGL 渲染器。远程桌面里检测到软件渲染时，地图会降低绘图分辨率以改善交互。
+从板卡桌面会话运行 `/opt/jw/military-command-server/current/launch-military-command.sh`（源码目录中为 `bash tools/offline-rk3588/launch-military-command.sh`）。脚本在本地 X11 `:0` 会话使用板载 Mali EGL，在 XRDP 虚拟桌面使用 Mesa GLX。可在 `chrome://gpu` 查看 WebGL 渲染器。远程桌面里检测到软件渲染时，地图会降低绘图分辨率以改善交互。
+
+从板卡桌面启动指挥界面时，启动脚本为当前用户注册工具入口。「即时通讯」启动 LANChat，「侦察车智能助手」在新标签页打开板上的 HTTPS 页面。即时通讯首次打开可能弹出外部应用确认。
 
 也可从 Windows PowerShell 建立 SSH 转发，让 Windows 浏览器使用本机显卡渲染。保持终端开启，在浏览器打开 `http://127.0.0.1:14177/`：
 
@@ -96,7 +98,7 @@ ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:14177:127.0.0.1:4177 cat@192.168
 3. 配置现场 RTSP 地址，验证打开、切换、关闭视频。配置无人机位置和离线瓦片后，分别核对轨迹和底图覆盖。
 4. 用测试数据与外部接收端核对目标报文和回执。
 
-系统日志可用 `journalctl -u target-guidance -u target-guidance-edge -u mosquitto` 查看。请按 RK3588 上实际安装的系统镜像准备对应包，Debian 与 Ubuntu 的系统包分开验收。
+系统日志可用 `journalctl -u military-command-server -u server-edge -u mosquitto` 查看。请按 RK3588 上实际安装的系统镜像准备对应包，Debian 与 Ubuntu 的系统包分开验收。
 
 ## 已验证
 

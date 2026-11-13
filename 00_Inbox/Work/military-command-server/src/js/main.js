@@ -46,22 +46,26 @@ function switchMainPage(pageName, options = {}) {
   const navBtnTactical = document.getElementById("nav-btn-tactical");
   const navBtnVideoMatrix = document.getElementById("nav-btn-video-matrix");
   const navBtnBatteryConfig = document.getElementById("nav-btn-battery-config");
+  const navBtnSettings = document.getElementById("nav-btn-settings");
   const navBtnTools = document.getElementById("nav-btn-tools");
   const pageTactical = document.getElementById("page-tactical");
   const pageVideo = document.getElementById("page-video-matrix");
   const pageFirepower = document.getElementById("page-firepower-affiliation");
+  const pageSettings = document.getElementById("page-settings");
   const pageTools = document.getElementById("page-tools");
   const pageDataManagement = document.getElementById("page-data-management");
 
   navBtnTactical?.classList.toggle("active", pageName === "tactical");
   navBtnVideoMatrix?.classList.toggle("active", pageName === "video-matrix");
   navBtnBatteryConfig?.classList.toggle("active", pageName === "firepower");
-  navBtnTools?.classList.toggle("active", pageName === "tools" || pageName === "data-management");
+  navBtnSettings?.classList.toggle("active", pageName === "settings" || pageName === "data-management");
+  navBtnTools?.classList.toggle("active", pageName === "tools");
 
   for (const [page, visible] of [
     [pageTactical, pageName === "tactical"],
     [pageVideo, pageName === "video-matrix"],
     [pageFirepower, pageName === "firepower"],
+    [pageSettings, pageName === "settings"],
     [pageTools, pageName === "tools"],
     [pageDataManagement, pageName === "data-management"]
   ]) {
@@ -91,11 +95,12 @@ function bindMainPageNavigation() {
   document.getElementById("nav-btn-tactical")?.addEventListener("click", () => switchMainPage("tactical"));
   document.getElementById("nav-btn-video-matrix")?.addEventListener("click", () => switchMainPage("video-matrix"));
   document.getElementById("nav-btn-battery-config")?.addEventListener("click", () => switchMainPage("firepower"));
+  document.getElementById("nav-btn-settings")?.addEventListener("click", () => switchMainPage("settings"));
   document.getElementById("nav-btn-tools")?.addEventListener("click", () => switchMainPage("tools"));
   const dataManagementButton = document.getElementById("btn-open-data-management");
   dataManagementButton?.addEventListener("click", () => switchMainPage("data-management"));
   document.getElementById("btn-data-management-back")?.addEventListener("click", () => {
-    switchMainPage("tools");
+    switchMainPage("settings");
     dataManagementButton?.focus();
   });
   document.getElementById("btn-uav-recon-video-matrix")?.addEventListener("click", () => switchMainPage("video-matrix"));

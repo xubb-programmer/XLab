@@ -1,5 +1,5 @@
 {
-  "name": "uav-recon-artillery-guidance",
+  "name": "military-command-server",
   "version": "1.0.0",
   "description": "单兵作战智能化指挥平台 (Individual Combat Intelligent Command Platform)",
   "private": true,

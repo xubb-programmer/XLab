@@ -10,7 +10,7 @@
   },
   "channels": [
     {
-      "channel_id": "udp_plc_dev",
+      "channel_id": "target-input-udp",
       "enabled": true,
       "type": "udp",
       "bind_address": "0.0.0.0",
@@ -20,7 +20,7 @@
       "multicast": { "enabled": false }
     },
     {
-      "channel_id": "udp_multicast_dev",
+      "channel_id": "device-status-udp",
       "enabled": true,
       "type": "udp",
       "bind_address": "0.0.0.0",
@@ -34,7 +34,7 @@
       }
     },
     {
-      "channel_id": "firepower_01_tcp",
+      "channel_id": "fire-01-tcp",
       "type": "tcp",
       "role": "client",
       "remote_host": "127.0.0.1",
@@ -43,8 +43,8 @@
     }
   ],
   "devices": [
-    { "device_id": "plc_udp_dev", "channel_id": "udp_plc_dev", "qos": 0, "message_format": "json" },
-    { "device_id": "plc_udp_multicast_dev", "channel_id": "udp_multicast_dev", "qos": 0, "message_format": "json" },
-    { "device_id": "FIRE-01", "channel_id": "firepower_01_tcp", "qos": 1, "message_format": "json" }
+    { "device_id": "target-input-device", "channel_id": "target-input-udp", "qos": 0, "message_format": "json" },
+    { "device_id": "device-status-device", "channel_id": "device-status-udp", "qos": 0, "message_format": "json" },
+    { "device_id": "fire-01-device", "channel_id": "fire-01-tcp", "qos": 1, "message_format": "json" }
   ]
 }

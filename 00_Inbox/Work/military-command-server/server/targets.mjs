@@ -4,8 +4,8 @@ import { isIPv4 } from "node:net";
 import { createEdgeActionSender } from "./edge-actions.mjs";
 import { appendTrajectoryPoint } from "../src/js/core/target-trajectory.js";
 
-const DEFAULT_TOPIC = "edge/v1/devices/plc_udp_dev/data";
-const DEFAULT_DEVICE_STATUS_TOPIC = "edge/v1/devices/plc_udp_multicast_dev/data";
+const DEFAULT_TOPIC = "edge/v1/devices/target-input-device/data";
+const DEFAULT_DEVICE_STATUS_TOPIC = "edge/v1/devices/device-status-device/data";
 const HEADER_LENGTH = 26;
 const MAX_RECORDS = 300;
 

@@ -110,6 +110,9 @@
           <span class="nav-tab-text">视频总览</span>
           <span id="nav-video-source-count" class="video-source-count-badge">检测中…</span>
         </button>
+        <button type="button" id="nav-btn-settings" class="topbar-nav-tab">
+          <span class="nav-tab-text">设置</span>
+        </button>
         <button type="button" id="nav-btn-tools" class="topbar-nav-tab">
           <span class="nav-tab-text">工具</span>
         </button>
@@ -374,7 +377,7 @@
                 <input type="number" step="1" min="1" max="65535" id="cfg-fp-port" class="text-input mono" placeholder="5567" required>
               </div>
             </div>
-            <input type="hidden" id="cfg-fp-device" value="FIRE-01">
+            <input type="hidden" id="cfg-fp-device" value="fire-01-device">
 
             <div class="modal-helper-row">
               <button type="button" id="btn-pick-map-center" class="btn btn-sm btn-tactical-tool" title="将当前三维地图画面中心坐标填入">
@@ -789,6 +792,14 @@
 
     <section id="page-tools" class="page-view fullpage-view" aria-label="工具" hidden>
       <div class="view-body management-page">
+        <a class="btn" href="https://127.0.0.1:18007/?v=0903a" target="_blank" rel="noopener">侦察车智能助手</a>
+        <a class="btn" href="military-command://lanchat">即时通讯</a>
+        <button class="btn" type="button" disabled>情报辅助分析</button>
+      </div>
+    </section>
+
+    <section id="page-settings" class="page-view fullpage-view" aria-label="设置" hidden>
+      <div class="view-body management-page">
         <button class="btn" id="btn-open-data-management" type="button">数据管理</button>
       </div>
     </section>
@@ -798,7 +809,7 @@
         <div class="header-title-group">
           <div class="view-title"><strong id="management-title" tabindex="-1">数据管理</strong></div>
         </div>
-        <button type="button" id="btn-data-management-back" class="btn btn-secondary">返回工具</button>
+        <button type="button" id="btn-data-management-back" class="btn btn-secondary">返回设置</button>
       </header>
       <div class="view-body management-page">
         <nav class="management-tabs" aria-label="数据类别">
