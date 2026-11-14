@@ -12,7 +12,7 @@ sudo bash tools/offline-rk3588/prepare.sh /path/to/output
 
 按 XLab 现有目录结构，脚本会定位 EdgeAgent 源码。若源码位置不同，可传入 `EDGEAGENT_SOURCE`（含 `EdgeAgent.pro` 的目录）。可用 `NODE_VERSION` 固定要构建的 Node.js 24 发行版本。输出文件名按构建环境自动生成，例如 Debian 11 ARM64 为 `military-command-server-debian11-arm64.tar.gz`，并同时生成 `.sha256` 文件。
 
-全球和中国概览放在项目的 `public/offline-satellite/`。MapTileGenerator 的 `tiles.db` 和 `manifest.json` 放在 `dist/offline-maps/highres-satellite/`。打包脚本为 SQLite 库生成独立快照并检查完整性，安装时随网页一起复制。板上由随包 Node.js 24 读取数据库。
+全球和中国概览放在项目的 `public/offline-satellite/`。厦门和朱日和—赤峰源图分别保存在 `dist/offline-maps/highres-satellite/` 与 `dist/offline-maps/zhurihe-chifeng/`。打包时 `merge-maps.mjs` 用 SQLite 在线备份制作一致性快照，合并成 `combined-theaters/tiles.db`，按战区图层生成精确瓦片覆盖并检查完整性。若朱日和—赤峰数据库仍有非空 WAL 写入日志，脚本默认停止打包；确需先发布当前下载进度时设置 `ALLOW_INCOMPLETE_OFFLINE_MAP=1`，输出会标记为 `provisional`。正式图集应在下载结束、写入检查点完成后重新生成。板上由随包 Node.js 24 读取合并库。
 
 若用 Docker，从 XLab 根目录执行以下命令。先建好输出目录，且 Docker 已能运行 `linux/arm64` 镜像。
 
@@ -29,7 +29,7 @@ Debian 11 目标板应使用 Debian 11 ARM64 构建环境，例如在 Debian 11 
 
 ```bash
 sudo env OFFLINE_BUILD=1 \
-  NODE_CACHE_DIR=/var/cache/target-guidance \
+  NODE_CACHE_DIR=/var/cache/military-command-server \
   NODE_MODULES_SOURCE=/path/to/node_modules \
   EDGEAGENT_SOURCE=/path/to/EdgeAgent \
   bash tools/offline-rk3588/prepare.sh /path/to/output
@@ -44,23 +44,25 @@ sudo env OFFLINE_BUILD=1 \
 ```bash
 sha256sum -c military-command-server-debian11-arm64.tar.gz.sha256
 tar --touch -xzf military-command-server-debian11-arm64.tar.gz
-cd target-guidance-offline
+cd military-command-server-offline
 sudo bash install.sh
 ```
 
-安装器检查系统发行版、版本和架构，只从包内的 APT 仓库装依赖。Mosquitto、EdgeAgent 和网页服务由 systemd 启动。程序装在 `/opt/jw/military-command-server`，站点配置在 `/etc/target-guidance`，阵位数据在 `/var/lib/target-guidance/scenarios`。重复安装会保留已配置的站点参数和阵位文件，并为旧 EdgeAgent 配置补上设备状态组播通道。初次安装默认启用离线底图。实际 RTSP 地址和现场来源需要配置。
+安装器检查系统发行版、版本和架构，只从包内的 APT 仓库装依赖。Mosquitto、EdgeAgent 和网页服务由 systemd 启动。程序装在 `/opt/jw/military-command-server`，站点配置在 `/etc/military-command-server`，阵位数据在 `/var/lib/military-command-server/scenarios`。重复安装会保留已配置的站点参数和阵位文件，并为旧 EdgeAgent 配置补上设备状态组播通道。初次安装默认启用离线底图。实际 RTSP 地址和现场来源需要配置。
+
+从旧命名版本升级时，安装器暂停网页和 EdgeAgent，迁移配置、场景、数据库、服务账户和构建缓存。服务账户的 UID/GID 保持原值，启动检查失败时恢复原路径、账户和服务配置。EdgeAgent 使用默认节点名的部署会切换到 `military_command_server_edge`，其状态主题也随之更新。
 
 | 现场项 | 初始值与后续配置 |
 | --- | --- |
-| 网页 | 默认在板上访问 `http://127.0.0.1:4177/`。用内网电脑访问时，把 `web.env` 的 `TARGET_GUIDANCE_BIND_HOST` 改为板卡的内网 IP，并限制访问来源，再重启 `military-command-server`。 |
+| 网页 | 默认在板上访问 `http://127.0.0.1:4177/`。用内网电脑访问时，把 `web.env` 的 `MILITARY_COMMAND_SERVER_BIND_HOST` 改为板卡的内网 IP，并限制访问来源，再重启 `military-command-server`。 |
 | MQTT | 默认使用本机 `127.0.0.1:1883`。若板上已有 Broker，沿用其配置，并核对网页和 EdgeAgent 的账号及主题。 |
 | ScoutMonitor | UDP 目标端口为 `28080`。将 ScoutMonitor 的内网 IP 以 `IP:0` 形式加入 `edgeagent.json` 中的 `allowed_peers`，再重启 `server-edge`。 |
-| 侦察与火力设备状态 | EdgeAgent 直接加入 `239.255.0.1:5678` 组播并发布到 `edge/v1/devices/device-status-device/data`。包内默认只接收 `192.168.10.130`；设备源 IP 不同时，修改 `edgeagent.json` 对应通道的 `allowed_peers` 后重启 `server-edge`。网页从本机 MQTT 订阅该主题。 |
+| 侦察与火力设备状态 | EdgeAgent 直接加入 `239.255.0.1:5678` 组播并发布到 `edge/v1/devices/device-status-device/data`。在 `edgeagent.json` 的 `device-status-udp.allowed_peers` 中逐项填写所有发送端的 `IP:0`，在 `web.env` 中以逗号分隔填写相同的 `DEVICE_SIM_SOURCE_IPS`，例如 `192.168.10.102,192.168.10.130`，然后重启 `server-edge` 和 `military-command-server`。网页从本机 MQTT 订阅该主题。 |
 | RTSP 视频 | 在 `video.json` 按无人机填写内网 RTSP 地址。随目标发行版打包的 FFmpeg 使用 `stimeout`，更换 FFmpeg 版本时按实际支持的选项调整。 |
-| 无人机实时经纬高 | 位置来源及设备标识仍待确定，安装后显示空值。 |
+| 无人机实时经纬高 | 由设备状态组播的 `飞机位置` 提供，可在地图上独立显示载荷位置与轨迹。 |
 | 目标上报 | 在 `edgeagent.json` 填写外部接收端的 IP 和端口。设备 `fire-01-device` 的示例地址为 `127.0.0.1:5567`。 |
-| 离线底图 | 页面默认离线，地图左上角可切换在线或离线。用 `/var/lib/target-guidance/scenarios/scenario-default.json` 中的 `mapMode` 配置初始模式。厦门细图从随包 SQLite 库读取，覆盖外使用概览。影像瓦片只提供底图，实际地面高程需另有数据来源。 |
-| 数据管理 | 从主界面的「设置 → 数据管理」查看实时记录和手工台账。设备上报目标及手工记录保存在 `/var/lib/target-guidance/management/records.sqlite`，设备最新快照保存在 `/var/lib/target-guidance/device-simulation/devices.sqlite`。重启后可恢复，设备收到新心跳后恢复在线。 |
+| 离线底图 | 页面默认离线，地图左上角可切换在线或离线。用 `/var/lib/military-command-server/scenarios/scenario-default.json` 中的 `mapMode` 配置初始模式。厦门、朱日和和赤峰从随包合并 SQLite 图集读取，各自按图层范围显示，覆盖外使用概览。影像瓦片只提供底图，实际地面高程需另有数据来源。 |
+| 数据管理 | 从主界面的「设置 → 数据管理」查看实时记录和手工台账。设备上报目标及手工记录保存在 `/var/lib/military-command-server/management/records.sqlite`，设备最新快照保存在 `/var/lib/military-command-server/device-simulation/devices.sqlite`。重启后可恢复，设备收到新心跳后恢复在线。 |
 
 ### 鲁班猫板上的指挥界面
 
@@ -71,25 +73,27 @@ sudo bash install.sh
 也可从 Windows PowerShell 建立 SSH 转发，让 Windows 浏览器使用本机显卡渲染。保持终端开启，在浏览器打开 `http://127.0.0.1:14177/`：
 
 ```powershell
-ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:14177:127.0.0.1:4177 cat@192.168.0.201
+ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:14177:127.0.0.1:4177 ztl@192.168.0.201
 ```
 
 ## 目标上报协议
 
 目标上报与上图使用同一 MQTT Broker。网页的阵位「EdgeAgent 设备 ID」对应 `edgeagent.json` 中的 `device_id`。为每个外部接收端配置一个 TCP 客户端通道，`remote_host` 和 `remote_port` 指向接收端，使用换行分帧和 `message_format: "json"`。配置生效需重启 EdgeAgent。升级时安装器会用旧场景里的地址为尚无设备绑定的阵位补建通道。配置了 MQTT 权限时，网页服务需能向对应设备的 `commands` 发布并订阅 `command-results`、`data`。
 
-每个目标发送一行 UTF-8 JSON，末尾追加 LF（`0x0A`）。经纬度为十进制度数值，四舍五入至六位小数，高程取整到米。默认请求和接收端成功回执如下，回执也以 LF 结尾。
+每个目标发送一行 UTF-8 JSON，末尾追加 LF（`0x0A`）。经纬度为十进制度数值，四舍五入至六位小数，高程取整到米。请求中的 `name` 固定为 `Action`。接收端回执也以 LF 结尾。
+
+发送前将 `lon`、`lat` 按 CGCS2000 经纬度投影为高斯坐标，采用 Gauss2Geo 默认的 6° 第 21 带（中央经线 123°E）。`x` 为含 500,000 米假东偏的东坐标，`y` 为北坐标，数值四舍五入到 0.01 米。
 
 ```jsonl
-{"name":"target","params":{"lon":10.123457,"lat":-20.654321,"elevate":51},"request_id":"example-id"}
+{"name":"Action","params":{"lon":118.900024,"lat":42.263227,"elevate":50,"x":161689.49,"y":4689023.06},"request_id":"example-id"}
 {"ok":true,"request_id":"example-id"}
 ```
 
-接收端回传同一 `request_id`。失败回执使用 `ok: false`，可带 `error` 说明。EdgeAgent 的发送回执用于报告转发失败，接收端回执用于确认接收。
+接收端回传同一 `request_id`。平台收到来自同一设备且带布尔值 `ok: true` 的匹配 JSON 回执时确认成功。失败回执使用 `ok: false`，可带 `error` 说明。EdgeAgent 的发送回执用于报告转发失败。
 
-接收端能够明确证明未处理时，可在失败回执中返回 `processed: false`。队列满用 `code: "queue_full"`，终端忙用 `code: "busy"`。缺少处理结果的失败回执归为「结果未知」。
+接收端能够确认未处理时，可在失败回执中返回 `processed: false`。队列满用 `code: "queue_full"`，终端忙用 `code: "busy"`。缺少处理结果的失败回执归为「结果未知」。
 
-上报记录保存在 `/var/lib/target-guidance/reporting.sqlite`。每个部署实例使用独立数据库，升级沿用已有记录。网页的「上报记录」可查询批次、核实结果未知的目标和差量重试。
+上报记录保存在 `/var/lib/military-command-server/reporting.sqlite`。每个部署实例使用独立数据库，升级沿用已有记录。网页的「上报记录」可查询批次、核实结果未知的目标和差量重试。
 
 ## 现场验收
 
@@ -104,6 +108,6 @@ ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:14177:127.0.0.1:4177 cat@192.168
 
 已在 RK3588 上用 Ubuntu 20.04 ARM64 隔离环境执行包内安装脚本。环境只有回环网络，APT 从包内装齐依赖，真实 EdgeAgent 和 Mosquitto 将侦察目标、炸点目标两类 1501 测试报文转给网页服务。浏览器已验证离线模式无公网请求。
 
-当前验证目标为 Debian 11 ARM64（`cat@192.168.0.201`）：包应在 Debian 11 ARM64 构建环境生成，并使用包内 DEB 仓库安装，避免依赖联网 APT 源。
+当前验证目标为 Debian 11 ARM64（`ztl@192.168.0.201`）：包应在 Debian 11 ARM64 构建环境生成，并使用包内 DEB 仓库安装，避免依赖联网 APT 源。
 
 隔离环境用测试程序启动服务进程。原生 Ubuntu 20.04 镜像上的 systemd 开机自启、实际 RTSP 视频和外部接收端仍需现场验收。

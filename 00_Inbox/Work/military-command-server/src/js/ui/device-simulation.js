@@ -19,7 +19,7 @@ function extractDeviceId(dev) {
 }
 
 export function initDeviceManager(viewer, panel, options = {}) {
-  const { artilleryLayer, statsPanel, targetService, scenarioPoints = [] } = options;
+  const { artilleryLayer, statsPanel, targetService, scenarioPoints = [], configuredUavs = [] } = options;
   const status = document.getElementById("device-simulation-status");
   if (status) {
     status.hidden = false;
@@ -28,10 +28,12 @@ export function initDeviceManager(viewer, panel, options = {}) {
 
   let previous = null;
   let revision = 0;
+  let refreshRequest = 0;
   let saving = false;
-  let currentUavs = [];
+  let currentUavs = configuredUavs;
   let currentFixedPoints = [];
   let currentMountedDevices = [];
+  let aircraftSignature;
   const modelPoint = p => ({
     ...p,
     battalion: p.battalion || "1营",
@@ -46,7 +48,9 @@ export function initDeviceManager(viewer, panel, options = {}) {
     port: p.port || 5567
   });
   const scenarioFirepower = scenarioPoints.map(modelPoint);
-  const scenarioUavs = [];
+  const scenarioUavs = configuredUavs.map(uav => ({ ...uav, isScenario: true }));
+  let scenarioRevision;
+  let savedScenarioUavs = scenarioUavs.map(uav => ({ ...uav }));
   let lastDeviceResult = { uavs: [], firepower: [], mounted: [] };
   let savedScenarioPoints = scenarioFirepower.map(point => ({ ...point }));
 
@@ -189,7 +193,7 @@ export function initDeviceManager(viewer, panel, options = {}) {
     return false;
   }
 
-  async function saveBatchFirepower() {
+  async function saveBatchFirepower({ includeUavs = false } = {}) {
     saving = true;
     revision++;
     try {
@@ -201,14 +205,14 @@ export function initDeviceManager(viewer, panel, options = {}) {
       }));
       const response = await fetch("/api/scenario/firepower/batch", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firepowerPoints })
+        body: JSON.stringify({ firepowerPoints, scenarioRevision, ...(includeUavs && { scenarioUavs }) })
       });
       const result = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error || "保存火力点配置失败");
       render({ ...lastDeviceResult, ...result });
       return true;
     } catch (error) {
-      render({ ...lastDeviceResult, firepowerPoints: savedScenarioPoints });
+      render({ ...lastDeviceResult, firepowerPoints: savedScenarioPoints, scenarioUavs: savedScenarioUavs });
       if (status) status.textContent = error.message;
       return false;
     } finally {
@@ -263,7 +267,7 @@ export function initDeviceManager(viewer, panel, options = {}) {
     try {
       const response = await fetch("/api/scenario/firepower/mount", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pointId: firepowerId, deviceId })
+        body: JSON.stringify({ pointId: firepowerId, deviceId, scenarioRevision })
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "保存挂载失败");
@@ -322,25 +326,6 @@ export function initDeviceManager(viewer, panel, options = {}) {
     assignPointMount(newPt, data.mountedDeviceId);
     scenarioFirepower.push(newPt);
     return await saveBatchFirepower() ? newPt : null;
-  }
-
-  async function removeFirepowerPoint(firepowerId) {
-    if (saving) return false;
-    let removed = false;
-    const idx = scenarioFirepower.findIndex(p => p.id === firepowerId);
-    if (idx >= 0) {
-      scenarioFirepower.splice(idx, 1);
-      removed = true;
-    }
-    const fixedIdx = currentFixedPoints.findIndex(p => p.id === firepowerId);
-    if (fixedIdx >= 0) {
-      currentFixedPoints.splice(fixedIdx, 1);
-      removed = true;
-    }
-    if (removed) {
-      return saveBatchFirepower();
-    }
-    return false;
   }
 
   async function autoMountAvailableDevices() {
@@ -540,26 +525,15 @@ export function initDeviceManager(viewer, panel, options = {}) {
           const idx = scenarioFirepower.findIndex(p => p.id === device.id);
           if (idx >= 0) {
             const pt = scenarioFirepower.splice(idx, 1)[0];
-            scenarioUavs.push({
-              ...pt,
-              videoSources: pt.videoSources || 2,
-              videoChannels: pt.videoChannels && pt.videoChannels.length ? pt.videoChannels : [
-                { id: `${pt.id}-c1`, label: `${pt.name} 视频1`, available: true },
-                { id: `${pt.id}-c2`, label: `${pt.name} 视频2`, available: true }
-              ]
-            });
-            previous = null;
-            render(lastDeviceResult);
-            if (status) status.textContent = `${device.name || device.id} 已转为侦察席`;
+            scenarioUavs.push(pt);
+            if (!await saveBatchFirepower({ includeUavs: true })) throw new Error("转换为侦察席失败");
           }
         } else if (role === "firepower") {
           const idx = scenarioUavs.findIndex(p => p.id === device.id);
           if (idx >= 0) {
             const pt = scenarioUavs.splice(idx, 1)[0];
-            scenarioFirepower.push(pt);
-            previous = null;
-            render(lastDeviceResult);
-            if (status) status.textContent = `${device.name || device.id} 已转为火力点`;
+            scenarioFirepower.push(modelPoint(pt));
+            if (!await saveBatchFirepower({ includeUavs: true })) throw new Error("转换为火力点失败");
           }
         }
         return;
@@ -569,23 +543,27 @@ export function initDeviceManager(viewer, panel, options = {}) {
   };
   const editor = new FirepowerConfigModal(
     viewer,
-    null,
-    async (key, coordinates, name) => {
-      const scenarioPt = [...scenarioFirepower, ...scenarioUavs].find(p => p.id === key);
-      if (scenarioPt) {
-        const deviceIp = scenarioPt.isScenario ? getMountedDeviceIp(scenarioPt.mountedDeviceId) : "";
-        Object.assign(scenarioPt, coordinates, { name });
-        if (deviceIp) scenarioPt.ip = deviceIp;
+    async (point, coordinates, name) => {
+      if (saving) throw new Error("设备配置正在保存，请稍后重试");
+      const key = point.id;
+      if (point.isScenario) {
+        const recon = scenarioUavs.find(p => p.id === key);
+        const scenarioPt = recon || scenarioFirepower.find(p => p.id === key);
+        if (!scenarioPt) throw new Error("场景记录已删除，请关闭后刷新");
+        saving = true;
+        revision++;
         try {
-          await fetch("/api/scenario/firepower", {
+          const response = await fetch("/api/scenario/firepower", {
             method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(scenarioPt)
+            body: JSON.stringify({ ...scenarioPt, ...(coordinates ?? { longitude: null, latitude: null, altitude: null }),
+              name, scenarioRevision, kind: recon ? "recon" : "firepower" })
           });
-        } catch (error) {
-          console.warn("[Scenario] 保存场景阵位坐标失败:", error);
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || "保存场景坐标失败");
+          render(result);
+        } finally {
+          saving = false;
         }
-        previous = null;
-        render(lastDeviceResult);
         return;
       }
       return save("coordinates", { key, coordinates, name });
@@ -593,13 +571,25 @@ export function initDeviceManager(viewer, panel, options = {}) {
     (device, role) => callbacks.changeRole(device, role)
   );
 
-  function render({ uavs = [], firepower = [], mounted = [], firepowerPoints }) {
-    lastDeviceResult = { uavs, firepower, mounted };
+  function render({ uavs = [], firepower = [], mounted = [], aircraft, firepowerPoints, scenarioUavs: nextUavs, scenarioRevision: nextRevision }) {
+    lastDeviceResult = { uavs, firepower, mounted, aircraft: aircraft ?? lastDeviceResult.aircraft };
+    if (aircraft) {
+      const signature = JSON.stringify(aircraft);
+      if (signature !== aircraftSignature) {
+        aircraftSignature = signature;
+        eventBus.emit("aircraft:updated", aircraft);
+      }
+    }
+    if (nextRevision) scenarioRevision = nextRevision;
+    if (nextUavs) {
+      savedScenarioUavs = nextUavs.map(uav => ({
+        ...uav, name: uav.name || uav.callsign || uav.id, isScenario: true
+      }));
+      scenarioUavs.splice(0, scenarioUavs.length, ...savedScenarioUavs.map(uav => ({ ...uav })));
+    }
     if (firepowerPoints) {
       savedScenarioPoints = firepowerPoints.map(modelPoint);
-      const localReconIds = new Set(scenarioUavs.map(point => point.id));
-      scenarioFirepower.splice(0, scenarioFirepower.length,
-        ...savedScenarioPoints.filter(point => !localReconIds.has(point.id)).map(point => ({ ...point })));
+      scenarioFirepower.splice(0, scenarioFirepower.length, ...savedScenarioPoints.map(point => ({ ...point })));
     }
     const model = devices => devices.map(({ key, name, customName, deviceId, online, coordinates, videoSources, videoChannels, canAssign, duplicateId, staleSnapshot, deviceIp }) => ({
       id: key, name, customName, deviceId, online, ...coordinates, videoSources,
@@ -611,11 +601,14 @@ export function initDeviceManager(viewer, panel, options = {}) {
       port: coordinates?.port || 5567,
       simulation: true, device: true
     }));
+    // 后端现在分别返回侦察视图和火力挂载视图；同一设备可以同时存在于两者。
+    // 侦察列表只使用 uavs，避免把 mounted 视图再次拼接造成重复卡片。
+    const devices = model(uavs);
+    const mountedDevices = model(mounted);
     const mountIds = new Set(scenarioFirepower.map(point => point.mountedDeviceId).filter(Boolean));
-    const devices = model([...uavs, ...mounted]);
     const isMounted = device => mountIds.has(device.deviceId) || mountIds.has(device.id);
-    currentMountedDevices = devices.filter(isMounted);
-    currentUavs = [...scenarioUavs.filter(device => !isMounted(device)), ...devices.filter(device => !isMounted(device))];
+    currentMountedDevices = mountedDevices;
+    currentUavs = [...scenarioUavs, ...devices];
     currentFixedPoints = model(firepower).filter(device => !isMounted(device));
     const allFirepowerPoints = [...scenarioFirepower, ...currentFixedPoints];
 
@@ -691,14 +684,18 @@ export function initDeviceManager(viewer, panel, options = {}) {
     }
   }
 
-  async function refresh() {
+  async function refresh(schedule = true) {
     const started = revision;
+    const requestId = ++refreshRequest;
     try {
       if (saving) return;
       const result = await request("devices");
-      if (started !== revision || saving) return;
+      if (requestId !== refreshRequest || started !== revision || saving) return;
       render(result);
       const receiveStatus = {
+        unconfigured: "未配置设备状态通道",
+        invalid: "设备状态通道配置无效",
+        dependency_missing: "未安装 MQTT 组件",
         connecting: "正在连接EdgeAgent…",
         subscribed: `设备状态通道已订阅 · ${result.source}`,
         subscription_failed: "EdgeAgent设备状态主题订阅失败",
@@ -707,12 +704,13 @@ export function initDeviceManager(viewer, panel, options = {}) {
       };
       if (status) status.textContent = result.receiveError || receiveStatus[result.state] || "等待EdgeAgent设备状态";
     } catch (error) {
-      if (started === revision && status) status.textContent = error.message;
+      if (requestId === refreshRequest && started === revision && status) status.textContent = error.message;
     } finally {
-      setTimeout(refresh, 1000);
+      if (schedule) setTimeout(refresh, 1000);
     }
   }
 
+  eventBus.on("management:changed", () => void refresh(false));
   panel.update(scenarioUavs, scenarioFirepower, callbacks);
   if (statsPanel && targetService) {
     statsPanel.update({
@@ -727,12 +725,13 @@ export function initDeviceManager(viewer, panel, options = {}) {
   return {
     getUavs: () => currentUavs,
     getFixedPoints: () => [...scenarioFirepower, ...currentFixedPoints],
+    getScenarioPoints: () => [...scenarioFirepower],
+    getScenarioUavs: () => [...scenarioUavs],
     openConfig: (point, role = "firepower") => editor.open(point, false, role),
     changeRole: (point, role) => callbacks.changeRole(point, role),
     mountDevice,
     updatePointAffiliation,
     addFirepowerPoint,
-    removeFirepowerPoint,
     autoMountAvailableDevices,
     resetToDefaultAffiliation,
     getAffiliationTree,

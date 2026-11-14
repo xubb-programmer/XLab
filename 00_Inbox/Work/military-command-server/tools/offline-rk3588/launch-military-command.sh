@@ -38,7 +38,18 @@ if [[ -r "$certificate" ]] && command -v openssl >/dev/null; then
   fi
 fi
 
+config_dir="${XDG_CONFIG_HOME:-$HOME/.config}"
+browser_dir="$config_dir/military-command-server-browser"
+old_browser_dir="$config_dir/target-guidance-browser"
+if [[ -d "$old_browser_dir" && ! -e "$browser_dir" && ! -L "$browser_dir" ]]; then
+  if pgrep -u "$(id -u)" -f -- "--user-data-dir=$old_browser_dir/" >/dev/null; then
+    printf '请先关闭旧指挥平台的 Chromium 窗口，再启动新版。\n' >&2
+    exit 1
+  fi
+  mv -T -- "$old_browser_dir" "$browser_dir"
+fi
+
 exec /usr/bin/chromium "${browser_flags[@]}" --use-gl="$gl" --enable-webgl \
   --disable-accelerated-video-decode --disable-features=VaapiVideoDecoder \
-  --user-data-dir="${XDG_CONFIG_HOME:-$HOME/.config}/target-guidance-browser/$profile" \
+  --user-data-dir="$browser_dir/$profile" \
   --no-first-run --start-maximized http://127.0.0.1:4177/

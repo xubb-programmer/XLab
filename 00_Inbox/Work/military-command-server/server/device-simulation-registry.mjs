@@ -1,9 +1,34 @@
 import { isIPv4 } from "node:net";
 import { DatabaseSync } from "node:sqlite";
+import { hasGeographicPosition } from "../src/js/core/coordinates.js";
+import { appendTrajectoryPoint } from "../src/js/core/target-trajectory.js";
 
 const utf8 = new TextDecoder("utf-8", { fatal: true });
 const text = value => typeof value === "string" ? value.trim() : "";
 const timestamp = value => typeof value === "string" && Number.isFinite(Date.parse(value)) ? new Date(value).toISOString() : null;
+
+function readAircraftUpdate(value) {
+  if (!value || typeof value["有效"] !== "boolean") return null;
+  const updatedAt = timestamp(value["更新时间"]);
+  if (!value["有效"]) return { valid: false, updatedAt };
+  const position = { longitude: value["经度"], latitude: value["纬度"], altitude: value["高程"], updatedAt };
+  return updatedAt && hasGeographicPosition(position) ? { valid: true, updatedAt, position } : null;
+}
+
+function updateAircraftTrack(previous, update) {
+  if (!update) return previous;
+  if (update.updatedAt && previous?.statusAt &&
+      (update.updatedAt < previous.statusAt || (update.valid && update.updatedAt === previous.statusAt))) return previous;
+  if (!update.valid) {
+    return { ...previous, valid: false, statusAt: update.updatedAt ?? previous?.statusAt ?? null };
+  }
+  return {
+    valid: true,
+    statusAt: update.updatedAt,
+    position: update.position,
+    trajectory: appendTrajectoryPoint(previous?.trajectory, update.position)
+  };
+}
 
 function readVideoChannels(sources, source) {
   if (!Array.isArray(sources)) return [];
@@ -73,7 +98,8 @@ export function decodeReport(datagram, source, now = Date.now()) {
     lastSeen: now, snapshotAt: legacy ? null : timestamp(packet["快照时间"]),
     videoSources: Array.isArray(sources) ? sources.length : 0,
     streamingChannels: Array.isArray(streams) ? streams.length : 0,
-    videoChannels: readVideoChannels(sources, source)
+    videoChannels: readVideoChannels(sources, source),
+    aircraftUpdate: readAircraftUpdate(Object.hasOwn(body, "飞机位置") ? body["飞机位置"] : packet["飞机位置"])
   };
 }
 
@@ -100,26 +126,34 @@ export function openRegistry(databasePath, onlineMs) {
       ON simulation_devices(device_id) WHERE firepower = 1;
     CREATE TABLE IF NOT EXISTS device_snapshots (
       identity TEXT PRIMARY KEY,
-      report TEXT NOT NULL
+      report TEXT NOT NULL,
+      deleted INTEGER NOT NULL DEFAULT 0
     );
   `);
   const columns = new Set(database.prepare("PRAGMA table_info(simulation_devices)").all().map(column => column.name));
   if (!columns.has("custom_name")) {
     database.exec("ALTER TABLE simulation_devices ADD COLUMN custom_name TEXT");
   }
+  const snapshotColumns = database.prepare("PRAGMA table_info(device_snapshots)").all();
+  if (!snapshotColumns.some(column => column.name === "deleted")) {
+    database.exec("ALTER TABLE device_snapshots ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0");
+  }
   const select = database.prepare("SELECT * FROM simulation_devices WHERE key = ?");
   const selected = database.prepare("SELECT * FROM simulation_devices WHERE firepower = 1");
   const selectById = database.prepare("SELECT key FROM simulation_devices WHERE device_id = ? AND firepower = 1");
   const storeSnapshot = database.prepare(`
     INSERT INTO device_snapshots (identity, report) VALUES (?, ?)
-    ON CONFLICT(identity) DO UPDATE SET report = excluded.report
+    ON CONFLICT(identity) DO UPDATE SET report = excluded.report, deleted = 0
   `);
+  const deleteSnapshot = database.prepare("UPDATE device_snapshots SET deleted = 1 WHERE identity = ? AND deleted = 0");
+  const deletedSnapshots = new Set(database.prepare("SELECT identity FROM device_snapshots WHERE deleted = 1")
+    .all().map(row => row.identity));
   database.exec(`
     INSERT OR IGNORE INTO device_snapshots (identity, report)
     SELECT json_extract(last_report, '$.identity'), last_report FROM simulation_devices
     WHERE json_extract(last_report, '$.identity') IS NOT NULL ORDER BY rowid DESC;
   `);
-  for (const { report } of database.prepare("SELECT report FROM device_snapshots").all()) {
+  for (const { report } of database.prepare("SELECT report FROM device_snapshots WHERE deleted = 0").all()) {
     const restored = JSON.parse(report);
     observations.set(restored.identity, restored);
   }
@@ -157,8 +191,9 @@ export function openRegistry(databasePath, onlineMs) {
     const active = observations.get(report.identity)?.key === report.key && online(report, now);
     const customName = text(settings?.custom_name);
     const roleDefault = role === "firepower" ? "火力点" : "侦察席";
+    const { aircraftTrack, ...device } = publicReport(report, active);
     return {
-      ...publicReport(report, active),
+      ...device,
       name: customName || text(report.name) || `${roleDefault}-${report.deviceId}`,
       customName: customName || null,
       online: active,
@@ -172,9 +207,10 @@ export function openRegistry(databasePath, onlineMs) {
   function snapshot(now = Date.now(), mounts = new Set()) {
     const duplicates = duplicateIds(now);
     const assigned = selected.all();
-    const assignedIds = new Set(assigned.map(row => row.device_id));
     const firepower = assigned.filter(row => !mounts.has(row.device_id))
-      .map(row => display(getObservation(row.key) || JSON.parse(row.last_report), row, now, duplicates, "firepower"));
+      .map(row => ({ row, report: getObservation(row.key) || JSON.parse(row.last_report) }))
+      .filter(({ report }) => !deletedSnapshots.has(report.identity))
+      .map(({ row, report }) => display(report, row, now, duplicates, "firepower"));
     const mountedById = new Map();
     for (const report of observations.values()) {
       if (!mounts.has(report.deviceId)) continue;
@@ -184,11 +220,27 @@ export function openRegistry(databasePath, onlineMs) {
       if (!prior || report.lastSeen > prior.lastSeen) mountedById.set(report.deviceId, report);
     }
     const mounted = [...mountedById.values()].map(report => display(report, select.get(report.key), now, duplicates, "firepower"));
-    // 保留已发现但已超时的侦察设备，让前端能显示真实的离线状态；是否在线仍由心跳超时计算。
-    const uavs = [...observations.values()].filter(report => !assignedIds.has(report.deviceId) && !mounts.has(report.deviceId))
+    // 挂载只改变火力阵位的通信绑定，不改变设备的侦察席身份。
+    // 因此已挂载设备仍保留在侦察列表，视频和飞机轨迹也继续使用同一份快照。
+    const uavs = [...observations.values()]
       .map(report => display(report, select.get(report.key), now, duplicates, "recon"));
+    const aircraft = [];
+    for (const report of observations.values()) {
+      const track = report.aircraftTrack;
+      if (!track?.position) continue;
+      const name = text(select.get(report.key)?.custom_name) || text(report.name) || report.deviceId;
+      aircraft.push({
+        id: report.identity,
+        identity: report.identity,
+        deviceId: report.deviceId,
+        name,
+        ...track.position,
+        trajectory: track.trajectory,
+        current: track.valid && online(report, now)
+      });
+    }
     const byId = (a, b) => a.deviceId.localeCompare(b.deviceId, "zh-CN", { numeric: true }) || a.key.localeCompare(b.key);
-    return { uavs: uavs.sort(byId), firepower: firepower.sort(byId), mounted: mounted.sort(byId) };
+    return { uavs: uavs.sort(byId), firepower: firepower.sort(byId), mounted: mounted.sort(byId), aircraft };
   }
 
   return {
@@ -217,10 +269,26 @@ export function openRegistry(databasePath, onlineMs) {
         throw error;
       }
     },
-    ingest(report) {
+    ingest({ aircraftUpdate, ...report }) {
+      report.aircraftTrack = updateAircraftTrack(observations.get(report.identity)?.aircraftTrack, aircraftUpdate);
       storeSnapshot.run(report.identity, JSON.stringify(publicReport(report)));
+      deletedSnapshots.delete(report.identity);
       observations.set(report.identity, report);
       received.add(report.identity);
+    },
+    removeSnapshot(key, mounts) {
+      const settings = select.get(key);
+      const report = getObservation(key) || (settings?.firepower && JSON.parse(settings.last_report));
+      if (!report) throw changeError(404, "设备快照不存在");
+      if (mounts.has(report.deviceId)) throw changeError(409, "设备已挂载，请先解除挂载");
+      // 设备改过 ID 时，旧的独立火力点仍可能引用同一个硬件身份。
+      if (observations.has(report.identity) && observations.get(report.identity).key !== key) {
+        throw changeError(409, "设备编号已变化，请核对设备身份");
+      }
+      if (!deleteSnapshot.run(report.identity).changes) throw changeError(404, "设备快照不存在");
+      deletedSnapshots.add(report.identity);
+      observations.delete(report.identity);
+      received.delete(report.identity);
     },
     expire() {
       // 不删除最后一份组播快照，以便离线设备仍可在卡片中显示为离线。
@@ -228,7 +296,8 @@ export function openRegistry(databasePath, onlineMs) {
     snapshot,
     videoConfig(key, mounts = new Set()) {
       const report = getObservation(key);
-      const usable = report && online(report, Date.now()) && !selectById.get(report.deviceId) && !mounts.has(report.deviceId);
+      // 独立火力标记和阵位挂载都不影响侦察视频访问。
+      const usable = report && online(report, Date.now());
       const streams = usable ? report.videoChannels.map(channel => ({ ...channel, uavId: key })) : [];
       return { state: streams.some(channel => channel.rtspUrl) ? "configured" : "unconfigured", streams };
     },

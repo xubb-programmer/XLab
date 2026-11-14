@@ -122,7 +122,7 @@ export class CesiumViewerManager {
     const baseDir = "/public/offline-satellite/";
     const manifests = await Promise.allSettled([
       fetch(`${baseDir}manifest.json`, { signal }).then(response => response.ok ? response.json() : null),
-      fetch("/offline-maps/highres-satellite/manifest.json", { signal }).then(response => response.ok ? response.json() : null)
+      fetch("/offline-maps/combined-theaters/manifest.json", { signal }).then(response => response.ok ? response.json() : null)
     ]);
     signal.throwIfAborted();
 
@@ -144,29 +144,36 @@ export class CesiumViewerManager {
       credits.add("Natural Earth II");
     }
 
-    const highres = manifests[1].value;
-    if (highres?.scheme === "xyz" && highres.crs === "EPSG:3857" && highres.coverage) {
-      const provider = new Cesium.UrlTemplateImageryProvider({
-        url: "/api/map/tiles/{z}/{x}/{y}.jpg",
-        minimumLevel: highres.minimumLevel,
-        maximumLevel: highres.maximumLevel,
-        rectangle: Cesium.Rectangle.fromDegrees(...highres.bounds),
-        enablePickFeatures: false,
-        tileDiscardPolicy: new Cesium.DiscardEmptyTileImagePolicy()
-      });
-      const requestImage = provider.requestImage.bind(provider);
-      provider.requestImage = (x, y, z, request) => {
-        const range = highres.coverage[z];
-        if (!range || x < range.x0 || x > range.x1 || y < range.y0 || y > range.y1) {
-          return Promise.resolve(Cesium.DiscardEmptyTileImagePolicy.EMPTY_IMAGE);
-        }
-        return requestImage(x, y, z, request);
-      };
-      providers.push(provider);
-      if (highres.credit) credits.add(highres.credit);
+    const atlas = manifests[1].value;
+    if (atlas?.scheme === "xyz" && atlas.crs === "EPSG:3857" && Array.isArray(atlas.layers)) {
+      const layers = [...atlas.layers].sort((a, b) => a.minimumLevel - b.minimumLevel);
+      for (const layer of layers) {
+        if (!Array.isArray(layer.bounds) || !layer.coverage ||
+            !Number.isFinite(layer.minimumLevel) || !Number.isFinite(layer.maximumLevel)) continue;
+        const provider = new Cesium.UrlTemplateImageryProvider({
+          url: "/api/map/tiles/{z}/{x}/{y}.jpg",
+          minimumLevel: layer.minimumLevel,
+          maximumLevel: layer.maximumLevel,
+          rectangle: Cesium.Rectangle.fromDegrees(...layer.bounds),
+          enablePickFeatures: false,
+          tileDiscardPolicy: new Cesium.DiscardEmptyTileImagePolicy()
+        });
+        const requestImage = provider.requestImage.bind(provider);
+        provider.requestImage = (x, y, z, request) => {
+          const range = layer.coverage[z];
+          const rowRanges = range?.rows?.[y];
+          const covered = range && (rowRanges
+            ? rowRanges.some(([x0, x1]) => x >= x0 && x <= x1)
+            : x >= range.x0 && x <= range.x1 && y >= range.y0 && y <= range.y1);
+          if (!covered) return Promise.resolve(Cesium.DiscardEmptyTileImagePolicy.EMPTY_IMAGE);
+          return requestImage(x, y, z, request);
+        };
+        providers.push(provider);
+        if (layer.credit) credits.add(layer.credit);
+      }
     }
 
-    const label = hasSatelliteBase || providers.length > 1 ? "离线卫星图" : "离线概览图";
+    const label = hasSatelliteBase || providers.length > 1 ? "离线综合卫星图" : "离线概览图";
     return { providers, credits: [...credits], label };
   }
 

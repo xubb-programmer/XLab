@@ -725,8 +725,8 @@ export class FirepowerAffiliationModal {
                             <button type="button" class="btn btn-xs btn-tree-fly" data-id="${escapeHtml(pt.id)}" title="地图视口飞向该火力点">
                               <span>定位</span>
                             </button>
-                            <button type="button" class="btn btn-xs btn-tree-del" data-id="${escapeHtml(pt.id)}" title="删除该火力点">
-                              <span>删除</span>
+                            <button type="button" class="btn btn-xs btn-tree-manage" title="在数据管理中删除火力点">
+                              <span>数据管理</span>
                             </button>
                           </div>
                         </div>
@@ -833,13 +833,10 @@ export class FirepowerAffiliationModal {
       });
     });
 
-    this.treeContainer.querySelectorAll(".btn-tree-del").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        const id = btn.getAttribute("data-id");
-        if (confirm("确定要删除该火力点吗？")) {
-          await dm?.removeFirepowerPoint(id);
-          this.render();
-        }
+    this.treeContainer.querySelectorAll(".btn-tree-manage").forEach(btn => {
+      btn.addEventListener("click", () => {
+        this.close();
+        eventBus.emit("management:openFirepower");
       });
     });
   }

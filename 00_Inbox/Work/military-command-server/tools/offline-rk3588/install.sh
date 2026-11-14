@@ -24,15 +24,51 @@ architecture=$(dpkg --print-architecture 2>/dev/null || true)
   die "此系统包要求 ${build[architecture]:-未知} ARM64，当前架构为 ${architecture:-未知}。"
 [[ $("$bundle/node/bin/node" -p 'process.arch') == arm64 ]] || die '包内 Node.js 无法在本机运行。'
 
-prefix=/opt/jw/military-command-server
-conf=/etc/target-guidance
-state=/var/lib/target-guidance
-tmp=$(mktemp -d /var/tmp/target-guidance-apt.XXXXXX)
+name=military-command-server
+prefix=/opt/jw/$name
+conf=/etc/$name
+state=/var/lib/$name
+tmp=$(mktemp -d /var/tmp/military-command-server-apt.XXXXXX)
 staging=
-trap 'rm -rf -- "$tmp"; if [[ -n "$staging" ]]; then rm -rf -- "$staging"; fi' EXIT
+services=(server-edge.service military-command-server.service)
+broker_file=/etc/mosquitto/conf.d/military-command-server-local.conf
+old_broker_file=/etc/mosquitto/conf.d/target-guidance-local.conf
+source "$bundle/migrate-installation.sh"
+trap finish_install EXIT
+switch_release() {
+  ln -sfn "$1" "$prefix/.current.new" &&
+    mv -Tf "$prefix/.current.new" "$prefix/current"
+}
+exec 9>/run/lock/military-command-server-install.lock
+flock -n 9 || die '已有安装任务在运行。'
+check_migration
 chmod 0755 "$tmp"
 cp -a "$bundle/debs" "$tmp/debs"
 chmod -R a+rX "$tmp/debs"
+# 板卡镜像可能锁定了定制库，版本号与包内发行版库相同也不能覆盖。
+held_packages=$(apt-mark showhold)
+if [[ -n "$held_packages" ]]; then
+  gzip -dc "$tmp/debs/Packages.gz" |
+    awk -v held_packages="$held_packages" '
+      BEGIN {
+        RS = ""; ORS = "\n\n"
+        count = split(held_packages, names, "\n")
+        for (i = 1; i <= count; i++) {
+          sub(/:[^:]+$/, "", names[i])
+          held[names[i]] = 1
+        }
+      }
+      {
+        if (match($0, /(^|\n)Package: [^\n]+/)) {
+          name = substr($0, RSTART, RLENGTH)
+          sub(/^\n?Package: /, "", name)
+          if (name in held) next
+        }
+        print
+      }
+    ' | gzip -n > "$tmp/Packages.gz"
+  mv -T -- "$tmp/Packages.gz" "$tmp/debs/Packages.gz"
+fi
 mkdir -p "$tmp"/{lists/partial,archives/partial}
 printf 'deb [trusted=yes] file:%s/debs ./\n' "$tmp" > "$tmp/sources.list"
 apt_local=(
@@ -48,32 +84,13 @@ apt-get "${apt_local[@]}" -s --no-install-recommends --no-remove install "${runt
 # A fresh Mosquitto install must listen only on loopback, including first start.
 if [[ $(dpkg-query -W -f='${Status}' mosquitto 2>/dev/null || true) != 'install ok installed' ]]; then
   install -d -m 0755 /etc/mosquitto/conf.d
-  if [[ ! -e /etc/mosquitto/conf.d/target-guidance-local.conf ]]; then
-    printf 'listener 1883 127.0.0.1\nallow_anonymous true\n' > /etc/mosquitto/conf.d/target-guidance-local.conf
+  if [[ ! -e "$broker_file" && ! -e "$old_broker_file" ]]; then
+    printf 'listener 1883 127.0.0.1\nallow_anonymous true\n' > "$broker_file"
   fi
 fi
 apt-get "${apt_local[@]}" -y --no-install-recommends --no-remove install "${runtime[@]}"
 
-if ! id target-guidance &>/dev/null; then
-  useradd --system --user-group --home-dir "$state" --shell /usr/sbin/nologin target-guidance
-fi
 install -d -m 0755 "$prefix/releases"
-install -d -m 0750 -o root -g target-guidance "$conf"
-install -d -m 0750 -o target-guidance -g target-guidance "$state" "$state/scenarios" "$state/edge"
-seed_config() {
-  if [[ ! -e "$2" ]]; then install -m 0640 -o root -g target-guidance "$1" "$2"; fi
-}
-for name in targets video reporting edgeagent; do
-  seed_config "$bundle/config/$name.json" "$conf/$name.json"
-done
-if [[ ! -e "$conf/web.env" ]]; then
-  printf 'TARGET_GUIDANCE_BIND_HOST=127.0.0.1\nPORT=4177\n' > "$tmp/web.env"
-  seed_config "$tmp/web.env" "$conf/web.env"
-fi
-scenario="$state/scenarios/scenario-default.json"
-if [[ ! -e "$scenario" ]]; then
-  install -m 0640 -o target-guidance -g target-guidance "$bundle/config/scenarios/scenario-default.json" "$scenario"
-fi
 
 release_id=$(sha256sum "$bundle/SHA256SUMS" | cut -c1-16)
 release="$prefix/releases/$release_id"
@@ -92,8 +109,30 @@ if [[ ! -d "$release" ]]; then
 fi
 ldd "$release/bin/edgeagent" > "$tmp/edge-ldd"
 if grep -q 'not found' "$tmp/edge-ldd"; then cat "$tmp/edge-ldd" >&2; die 'EdgeAgent 运行库不齐。'; fi
-for service in military-command-server server-edge; do
-  install -m 0644 "$bundle/services/$service.service" "/etc/systemd/system/$service.service"
+
+begin_install
+migrate_installation
+if ! id "$name" &>/dev/null; then
+  useradd --system --user-group --home-dir "$state" --shell /usr/sbin/nologin "$name"
+fi
+install -d -m 0750 -o root -g "$name" "$conf"
+install -d -m 0750 -o "$name" -g "$name" "$state" "$state/scenarios" "$state/edge"
+seed_config() {
+  if [[ ! -e "$2" ]]; then install -m 0640 -o root -g "$name" "$1" "$2"; fi
+}
+for config in targets video reporting edgeagent; do
+  seed_config "$bundle/config/$config.json" "$conf/$config.json"
+done
+if [[ ! -e "$conf/web.env" ]]; then
+  printf 'MILITARY_COMMAND_SERVER_BIND_HOST=127.0.0.1\nPORT=4177\nDEVICE_SIM_SOURCE_IPS=192.168.10.130\n' > "$tmp/web.env"
+  seed_config "$tmp/web.env" "$conf/web.env"
+fi
+scenario="$state/scenarios/scenario-default.json"
+if [[ ! -e "$scenario" ]]; then
+  install -m 0640 -o "$name" -g "$name" "$bundle/config/scenarios/scenario-default.json" "$scenario"
+fi
+for service in "${services[@]}"; do
+  install -m 0644 "$bundle/services/$service" "/etc/systemd/system/$service"
 done
 
 edge_config="$conf/edgeagent.json"
@@ -102,29 +141,23 @@ edge_config="$conf/edgeagent.json"
 replace_edge_config() {
   local next
   next=$(mktemp "$conf/.edgeagent.XXXXXX")
-  install -m 0640 -o root -g target-guidance "$1" "$next"
+  install -m 0640 -o root -g "$name" "$1" "$next"
   mv -Tf "$next" "$edge_config"
 }
 if [[ -f "$tmp/edgeagent-migrated.json" ]]; then
-  cp "$edge_config" "$tmp/edgeagent-previous.json"
+  cp -p "$edge_config" "$tmp/edgeagent-previous.json"
   replace_edge_config "$tmp/edgeagent-migrated.json"
 fi
 
-previous=$(readlink "$prefix/current" || true)
-switch_release() {
-  ln -sfn "$1" "$prefix/.current.new"
-  mv -Tf "$prefix/.current.new" "$prefix/current"
-}
 switch_release "$release"
 systemctl daemon-reload
 systemctl enable --now mosquitto.service
-systemctl enable server-edge.service military-command-server.service
-restart_services() { systemctl restart server-edge.service military-command-server.service; }
+systemctl enable "${services[@]}"
 service_ready() (
   set -a
   . "$conf/web.env"
   set +a
-  host=${TARGET_GUIDANCE_BIND_HOST:-127.0.0.1}
+  host=${MILITARY_COMMAND_SERVER_BIND_HOST:-127.0.0.1}
   [[ "$host" != 0.0.0.0 ]] || host=127.0.0.1
   if [[ "$host" == *:* ]]; then host="[$host]"; fi
   "$prefix/current/node/bin/node" --input-type=module - "http://$host:${PORT:-4177}" <<'JS'
@@ -139,15 +172,10 @@ for (let i = 0; i < 15; i++) {
 process.exit(1);
 JS
 )
-if ! restart_services || ! service_ready || ! systemctl is-active --quiet server-edge.service; then
-  if [[ -f "$tmp/edgeagent-previous.json" ]]; then
-    replace_edge_config "$tmp/edgeagent-previous.json"
-  fi
-  if [[ -n "$previous" && "$previous" != "$release" ]]; then
-    switch_release "$previous"
-    restart_services || true
-  fi
+if ! systemctl restart "${services[@]}" || ! service_ready || ! systemctl is-active --quiet server-edge.service; then
   die '启动检查未通过，请查看 journalctl -u military-command-server -u server-edge -u mosquitto。'
 fi
+install_complete=1
+update_release_links
 
 printf '离线部署完成。网页端口和监听地址见 %s/web.env。\n' "$conf"

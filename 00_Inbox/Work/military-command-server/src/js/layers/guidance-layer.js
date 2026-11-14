@@ -12,6 +12,7 @@ export class GuidanceLayer {
     this.entities = this.viewer.entities;
     this.guidanceEntities = new Map(); // targetId -> { lineEntity, labelEntity }
     this.visible = true; // 默认启用引导功能（有选中目标时自动呈现引导，未选目标时保持三维纯净）
+    this.targetsVisible = true;
     this.currentAssignments = [];
 
     this.initEvents();
@@ -47,8 +48,8 @@ export class GuidanceLayer {
 
   refreshVisibility() {
     for (const [_, record] of this.guidanceEntities) {
-      if (record.lineEntity) record.lineEntity.show = this.visible;
-      if (record.labelEntity) record.labelEntity.show = this.visible;
+      if (record.lineEntity) record.lineEntity.show = this.targetsVisible && (this.visible || record.forceVisible);
+      if (record.labelEntity) record.labelEntity.show = this.targetsVisible && (this.visible || record.forceVisible);
     }
   }
 
@@ -67,7 +68,7 @@ export class GuidanceLayer {
 
     if (assignments.length === 0) return;
 
-    const showEntity = forceVisible || this.visible;
+    const showEntity = this.targetsVisible && (forceVisible || this.visible);
 
     for (const item of assignments) {
       const target = item.target;
@@ -114,6 +115,7 @@ export class GuidanceLayer {
 
       const existing = this.guidanceEntities.get(target.id);
       if (existing) {
+        existing.forceVisible = forceVisible;
         // 更新现有实体
         existing.lineEntity.polyline.positions = [startPos, endPos];
         existing.lineEntity.polyline.width = lineWidth;
@@ -166,7 +168,7 @@ export class GuidanceLayer {
         lineEntity._customType = "guidanceLine";
         labelEntity._customType = "guidanceLabel";
 
-        this.guidanceEntities.set(target.id, { lineEntity, labelEntity });
+        this.guidanceEntities.set(target.id, { lineEntity, labelEntity, forceVisible });
       }
     }
   }

@@ -2,7 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 import { createServer } from "node:http";
 import { createReadStream } from "node:fs";
 import { stat, readFile, writeFile, rename, unlink } from "node:fs/promises";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { extname, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadVideoConfig, serveVideo } from "./video.mjs";
@@ -12,35 +12,35 @@ import { ReportError, loadReportingConfig, prepareReportItems, readReportRequest
 import { openReportBatches } from "./report-batches.mjs";
 import { edgeDeviceIdPattern } from "./edge-actions.mjs";
 import { readDataJson, serveDataManagement, writeDataError } from "./data-management.mjs";
-import { openOperationalStore } from "./operational-store.mjs";
+import { dataError, openOperationalStore } from "./operational-store.mjs";
 import { openPreviewRegistry } from "./preview-device-registry.mjs";
 import { mountedDeviceId, mountedDeviceIds, validateMounts } from "./device-mounts.mjs";
 import { hasGeographicPosition } from "../src/js/core/coordinates.js";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
-const scenarioPath = process.env.TARGET_GUIDANCE_SCENARIO || resolve(root, "public/scenarios/scenario-default.json");
+const scenarioPath = process.env.MILITARY_COMMAND_SERVER_SCENARIO || resolve(root, "public/scenarios/scenario-default.json");
 const port = Number(process.env.PORT ?? 4177);
-const host = process.env.TARGET_GUIDANCE_BIND_HOST || "127.0.0.1";
-const videoConfig = await loadVideoConfig(process.env.TARGET_GUIDANCE_VIDEO_CONFIG || resolve(root, "config/video.json"));
+const host = process.env.MILITARY_COMMAND_SERVER_BIND_HOST || "127.0.0.1";
+const videoConfig = await loadVideoConfig(process.env.MILITARY_COMMAND_SERVER_VIDEO_CONFIG || resolve(root, "config/video.json"));
 let deviceSimulation;
-const managementDb = process.env.TARGET_GUIDANCE_MANAGEMENT_DB || resolve(root, "dist/data-preview/records.sqlite");
+const managementDb = process.env.MILITARY_COMMAND_SERVER_MANAGEMENT_DB || resolve(root, "dist/data-preview/records.sqlite");
 const operations = openOperationalStore(managementDb);
 const managementRegistry = openPreviewRegistry(managementDb);
-const highresDir = resolve(root, "dist/offline-maps/highres-satellite");
-let highresDb;
-let highresTileQuery;
+const offlineMapDir = resolve(root, "dist/offline-maps/combined-theaters");
+let offlineMapDb;
+let offlineMapTileQuery;
 const targetsConfig = await loadTargetsConfig(
-  process.env.TARGET_GUIDANCE_TARGETS_CONFIG || resolve(root, "config/targets.json")
+  process.env.MILITARY_COMMAND_SERVER_TARGETS_CONFIG || resolve(root, "config/targets.json")
 );
 const targetFeed = await openTargetFeed(targetsConfig, operations);
 const reportBatches = openReportBatches(
-  process.env.TARGET_GUIDANCE_REPORTING_DB || resolve(root, "dist/reporting/reporting.sqlite"),
+  process.env.MILITARY_COMMAND_SERVER_REPORTING_DB || resolve(root, "dist/reporting/reporting.sqlite"),
   targetFeed.sendEdgeAction
 );
 
 function getDeviceSimulation() {
   deviceSimulation ??= openDeviceSimulation(videoConfig.rtspTimeoutOption, targetsConfig, {
-    readPoints: readFirepowerPoints,
+    read: readScenarioRecords,
     enqueue: queueFirepowerWrite
   }).catch(error => {
     deviceSimulation = undefined;
@@ -65,9 +65,31 @@ async function readReportJson(req) {
   }
 }
 
+async function readScenario() {
+  const raw = await readFile(scenarioPath, "utf8");
+  const scenario = JSON.parse(raw);
+  return { scenario, scenarioRevision: createHash("sha256").update(raw).digest("hex") };
+}
+
+function scenarioRecords(scenario, scenarioRevision) {
+  return {
+    firepowerPoints: scenario.firepowerPoints ?? [scenario.firepowerPoint].filter(Boolean),
+    scenarioUavs: scenario.uavs ?? [scenario.uav].filter(Boolean),
+    scenarioRevision
+  };
+}
+
+async function readScenarioRecords() {
+  const { scenario, scenarioRevision } = await readScenario();
+  return scenarioRecords(scenario, scenarioRevision);
+}
+
 async function readFirepowerPoints() {
-  const scenario = JSON.parse(await readFile(scenarioPath, "utf8"));
-  return scenario.firepowerPoints ?? [scenario.firepowerPoint].filter(Boolean);
+  return (await readScenarioRecords()).firepowerPoints;
+}
+
+function checkScenarioRevision(expected, actual) {
+  if (expected !== actual) throw dataError(409, "场景配置已更新，请刷新后重试");
 }
 
 async function handleReportRequest(req, res, batchRoute) {
@@ -95,10 +117,11 @@ async function handleReportRequest(req, res, batchRoute) {
       result = reportBatches.snapshot(request.batchId, request.requestKey);
       if (!result) {
         const config = await loadReportingConfig(
-          process.env.TARGET_GUIDANCE_REPORTING_CONFIG || resolve(root, "config/reporting.json")
+          process.env.MILITARY_COMMAND_SERVER_REPORTING_CONFIG || resolve(root, "config/reporting.json")
         );
         const prepared = prepareReportItems({
-          request, config, firepowerPoints: await readFirepowerPoints(), feedTargets: targetFeed.snapshot().targets
+          request, config, firepowerPoints: await readFirepowerPoints(),
+          getTarget: id => operations.getLiveTarget(id)
         });
         result = await reportBatches.submit(request, prepared, background);
       }
@@ -113,17 +136,17 @@ async function handleReportRequest(req, res, batchRoute) {
   }
 }
 
-function openHighresMap() {
-  if (highresDb) return highresDb;
+function openOfflineMap() {
+  if (offlineMapDb) return offlineMapDb;
   let database;
   try {
-    database = new DatabaseSync(resolve(highresDir, "tiles.db"), { readOnly: true });
-    highresTileQuery = database.prepare(`
+    database = new DatabaseSync(resolve(offlineMapDir, "tiles.db"), { readOnly: true });
+    offlineMapTileQuery = database.prepare(`
       SELECT tile_data FROM tiles WHERE zoom_level = ? AND tile_column = ? AND tile_row = ?
       ORDER BY rowid DESC LIMIT 1
     `);
-    highresDb = database;
-    return highresDb;
+    offlineMapDb = database;
+    return offlineMapDb;
   } catch {
     database?.close();
     return null;
@@ -187,36 +210,56 @@ function queueFirepowerWrite(write) {
   return result;
 }
 
-async function saveFirepowerScenario(scenario) {
-  const devices = targetsConfig.state === "connecting" ? await getDeviceSimulation() : null;
-  validateMounts(scenario.firepowerPoints, devices?.standaloneIds() ?? new Set());
+async function saveScenario(scenario) {
+  const devices = await getDeviceSimulation();
+  const raw = JSON.stringify({ ...scenario, revision: randomUUID() }, null, 2) + "\n";
+  const current = scenarioRecords(scenario, createHash("sha256").update(raw).digest("hex"));
+  const mounts = mountedDeviceIds(current.firepowerPoints);
+  validateMounts(current.firepowerPoints, devices.standaloneIds());
   const temporaryPath = `${scenarioPath}.${randomUUID()}.tmp`;
   try {
-    await writeFile(temporaryPath, JSON.stringify(scenario, null, 2) + "\n", "utf-8");
+    await writeFile(temporaryPath, raw, "utf-8");
     await rename(temporaryPath, scenarioPath);
   } catch (error) {
     await unlink(temporaryPath).catch(() => {});
     throw error;
   }
-  return { ...devices?.snapshot(Date.now(), mountedDeviceIds(scenario.firepowerPoints)),
-    firepowerPoints: scenario.firepowerPoints };
+  return { ...current, ...devices.snapshot(Date.now(), mounts) };
 }
 
-async function saveFirepowerPoint(point) {
-  const raw = await readFile(scenarioPath, "utf-8");
-  const scenario = JSON.parse(raw);
+async function deleteScenarioRecord(type, id, expectedRevision) {
+  const { scenario, scenarioRevision } = await readScenario();
+  checkScenarioRevision(expectedRevision, scenarioRevision);
+  const current = scenarioRecords(scenario, scenarioRevision);
+  const key = type === "firepower" ? "firepowerPoints" : "uavs";
+  const rows = type === "firepower" ? current.firepowerPoints : current.scenarioUavs;
+  if (!rows.some(record => record.id === id)) throw dataError(404, "场景记录不存在");
+  scenario[key] = rows.filter(record => record.id !== id);
+  delete scenario[type === "firepower" ? "firepowerPoint" : "uav"];
+  return saveScenario(scenario);
+}
+
+async function saveFirepowerPoint(point, expectedRevision, kind) {
+  const { scenario, scenarioRevision } = await readScenario();
+  checkScenarioRevision(expectedRevision, scenarioRevision);
+  if (kind === "recon") {
+    const { scenarioUavs } = scenarioRecords(scenario, scenarioRevision);
+    const idx = scenarioUavs.findIndex(existing => existing.id === point.id);
+    if (idx < 0) throw dataError(404, "场景侦察席不存在");
+    const { name, longitude, latitude, altitude } = point;
+    scenarioUavs[idx] = { ...scenarioUavs[idx], name, longitude, latitude, altitude };
+    scenario.uavs = scenarioUavs;
+    return saveScenario(scenario);
+  }
   if (!Array.isArray(scenario.firepowerPoints)) {
     scenario.firepowerPoints = scenario.firepowerPoint ? [scenario.firepowerPoint] : [];
   }
   const idx = scenario.firepowerPoints.findIndex(existing => existing.id === point.id);
-  const saved = idx < 0 ? point : { ...scenario.firepowerPoints[idx], ...point };
-  // 场景阵位的 id 只是内部配置键，不能沿用旧的 FIRE-* 伪设备 ID。
-  if (!Object.hasOwn(point, "deviceId")) delete saved.deviceId;
-  if (idx < 0) scenario.firepowerPoints.push(saved);
-  else scenario.firepowerPoints[idx] = saved;
+  if (idx < 0) throw dataError(404, "场景火力点不存在");
+  const saved = { ...scenario.firepowerPoints[idx], ...point };
+  scenario.firepowerPoints[idx] = saved;
 
-  await saveFirepowerScenario(scenario);
-  return saved;
+  return { ...await saveScenario(scenario), firepowerPoint: saved };
 }
 
 const server = createServer(async (req, res) => {
@@ -225,15 +268,10 @@ const server = createServer(async (req, res) => {
     const pathname = decodeURIComponent(parsedUrl.pathname);
 
     if (pathname.startsWith("/api/management/")) {
-      if (/^\/api\/management\/recon(?:\/|$)/.test(pathname)) {
-        return await queueFirepowerWrite(async () => {
-          const devices = targetsConfig.state === "connecting" ? await getDeviceSimulation() : null;
-          const mounts = mountedDeviceIds(await readFirepowerPoints());
-          return serveDataManagement(req, res, parsedUrl, pathname, operations, managementRegistry,
-            id => mounts.has(id) || devices?.isFirepower(id));
-        });
-      }
-      return await serveDataManagement(req, res, parsedUrl, pathname, operations, managementRegistry);
+      return await serveDataManagement(req, res, parsedUrl, pathname, {
+        operations, registry: managementRegistry, targetFeed, readScenario: readScenarioRecords,
+        deleteScenarioRecord, enqueue: queueFirepowerWrite, getDevices: getDeviceSimulation
+      });
     }
 
     if (pathname.startsWith("/api/device-simulation/")) {
@@ -247,19 +285,20 @@ const server = createServer(async (req, res) => {
 
     if (req.method === "POST" && pathname === "/api/scenario/firepower/mount") {
       try {
-        const { pointId, deviceId } = await readDataJson(req);
+        const { pointId, deviceId, scenarioRevision: expectedRevision } = await readDataJson(req);
         if (typeof pointId !== "string" || !pointId || typeof deviceId !== "string" || deviceId.length > 500) {
           return writeReportJson(res, 400, { error: "请选择火力点和挂载设备" });
         }
         const result = await queueFirepowerWrite(async () => {
-          const scenario = JSON.parse(await readFile(scenarioPath, "utf8"));
+          const { scenario, scenarioRevision } = await readScenario();
+          checkScenarioRevision(expectedRevision, scenarioRevision);
           const points = scenario.firepowerPoints ?? [scenario.firepowerPoint].filter(Boolean);
           const point = points.find(item => item.id === pointId);
           if (!point) return { status: 404, error: "火力点不存在" };
           const id = mountedDeviceId(deviceId);
           if (deviceId.trim() && !id) return { status: 400, error: "挂载设备 ID 无效" };
-          const devices = targetsConfig.state === "connecting" ? await getDeviceSimulation() : null;
-          const state = devices?.snapshot(Date.now(), mountedDeviceIds(points));
+          const devices = await getDeviceSimulation();
+          const state = devices.snapshot(Date.now(), mountedDeviceIds(points));
           const device = [...(state?.uavs ?? []), ...(state?.mounted ?? [])].find(item => item.deviceId === id);
           if (id && mountedDeviceId(point.mountedDeviceId) !== id && (!device?.online || device.duplicateId)) {
             return { status: 409, error: "设备离线、ID 重复或角色已变更，请刷新后重试" };
@@ -279,7 +318,7 @@ const server = createServer(async (req, res) => {
             }
           }
           scenario.firepowerPoints = points;
-          return saveFirepowerScenario(scenario);
+          return saveScenario(scenario);
         });
         return writeReportJson(res, result.status ?? 200, result);
       } catch (error) {
@@ -295,10 +334,15 @@ const server = createServer(async (req, res) => {
         try {
           const payload = JSON.parse(body);
           if (Array.isArray(payload?.firepowerPoints)) {
+            if (payload.scenarioUavs !== undefined && !Array.isArray(payload.scenarioUavs)) {
+              throw dataError(400, "场景侦察席格式无效");
+            }
             const result = await queueFirepowerWrite(async () => {
-              const scenario = JSON.parse(await readFile(scenarioPath, "utf-8"));
+              const { scenario, scenarioRevision } = await readScenario();
+              checkScenarioRevision(payload.scenarioRevision, scenarioRevision);
               scenario.firepowerPoints = payload.firepowerPoints;
-              return saveFirepowerScenario(scenario);
+              if (payload.scenarioUavs) scenario.uavs = payload.scenarioUavs;
+              return saveScenario(scenario);
             });
             res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
             res.end(JSON.stringify({ ok: true, ...result }));
@@ -328,8 +372,10 @@ const server = createServer(async (req, res) => {
           return;
         }
         const id = payload?.id ?? "FIRE-01";
+        const emptyReconPosition = payload?.kind === "recon" &&
+          [payload.longitude, payload.latitude, payload.altitude].every(value => value == null);
         if (typeof id !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/.test(id) ||
-            !hasGeographicPosition(payload)) {
+            (!emptyReconPosition && !hasGeographicPosition(payload))) {
           res.writeHead(400, { "Content-Type": "application/json; charset=utf-8" });
           res.end(JSON.stringify({ ok: false, error: "请检查火力点编号和经纬高。" }));
           return;
@@ -357,9 +403,9 @@ const server = createServer(async (req, res) => {
         if (company !== undefined) updatedPoint.company = String(company).trim();
         if (mountedDeviceId !== undefined) updatedPoint.mountedDeviceId = String(mountedDeviceId).trim();
         try {
-          const savedPoint = await queueFirepowerWrite(() => saveFirepowerPoint(updatedPoint));
+          const result = await queueFirepowerWrite(() => saveFirepowerPoint(updatedPoint, payload.scenarioRevision, payload.kind));
           res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
-          res.end(JSON.stringify({ ok: true, firepowerPoint: savedPoint }));
+          res.end(JSON.stringify({ ok: true, ...result }));
         } catch (err) {
           if (!err.status) console.error("无法保存阵位配置:", err);
           res.writeHead(err.status || 500, { "Content-Type": "application/json; charset=utf-8" });
@@ -377,7 +423,16 @@ const server = createServer(async (req, res) => {
       return;
     }
     if (pathname === "/api/video/status" || pathname === "/api/video/stream") {
-      serveVideo(req, res, videoConfig, pathname, parsedUrl.searchParams.get("id"), parsedUrl.searchParams.get("uav") ?? undefined);
+      const uavId = parsedUrl.searchParams.get("uav") ?? "UAV-RECON-01";
+      const { scenarioUavs } = await readScenarioRecords();
+      const config = scenarioUavs.some(uav => uav.id === uavId) ? videoConfig : { state: "unconfigured", streams: [] };
+      serveVideo(req, res, config, pathname, parsedUrl.searchParams.get("id"), uavId);
+      return;
+    }
+    if (pathname === "/public/scenarios/scenario-default.json") {
+      const { scenario } = await readScenario();
+      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+      res.end(req.method === "HEAD" ? undefined : JSON.stringify(scenario));
       return;
     }
     if (pathname === "/api/targets") {
@@ -385,28 +440,16 @@ const server = createServer(async (req, res) => {
       res.end(req.method === "HEAD" ? undefined : JSON.stringify(targetFeed.snapshot()));
       return;
     }
-    if (pathname === "/offline-maps/highres-satellite/manifest.json") {
-      const database = openHighresMap();
-      const content = await readFile(resolve(highresDir, "manifest.json"), "utf8").catch(() => null);
+    if (pathname === "/offline-maps/combined-theaters/manifest.json") {
+      const database = openOfflineMap();
+      const content = await readFile(resolve(offlineMapDir, "manifest.json"), "utf8").catch(() => null);
       if (!database || !content) {
         res.writeHead(404).end();
         return;
       }
       const manifest = JSON.parse(content);
-      const rows = database.prepare(`
-        SELECT zoom_level AS z, MIN(tile_column) AS x0, MAX(tile_column) AS x1,
-          MIN(tile_row) AS y0, MAX(tile_row) AS y1
-        FROM tiles GROUP BY zoom_level ORDER BY CAST(zoom_level AS INTEGER)
-      `).all();
-      if (!rows.length) {
-        res.writeHead(404).end();
-        return;
-      }
-      const coverage = Object.fromEntries(rows.map(({ z, ...range }) => [z, range]));
       res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
-      res.end(req.method === "HEAD" ? undefined : JSON.stringify({
-        ...manifest, minimumLevel: Number(rows[0].z), maximumLevel: Number(rows.at(-1).z), coverage
-      }));
+      res.end(req.method === "HEAD" ? undefined : JSON.stringify(manifest));
       return;
     }
 
@@ -414,8 +457,8 @@ const server = createServer(async (req, res) => {
     const tileMatch = pathname.match(/^\/api\/map\/tiles\/(\d+)\/(\d+)\/(\d+)\.(?:jpg|png|jpeg)$/);
     if (tileMatch) {
       const [, z, x, y] = tileMatch.map(Number);
-      if (z <= 22 && x < 2 ** z && y < 2 ** z && openHighresMap()) {
-        const row = highresTileQuery.get(String(z), x, y);
+      if (z <= 22 && x < 2 ** z && y < 2 ** z && openOfflineMap()) {
+        const row = offlineMapTileQuery.get(String(z), x, y);
         if (row?.tile_data) {
           res.writeHead(200, {
             "Content-Type": "image/jpeg",
@@ -476,10 +519,8 @@ const server = createServer(async (req, res) => {
 server.listen(port, host, () => {
   const { address, port } = server.address();
   const urlHost = address.includes(":") ? `[${address}]` : address;
-  console.log(`[Target Allocation & Guidance] Server listening at http://${urlHost}:${port}/`);
-  if (targetsConfig.state === "connecting") {
-    void getDeviceSimulation().catch(error => console.error("设备状态订阅启动失败", error));
-  }
+  console.log(`[Military Command Server] Server listening at http://${urlHost}:${port}/`);
+  void getDeviceSimulation().catch(error => console.error("设备状态订阅启动失败", error));
 });
 server.on("close", () => {
   targetFeed.close();
@@ -487,5 +528,5 @@ server.on("close", () => {
   managementRegistry.close();
   operations.close();
   void deviceSimulation?.then(simulation => simulation.close()).catch(() => {});
-  highresDb?.close();
+  offlineMapDb?.close();
 });

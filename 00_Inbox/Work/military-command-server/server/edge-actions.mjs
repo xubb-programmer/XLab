@@ -1,3 +1,5 @@
+import { projectGaussKruger } from "./gauss-kruger.mjs";
+
 export const edgeDeviceIdPattern = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$/;
 const notSent = error => ({ state: "not_sent", pause: true, error });
 const unknown = (error, timeout = false) => ({ state: "unknown", pause: true, error, timeout });
@@ -48,30 +50,34 @@ export function createEdgeActionSender(client) {
           !/^(?:[\da-f]{2})+$/i.test(envelope.data)) return;
       const response = JSON.parse(Buffer.from(envelope.data, "hex").toString("utf8"));
       const request = pending.get(response?.request_id);
-      if (request?.dispatched && request.deviceId === deviceId && typeof response.ok === "boolean") {
-        if (response.ok) {
-          request.finish({ state: "confirmed" });
-          return;
-        }
-        const error = typeof response.error === "string" ? response.error : "接收端未确认处理结果";
-        const queueFull = response.code === "queue_full" || error === "action queue full";
-        const busy = queueFull || response.code === "busy";
-        request.finish(response.processed === false || (queueFull && response.processed !== true)
-          ? { state: "rejected", pause: busy, error }
-          : unknown(error));
+      if (!request?.dispatched || request.deviceId !== deviceId || typeof response.ok !== "boolean") return;
+      if (response.ok === true) {
+        request.finish({ state: "confirmed" });
+        return;
       }
+      const error = typeof response.error === "string" ? response.error : "接收端返回失败";
+      const queueFull = response.code === "queue_full" || error === "action queue full";
+      const busy = queueFull || response.code === "busy";
+      request.finish(response.processed === false || (queueFull && response.processed !== true)
+        ? { state: "rejected", pause: busy, error }
+        : unknown(error));
     } catch {
       // 其他设备上行或无法关联的回执由各自的业务处理。
     }
   });
 
-  return function sendEdgeAction({ deviceId, action, params, requestId, timeoutMs }) {
+  return function sendEdgeAction({ deviceId, params, requestId, timeoutMs }) {
     if (typeof deviceId !== "string" || !edgeDeviceIdPattern.test(deviceId)) {
       return Promise.resolve(notSent("EdgeAgent 设备 ID 无效"));
     }
     if (!client.connected) return Promise.resolve(notSent("MQTT 未连接，上报未发出"));
     const prefix = `edge/v1/devices/${deviceId}`;
-    const bytes = Buffer.from(JSON.stringify({ name: action, params, request_id: requestId }) + "\n");
+    const { x, y } = projectGaussKruger(params.lon, params.lat);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) {
+      return Promise.resolve(notSent("高斯坐标转换失败，上报未发出"));
+    }
+    const wireParams = { ...params, x: Number(x.toFixed(2)), y: Number(y.toFixed(2)) };
+    const bytes = Buffer.from(JSON.stringify({ name: "Action", params: wireParams, request_id: requestId }) + "\n");
     const command = JSON.stringify({ id: requestId, transport: "tcp", data: bytes.toString("hex") });
 
     return new Promise(resolve => {

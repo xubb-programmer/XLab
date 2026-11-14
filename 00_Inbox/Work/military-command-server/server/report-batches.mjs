@@ -100,10 +100,12 @@ export function openReportBatches(path, sendEdgeAction) {
     const groupResults = [...groupMap.values()].map(group => {
       const ok = group.every(item => item.ok);
       const unknown = group.some(item => item.state === "unknown");
+      const received = group.every(item => item.state === "confirmed" && item.error === null);
       return {
         firepowerId: group[0].firepowerId, firepowerName: group[0].firepowerName,
         ok, timeout: group.some(item => item.timeout),
-        message: ok ? "接收端已确认" : unknown ? "上报结果未知" : group.find(item => item.error)?.error || "本阵位有未确认目标",
+        message: received ? "已收到接收端回执" : ok ? "上报已确认"
+          : unknown ? "上报结果未知" : group.find(item => item.error)?.error || "本阵位有未确认目标",
         totalCount: group.length, successCount: group.filter(item => item.ok).length, results: group
       };
     });
@@ -115,7 +117,9 @@ export function openReportBatches(path, sendEdgeAction) {
       batchId, running, updatedAt: batch.updated_at, ok, totalCount: results.length, successCount,
       unknownCount, retryableCount: results.filter(item => item.retryable).length,
       mock: results.some(item => item.state === "mock"), timeout: results.some(item => item.timeout),
-      message: running ? "正在上报" : ok ? "接收端已确认" : unknownCount ? "上报结果未知"
+      message: running ? "正在上报"
+        : ok ? (groupResults.every(group => group.message === "已收到接收端回执") ? "已收到接收端回执" : "上报已确认")
+        : unknownCount ? "上报结果未知"
         : groupResults.find(group => !group.ok)?.message || "本批有未确认目标",
       firepowerName: groupResults.map(group => group.firepowerName).join("、"),
       groupResults, results
@@ -152,7 +156,7 @@ export function openReportBatches(path, sendEdgeAction) {
             let result;
             try {
               result = item.mock ? { state: "mock" } : await sendEdgeAction({
-                deviceId, requestId, action: item.action, params: item.params, timeoutMs: item.timeoutMs
+                deviceId, requestId, params: item.params, timeoutMs: item.timeoutMs
               });
             } catch {
               result = { state: "unknown", pause: true, error: "发送中断，须核对接收端" };

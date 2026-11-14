@@ -73,10 +73,13 @@ export function openOperationalStore(path) {
     CREATE TABLE IF NOT EXISTS live_targets (
       id TEXT PRIMARY KEY, target_type TEXT NOT NULL, target_number INTEGER NOT NULL,
       name TEXT NOT NULL, longitude REAL NOT NULL, latitude REAL NOT NULL, altitude REAL NOT NULL,
-      trajectory TEXT NOT NULL, updated_at INTEGER NOT NULL, ordinal INTEGER NOT NULL
+      trajectory TEXT NOT NULL, updated_at INTEGER NOT NULL, ordinal INTEGER NOT NULL, generation TEXT NOT NULL DEFAULT ''
     );
     CREATE INDEX IF NOT EXISTS live_targets_recent ON live_targets(ordinal DESC);
   `);
+  if (!db.prepare("PRAGMA table_info(live_targets)").all().some(column => column.name === "generation")) {
+    db.exec("ALTER TABLE live_targets ADD COLUMN generation TEXT NOT NULL DEFAULT ''");
+  }
 
   const pointRows = db.prepare("SELECT data FROM firepower_points ORDER BY sort_order, id");
   const pointRow = db.prepare("SELECT data FROM firepower_points WHERE id = ?");
@@ -102,6 +105,7 @@ export function openOperationalStore(path) {
   `);
   const deleteTarget = db.prepare("UPDATE targets SET deleted = 1, trajectory = '[]' WHERE id = ? AND deleted = 0");
   const liveTargetRow = db.prepare("SELECT * FROM live_targets WHERE id = ?");
+  const deleteLiveTarget = db.prepare("DELETE FROM live_targets WHERE id = ?");
   const listLiveTargetRows = db.prepare(`
     SELECT * FROM live_targets WHERE instr(lower(name || ' ' || target_number || ' ' || id), lower(?)) > 0
     ORDER BY ordinal DESC LIMIT ? OFFSET ?
@@ -110,8 +114,8 @@ export function openOperationalStore(path) {
     SELECT count(*) AS total FROM live_targets WHERE instr(lower(name || ' ' || target_number || ' ' || id), lower(?)) > 0
   `);
   const putLiveTarget = db.prepare(`
-    INSERT INTO live_targets (id, target_type, target_number, name, longitude, latitude, altitude, trajectory, updated_at, ordinal)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(ordinal), 0) + 1 FROM live_targets))
+    INSERT INTO live_targets (id, target_type, target_number, name, longitude, latitude, altitude, trajectory, updated_at, ordinal, generation)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(ordinal), 0) + 1 FROM live_targets), ?)
     ON CONFLICT(id) DO UPDATE SET name = excluded.name, longitude = excluded.longitude,
       latitude = excluded.latitude, altitude = excluded.altitude, trajectory = excluded.trajectory,
       updated_at = excluded.updated_at, ordinal = excluded.ordinal
@@ -173,7 +177,7 @@ export function openOperationalStore(path) {
     return toTarget(targetRow.get(target.id));
   }
 
-  const toLiveTarget = row => ({ ...toTarget(row), source: "udp", live: true });
+  const toLiveTarget = row => ({ ...toTarget(row), source: "udp", live: true, generation: row.generation });
 
   return {
     listPoints: points,
@@ -196,6 +200,12 @@ export function openOperationalStore(path) {
       const row = liveTargetRow.get(id);
       return row && toLiveTarget(row);
     },
+    removeLiveTarget(id, generation) {
+      const current = liveTargetRow.get(id);
+      if (!current) throw dataError(404, "设备上报目标不存在");
+      if (generation !== current.generation) throw dataError(409, "目标已重新入库，请刷新后重试");
+      if (!deleteLiveTarget.run(id).changes) throw dataError(404, "设备上报目标不存在");
+    },
     importLiveTargets(targets) {
       return transaction(() => {
         let imported = 0;
@@ -207,7 +217,7 @@ export function openOperationalStore(path) {
           const trajectory = (target.trajectory ?? []).slice(-60);
           putLiveTarget.run(id, target.type, target.targetNumber, target.name, longitude, latitude,
             altitude, JSON.stringify(trajectory.length ? trajectory : [[longitude, latitude, altitude]]),
-            target.updatedAt ?? Date.now());
+            target.updatedAt ?? Date.now(), randomUUID());
           imported++;
         }
         return imported;
@@ -216,8 +226,8 @@ export function openOperationalStore(path) {
     saveLiveTarget(target, trajectory) {
       const updatedAt = Date.now();
       putLiveTarget.run(target.id, target.type, target.targetNumber, target.name, target.longitude, target.latitude,
-        target.altitude, JSON.stringify(trajectory), updatedAt);
-      return { ...target, trajectory, updatedAt, source: "udp", live: true };
+        target.altitude, JSON.stringify(trajectory), updatedAt, randomUUID());
+      return toLiveTarget(liveTargetRow.get(target.id));
     },
     saveTarget(value, id) {
       const row = id ? targetRow.get(id) : null;

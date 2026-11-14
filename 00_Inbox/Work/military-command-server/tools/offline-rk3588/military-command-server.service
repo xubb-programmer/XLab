@@ -6,16 +6,16 @@ Requires=mosquitto.service
 
 [Service]
 Type=simple
-User=target-guidance
-Group=target-guidance
+User=military-command-server
+Group=military-command-server
 WorkingDirectory=/opt/jw/military-command-server/current/web
-EnvironmentFile=/etc/target-guidance/web.env
-Environment=TARGET_GUIDANCE_VIDEO_CONFIG=/etc/target-guidance/video.json
-Environment=TARGET_GUIDANCE_TARGETS_CONFIG=/etc/target-guidance/targets.json
-Environment=TARGET_GUIDANCE_REPORTING_CONFIG=/etc/target-guidance/reporting.json
-Environment=TARGET_GUIDANCE_REPORTING_DB=/var/lib/target-guidance/reporting.sqlite
-Environment=TARGET_GUIDANCE_MANAGEMENT_DB=/var/lib/target-guidance/management/records.sqlite
-Environment=DEVICE_SIM_STATE_DIR=/var/lib/target-guidance/device-simulation
+EnvironmentFile=/etc/military-command-server/web.env
+Environment=MILITARY_COMMAND_SERVER_VIDEO_CONFIG=/etc/military-command-server/video.json
+Environment=MILITARY_COMMAND_SERVER_TARGETS_CONFIG=/etc/military-command-server/targets.json
+Environment=MILITARY_COMMAND_SERVER_REPORTING_CONFIG=/etc/military-command-server/reporting.json
+Environment=MILITARY_COMMAND_SERVER_REPORTING_DB=/var/lib/military-command-server/reporting.sqlite
+Environment=MILITARY_COMMAND_SERVER_MANAGEMENT_DB=/var/lib/military-command-server/management/records.sqlite
+Environment=DEVICE_SIM_STATE_DIR=/var/lib/military-command-server/device-simulation
 ExecStart=/opt/jw/military-command-server/current/node/bin/node server/serve.mjs
 Restart=on-failure
 RestartSec=2

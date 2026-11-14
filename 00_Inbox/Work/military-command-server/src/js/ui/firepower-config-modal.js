@@ -1,16 +1,13 @@
 /**
  * 地面火力点阵位信息与打击范围场景配置交互弹窗
  */
-import { eventBus } from "../core/event-bus.js";
-import { hasGeographicPosition } from "../core/coordinates.js";
 import { getPlatformDeviceId } from "../core/platform-labels.js";
 
 const activeEditors = new WeakMap();
 
 export class FirepowerConfigModal {
-  constructor(viewerManager, onSave, saveSimulationCoordinates, changeSimulationRole = null) {
+  constructor(viewerManager, saveSimulationCoordinates, changeSimulationRole = null) {
     this.viewerManager = viewerManager;
-    this.onSave = onSave;
     this.saveSimulationCoordinates = saveSimulationCoordinates;
     this.changeSimulationRole = changeSimulationRole;
     this.currentPoint = null;
@@ -89,7 +86,7 @@ export class FirepowerConfigModal {
           await this.changeSimulationRole(this.currentPoint, "firepower");
           this.close();
         } catch (err) {
-          this.showSaveError(err.message || "转换为火力点失败");
+          this.showSaveError(err.message || "设置为同时作为火力点失败");
         } finally {
           this.btnRoleToFirepower.disabled = false;
         }
@@ -104,7 +101,7 @@ export class FirepowerConfigModal {
           await this.changeSimulationRole(this.currentPoint, "uav");
           this.close();
         } catch (err) {
-          this.showSaveError(err.message || "转换为侦察席失败");
+          this.showSaveError(err.message || "取消独立火力点失败");
         } finally {
           this.btnRoleToRecon.disabled = false;
         }
@@ -117,7 +114,6 @@ export class FirepowerConfigModal {
       this.handleSubmit();
     });
 
-    if (!this.saveSimulationCoordinates) eventBus.on("firepower:openConfigModal", point => this.open(point));
   }
 
   open(point, preserveValues = false, role = "firepower") {
@@ -208,6 +204,8 @@ export class FirepowerConfigModal {
     }
 
     const canSwitchRole = Boolean(this.changeSimulationRole);
+    if (this.btnRoleToFirepower) this.btnRoleToFirepower.textContent = "同时作为火力点";
+    if (this.btnRoleToRecon) this.btnRoleToRecon.textContent = "取消独立火力点";
     if (this.btnRoleToFirepower) {
       this.btnRoleToFirepower.hidden = !(canSwitchRole && isRecon);
     }
@@ -368,34 +366,14 @@ export class FirepowerConfigModal {
     this.form.inert = true;
     this.btnSave.disabled = true;
     this.btnClose.disabled = true;
-    let savedPoint;
     try {
-      if (this.saveSimulationCoordinates) {
-        const { longitude, latitude, altitude, strikeRange, maxTargets, ip, port } = updated;
-        const coordinates = isRecon ? null : { longitude, latitude, altitude, strikeRange, maxTargets, ip, port, battalion, company, mountedDeviceId };
-        await this.saveSimulationCoordinates(this.currentPoint.id, coordinates, updated.name);
-        this.isSaving = false;
-        this.close();
-        return;
-      }
-      const response = await fetch("/api/scenario/firepower", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated),
-        signal: AbortSignal.timeout(8000)
-      });
-      const result = await response.json().catch(() => null);
-      if (!response.ok || result?.ok === false) {
-        this.showSaveError(result?.error || "保存失败，请重试。");
-        return;
-      }
-      savedPoint = result?.firepowerPoint;
-      if (result?.ok !== true || savedPoint?.id !== updated.id || !hasGeographicPosition(savedPoint)) {
-        this.showSaveError("未收到有效的保存确认，请刷新页面核对阵位。");
-        return;
-      }
+      const { longitude, latitude, altitude, strikeRange, maxTargets, ip, port } = updated;
+      const coordinates = isRecon
+        ? (Number.isNaN(rawLon) && Number.isNaN(rawLat) && Number.isNaN(rawAlt) ? null : { longitude, latitude, altitude })
+        : { longitude, latitude, altitude, strikeRange, maxTargets, ip, port, battalion, company, mountedDeviceId };
+      await this.saveSimulationCoordinates(this.currentPoint, coordinates, updated.name);
     } catch (error) {
-      this.showSaveError(this.saveSimulationCoordinates ? error.message : "未收到保存确认，请刷新页面核对阵位。");
+      this.showSaveError(error.message || "未收到保存确认，请刷新后重试。");
       return;
     } finally {
       this.isSaving = false;
@@ -403,12 +381,6 @@ export class FirepowerConfigModal {
       this.btnSave.disabled = false;
       this.btnClose.disabled = false;
     }
-
-    this.onSave?.(savedPoint);
-    eventBus.emit("log:event", {
-      level: "info",
-      text: `火力点已更新: ${savedPoint.name} (经度: ${savedPoint.longitude}°, 纬度: ${savedPoint.latitude}°, 高度: ${savedPoint.altitude}m, 范围: ${savedPoint.strikeRange})`
-    });
 
     this.close();
   }

@@ -989,6 +989,11 @@ button.artillery-card:hover {
   background: linear-gradient(135deg, rgba(42, 18, 26, 0.98) 0%, rgba(22, 10, 16, 0.98) 100%);
 }
 
+.uav-recon-card.is-locate-selected {
+  outline: 2px solid rgba(251, 191, 36, 0.9);
+  outline-offset: 1px;
+}
+
 .uav-recon-card .card-corner-tl,
 .uav-recon-card .card-corner-br,
 .artillery-card .card-corner-tl,
@@ -3846,8 +3851,18 @@ button.artillery-card:hover {
   border-radius: 6px;
   padding: 6px 16px;
   text-align: center;
+  width: max-content;
   min-width: 140px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.tree-node-company .node-branch-actions {
+  justify-content: center;
+}
+
+.tree-node-company .node-branch-actions .btn {
+  flex: none;
+  white-space: nowrap;
 }
 
 .tree-points-container {
@@ -4437,6 +4452,7 @@ button.artillery-card:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   margin-top: 6px;
   padding-top: 6px;
   border-top: 1px dashed rgba(255, 255, 255, 0.08);
@@ -4445,14 +4461,24 @@ button.artillery-card:hover {
 
 .recon-mount-status {
   display: flex;
+  flex: 1 1 auto;
   align-items: center;
+  min-width: 0;
   gap: 6px;
 }
 
 .recon-mount-tag {
+  min-width: 0;
+  overflow: hidden;
   font-size: 10px;
   padding: 1px 5px;
   border-radius: 3px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recon-mount-action {
+  flex: 0 0 auto;
 }
 
 .recon-mount-tag.is-mounted {
@@ -4468,8 +4494,11 @@ button.artillery-card:hover {
 }
 
 .btn-tactical-mount {
+  flex: 0 0 auto;
+  min-width: 68px;
   padding: 2px 6px;
   font-size: 10px;
+  white-space: nowrap;
   background: rgba(0, 240, 255, 0.1);
   border-color: rgba(0, 240, 255, 0.3);
   color: #00f0ff;
@@ -4489,6 +4518,11 @@ button.artillery-card:hover {
   background: rgba(6, 12, 19, 0.9);
   border: 1px solid rgba(0, 240, 255, 0.25);
   border-radius: 4px;
+}
+
+.recon-mount-quick-picker .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .recon-quick-select {

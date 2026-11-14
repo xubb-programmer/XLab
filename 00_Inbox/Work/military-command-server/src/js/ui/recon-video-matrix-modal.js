@@ -172,10 +172,10 @@ class CellStreamPlayer {
  * 侦察载荷全视频链路总览矩阵管理中心
  */
 export class ReconVideoMatrixModal {
-  constructor(viewerManager, getUavsCallback, scenarioUavs = []) {
+  constructor(viewerManager, getUavsCallback, getScenarioUavs) {
     this.viewerManager = viewerManager;
     this.getUavsCallback = getUavsCallback;
-    this.scenarioUavs = scenarioUavs;
+    this.getScenarioUavs = getScenarioUavs;
     this.configuredUavs = [];
 
     this.modal = document.getElementById("page-video-matrix") || document.getElementById("recon-video-matrix-modal");
@@ -204,7 +204,10 @@ export class ReconVideoMatrixModal {
     this.renderView();
     void this.refreshScenarioStreams();
 
-    eventBus.on("devices:updated", () => this.renderView());
+    eventBus.on("devices:updated", () => {
+      this.renderView();
+      if (JSON.stringify(this.getScenarioUavs()) !== this.scenarioSignature) void this.refreshScenarioStreams();
+    });
   }
 
   initDom() {
@@ -262,7 +265,10 @@ export class ReconVideoMatrixModal {
   }
 
   async refreshScenarioStreams(restartStreams = false) {
-    const configuredUavs = await Promise.all(this.scenarioUavs.map(async uav => {
+    const uavs = this.getScenarioUavs();
+    const signature = JSON.stringify(uavs);
+    this.scenarioSignature = signature;
+    const configuredUavs = await Promise.all(uavs.map(async uav => {
       try {
         const query = new URLSearchParams({ uav: uav.id });
         const response = await fetch(`/api/video/status?${query}`, {
@@ -278,6 +284,7 @@ export class ReconVideoMatrixModal {
       }
     }));
 
+    if (this.scenarioSignature !== signature) return;
     this.configuredUavs = configuredUavs.filter(Boolean);
     this.renderView(restartStreams);
   }
@@ -285,9 +292,10 @@ export class ReconVideoMatrixModal {
   getSeats() {
     const devices = this.getUavsCallback().filter(uav => !uav.isScenario);
     const deviceIds = new Set(devices.map(uav => uav.id));
+    const configuredIds = new Set(this.getScenarioUavs().map(uav => uav.id));
     return [
       ...devices.map(uav => ({ uav, device: true })),
-      ...this.configuredUavs.filter(uav => !deviceIds.has(uav.id)).map(uav => ({ uav, device: false }))
+      ...this.configuredUavs.filter(uav => configuredIds.has(uav.id) && !deviceIds.has(uav.id)).map(uav => ({ uav, device: false }))
     ];
   }
 

@@ -2,8 +2,6 @@ import { eventBus } from "../core/event-bus.js";
 import { hasGeographicPosition } from "../core/coordinates.js";
 import { getPlatformDisplayName } from "../core/platform-labels.js";
 
-const MAX_UAV_TRAIL_POINTS = 1000;
-
 function parseRangeMeters(rangeVal) {
   if (typeof rangeVal === "number") return rangeVal > 500 ? rangeVal : rangeVal * 1000;
   if (typeof rangeVal === "string") {
@@ -40,7 +38,6 @@ export class ArtilleryLayer {
     for (const [id, record] of group) {
       if (ids.has(id)) continue;
       this.entities.remove(record.entity);
-      if (record.trail) this.entities.remove(record.trail);
       if (record.rangeRing) this.entities.remove(record.rangeRing);
       group.delete(id);
     }
@@ -50,7 +47,7 @@ export class ArtilleryLayer {
       const position = Cesium.Cartesian3.fromDegrees(platform.longitude, platform.latitude, platform.altitude);
       const details = isUav ? "高度: " + Math.round(platform.altitude) + " m" : "";
       const platformName = getPlatformDisplayName(platform, isUav ? "recon" : "firepower");
-      const label = (isUav ? "✈ " : "") + platformName + (details && details !== platformName ? "\n" + details : "");
+      const label = platformName + (details && details !== platformName ? "\n" + details : "");
       let record = group.get(platform.id);
       if (!record) {
         const entity = this.entities.add({
@@ -70,7 +67,7 @@ export class ArtilleryLayer {
         });
         entity._customType = isUav ? "uav" : "battery";
         entity._dataId = platform.id;
-        record = { entity, platform, positions: [], trail: null, rangeRing: null, rangeM: 40000 };
+        record = { entity, platform, rangeRing: null, rangeM: 40000 };
         group.set(platform.id, record);
       } else {
         record.platform = platform;
@@ -78,9 +75,7 @@ export class ArtilleryLayer {
         record.entity.label.text = label;
       }
       
-      if (isUav) {
-        this.updateTrail(record, position, color);
-      } else {
+      if (!isUav) {
         // 地面火力点打击范围包络圈 (Strike Range Circle)
         const rangeM = parseRangeMeters(platform.strikeRange ?? platform.maxRangeKm);
         record.rangeM = rangeM;
@@ -105,23 +100,6 @@ export class ArtilleryLayer {
           }
         }
       }
-    }
-  }
-
-  updateTrail(record, position, color) {
-    const last = record.positions.at(-1);
-    if (last && Cesium.Cartesian3.equals(last, position)) return;
-    record.positions.push(position);
-    if (record.positions.length > MAX_UAV_TRAIL_POINTS) record.positions.shift();
-    if (record.positions.length < 2) return;
-
-    const positions = record.positions.slice();
-    if (record.trail) {
-      record.trail.polyline.positions = positions;
-    } else {
-      record.trail = this.entities.add({
-        polyline: { positions, width: 2, arcType: Cesium.ArcType.NONE, material: color }
-      });
     }
   }
 

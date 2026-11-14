@@ -5,6 +5,7 @@ export class TargetLayer {
     this.viewer = viewerManager.viewer;
     this.entities = new Map();
     this.selectedIds = new Set();
+    this.visible = true;
 
     eventBus.on("targets:selectionChanged", ids => {
       this.selectedIds = new Set(ids || []);
@@ -20,6 +21,11 @@ export class TargetLayer {
       this.selectedIds.clear();
       this.updateHighlight();
     });
+  }
+
+  setVisible(visible) {
+    this.visible = visible;
+    for (const entity of this.entities.values()) entity.show = visible;
   }
 
   updateTargets(targets) {
@@ -44,6 +50,7 @@ export class TargetLayer {
         entity.label.text = text;
       } else {
         entity = this.viewer.entities.add({
+          show: this.visible,
           position,
           point: {
             pixelSize: 14,

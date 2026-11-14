@@ -3,7 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { edgeDeviceIdPattern } from "./edge-actions.mjs";
 import { hasGeographicPosition } from "../src/js/core/coordinates.js";
 
-const defaultEndpoint = { action: "target", timeoutMs: 6000 };
+const defaultEndpoint = { timeoutMs: 6000 };
 export const reportIdPattern = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/;
 
 export class ReportError extends Error {
@@ -49,7 +49,9 @@ export function readReportRequest(payload) {
     if (seen.has(key)) throw new ReportError(400, "同一目标在同一阵位重复指派");
     seen.add(key);
     const target = targets.get(targetId);
-    return [targetId, firepowerId, target?.longitude, target?.latitude, target?.altitude];
+    const entry = [targetId, firepowerId, target?.longitude, target?.latitude, target?.altitude];
+    if (target?.generation !== undefined) entry.push(target.generation);
+    return entry;
   });
   const requestKey = createHash("sha256").update(JSON.stringify(plan)).digest("hex");
   return { batchId, requestKey, assignments, targets };
@@ -89,12 +91,14 @@ export function validateReportAssignments(assignments, firepowerPoints) {
   return points;
 }
 
-export function prepareReportItems({ request, firepowerPoints, feedTargets, config }) {
+export function prepareReportItems({ request, firepowerPoints, getTarget, config }) {
   const points = validateReportAssignments(request.assignments, firepowerPoints);
-  const targets = new Map(request.targets);
-  for (const target of feedTargets) targets.set(target.id, target);
   return request.assignments.map(({ targetId, firepowerId }) => {
-    const target = targets.get(targetId);
+    const target = getTarget(targetId);
+    const submitted = request.targets.get(targetId);
+    if (!target || (submitted && (submitted.generation ?? "") !== target.generation)) {
+      throw new ReportError(409, `目标 ${targetId} 已删除或重新入库，请刷新后重试`);
+    }
     if (!hasGeographicPosition(target)) throw new ReportError(400, `目标 ${targetId} 缺少有效经纬高`);
     const point = points.get(firepowerId);
     const endpoint = config.endpoints[firepowerId] || config.defaultEndpoint;
@@ -104,7 +108,7 @@ export function prepareReportItems({ request, firepowerPoints, feedTargets, conf
     return {
       targetId, targetNumber: target.targetNumber, name: target.name,
       firepowerId, firepowerName: point.name || firepowerId, deviceId: point.deviceId || firepowerId,
-      action: endpoint.action || defaultEndpoint.action, timeoutMs, mock: Boolean(endpoint.mock),
+      timeoutMs, mock: Boolean(endpoint.mock),
       params: {
         lon: Number(target.longitude.toFixed(6)),
         lat: Number(target.latitude.toFixed(6)),

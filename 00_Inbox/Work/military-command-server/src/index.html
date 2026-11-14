@@ -7,8 +7,8 @@
   <title>单兵作战智能化指挥平台</title>
   <link rel="stylesheet" href="/cesium/Widgets/widgets.css">
   <link rel="stylesheet" href="/styles/main.css?v=2.1">
-  <link rel="stylesheet" href="/styles/layout.css?v=2.1">
-  <link rel="stylesheet" href="/styles/components.css?v=2.1">
+  <link rel="stylesheet" href="/styles/layout.css?v=2.2">
+  <link rel="stylesheet" href="/styles/components.css?v=2.2">
   <script>window.CESIUM_BASE_URL = "/cesium/";</script>
   <script>
     // Keep the offline board compatible with its Chromium 91 runtime.
@@ -79,7 +79,7 @@
     }
   </script>
   <script defer src="/cesium/Cesium.js"></script>
-  <script type="module" src="/js/main.js?v=2.2"></script>
+  <script type="module" src="/js/main.js?v=2.4"></script>
 </head>
 <body>
   <div class="app-container">
@@ -218,9 +218,14 @@
               <polyline points="15.5 4.5 20 4.5 20 9"></polyline>
             </svg>
           </button>
-          <button id="btn-view-uav" class="btn btn-sm" type="button" hidden>聚焦侦察无人机</button>
+          <button id="btn-view-uav" class="btn btn-sm" type="button" hidden>定位侦察席</button>
           <button id="btn-map-mode" class="btn btn-sm btn-map-mode is-offline" type="button" aria-label="底图模式切换" title="当前：离线底图（点击切换在线）"></button>
           <span id="map-mode-status" class="map-offline-status" role="status" hidden></span>
+          <div class="map-layer-controls" role="group" aria-label="地图图层">
+            <label class="map-layer-aircraft"><input type="checkbox" id="show-aircraft-layer" checked> 载荷</label>
+            <label class="map-layer-target"><input type="checkbox" id="show-target-layer" checked> 目标</label>
+            <button id="btn-locate-aircraft" class="btn btn-sm" type="button" disabled>定位载荷</button>
+          </div>
         </div>
       </section>
 
@@ -393,8 +398,8 @@
 
           <footer class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
             <div class="modal-footer-left">
-              <button type="button" id="btn-modal-role-to-recon" class="btn btn-secondary" hidden>转为侦察席</button>
-              <button type="button" id="btn-modal-role-to-firepower" class="btn btn-secondary" hidden>转为火力点</button>
+              <button type="button" id="btn-modal-role-to-recon" class="btn btn-secondary" hidden>取消独立火力点</button>
+              <button type="button" id="btn-modal-role-to-firepower" class="btn btn-secondary" hidden>同时作为火力点</button>
             </div>
             <div class="modal-footer-right" style="display:flex; gap:10px;">
               <button type="button" id="btn-cancel-firepower" class="btn btn-secondary">取消</button>

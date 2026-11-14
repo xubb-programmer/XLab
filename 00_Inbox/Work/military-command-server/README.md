@@ -23,7 +23,7 @@ printf '%s %s\n' "$ID" "$VERSION_ID"
 dpkg --print-architecture
 ```
 
-从现有开发板 `cat@192.168.0.201` 的 `/opt/jw/military-command-server/` 获取对应部署包及同名的 `.sha256` 文件，用 U 盘或局域网拷贝到新板的同一目录。
+从现有开发板 `ztl@192.168.0.201` 的 `/opt/jw/military-command-server/` 获取对应部署包及同名的 `.sha256` 文件，用 U 盘或局域网拷贝到新板的同一目录。
 
 | 系统检查结果 | 部署包 |
 | --- | --- |
@@ -37,7 +37,7 @@ package=military-command-server-ubuntu20.04-arm64.tar.gz
 # Debian 11 使用 package=military-command-server-debian11-arm64.tar.gz
 sha256sum -c "$package.sha256" &&
 tar --touch -xzf "$package" &&
-cd target-guidance-offline &&
+cd military-command-server-offline &&
 sudo bash install.sh
 ```
 
@@ -55,15 +55,15 @@ curl -fsS http://127.0.0.1:4177/api/targets
 /opt/jw/military-command-server/current/launch-military-command.sh
 ```
 
-现场接入时，在 `/etc/target-guidance/edgeagent.json` 配置 UDP 发送端白名单、组播来源及 `fire-01-tcp` 的接收地址和端口，修改后重启 `server-edge.service`。在同目录的 `video.json` 配置 RTSP，修改后重启 `military-command-server.service`。「即时通讯」和「侦察车智能助手」分别依赖板上已有的 LANChat 和语音助手服务。
+现场接入时，在 `/etc/military-command-server/edgeagent.json` 配置 UDP 发送端白名单、组播来源及 `fire-01-tcp` 的接收地址和端口，修改后重启 `server-edge.service`。在同目录的 `video.json` 配置 RTSP，修改后重启 `military-command-server.service`。「即时通讯」和「侦察车智能助手」分别依赖板上已有的 LANChat 和语音助手服务。
 
 Ubuntu 包已通过完整性校验，原生 Ubuntu 20.04 ARM64 板上的断网首装待现场验证。打包及更多现场配置见 [离线部署](tools/offline-rk3588/README.md)。
 
 ## 切换卫星底图
 
-地图左上角用「切换在线」和「切换离线」切换底图，保留当前视角。页面默认使用离线底图。需要改变页面初始模式时，编辑 `public/scenarios/scenario-default.json` 的顶层 `mapMode`，设置为 `"online"` 或 `"offline"` 后刷新。RK3588 安装后对应配置在 `/var/lib/target-guidance/scenarios/scenario-default.json`。
+地图左上角用「切换在线」和「切换离线」切换底图，保留当前视角。页面默认使用离线底图。需要改变页面初始模式时，编辑 `public/scenarios/scenario-default.json` 的顶层 `mapMode`，设置为 `"online"` 或 `"offline"` 后刷新。RK3588 安装后对应配置在 `/var/lib/military-command-server/scenarios/scenario-default.json`。
 
-全球和中国概览读取 `public/offline-satellite/`。厦门细图读取 MapTileGenerator 生成的 Web Mercator XYZ JPEG 数据库 `dist/offline-maps/highres-satellite/tiles.db` 和同目录的 `manifest.json`。细图范围随层级变化，覆盖外显示较低层级或概览影像。概览瓦片缺失时使用 Cesium 随附的 Natural Earth II 底图。
+全球和中国概览读取 `public/offline-satellite/`。厦门、朱日和和赤峰细图合成为 `dist/offline-maps/combined-theaters/`，网页按各战区图层范围和逐行瓦片覆盖加载同一份 Web Mercator XYZ JPEG 数据库。原始地图仍分别保存在 `highres-satellite/` 与 `zhurihe-chifeng/`，合并脚本从 SQLite 一致性快照生成图集；覆盖以外显示概览影像。概览瓦片缺失时使用 Cesium 随附的 Natural Earth II 底图。
 
 ## 无人机
 
@@ -77,19 +77,25 @@ Ubuntu 包已通过完整性校验，原生 Ubuntu 20.04 ARM64 板上的断网�
 
 ## 数据管理
 
-执行 `npm start`，从主界面的「设置 → 数据管理」打开。页面支持新增、按名称或编号查询、编辑和删除三类手动录入的资料。Windows 开发环境沿用原有的 `dist/data-preview/records.sqlite`，离线板端保存在 `/var/lib/target-guidance/management/records.sqlite`。
+执行 `npm start`，从主界面的「设置 → 数据管理」打开。页面支持新增、按名称或编号查询、编辑和删除三类手动录入的资料。Windows 开发环境沿用原有的 `dist/data-preview/records.sqlite`，离线板端保存在 `/var/lib/military-command-server/management/records.sqlite`。
 
-数据管理同时显示战术大厅的侦察席、火力点、已入库目标和手工台账。设备上报记录支持查看详情及目标轨迹，手工记录支持编辑和删除。恢复已删除的手工目标时，可用相同类型和编号重新新增。
+数据管理按来源显示设备上报、场景配置和手工记录，每条记录均可从这里删除。设备快照删除后，设备下一次有效心跳会重新入库，沿用原有名称、角色和坐标。实时目标删除后从地图和列表移除，再次上报时重新开始记录轨迹。手工记录可编辑，已删除的手工目标可用相同类型和编号重新录入。
 
-设备可在侦察席和火力点之间切换，角色按设备 ID 互斥。挂载到已有阵位时，场景绑定同时决定设备角色，设备从侦察席列表移到该阵位，解绑后恢复。通过「转为火力点」设置的独立火力点角色保存在 SQLite。
+删除已挂载的设备前，在数据管理页先点「解绑」。删除场景阵位会解除该阵位的挂载，已保存的上报历史仍可查阅。已删除阵位上的旧指派无法按原阵位重试。
+
+侦察席与火力点不再按设备 ID 互斥：同一组播设备可以继续显示在侦察席，同时作为一个火力阵位的通信信道。挂载只建立设备与阵位的绑定，同一设备最多挂载一个阵位；挂载后视频、侦察席坐标和飞机轨迹继续有效，解除挂载后清除阵位绑定但保留侦察席配置。通过「同时作为火力点」设置的独立火力点标记保存在 SQLite；已设为独立火力点的设备如需挂载，须先「取消独立火力点」。
 
 ## 地图目标
 
 从 `config/targets.example.json` 复制出 `config/targets.json`，填写 EdgeAgent 使用的 `brokerUrl`（`mqtt://` 或 `mqtts://`），按需填写 `username` 和 `password`。目标主题默认为 `edge/v1/devices/target-input-device/data`，设备状态主题默认为 `edge/v1/devices/device-status-device/data`。
 
-Windows + WSL 开发时，设备状态的 Windows 组播转发器接收 `239.255.0.1:5678`，把原始报文单播送入 WSL EdgeAgent 的 `18082` 端口；EdgeAgent 再通过 MQTT 发布到设备状态主题。启动 EdgeAgent 和网页后，在项目目录另开终端运行 `npm run relay:edgeagent`。RK3588 部署包中的 EdgeAgent 则直接加入该组播并发布到 MQTT。平台只订阅 MQTT。目标报文仍由 EdgeAgent 通过 MQTT 转发。服务解析 ScoutMonitor 033（1501）报文，在地图和右侧列表显示侦察目标与炸点目标。配置和连接状态在顶部显示。没有收到有效报文时，目标列表为空。
+Windows + WSL 开发时，设备状态的 Windows 组播转发器接收 `239.255.0.1:5678`，把原始报文单播送入 WSL EdgeAgent 的 `18082` 端口；EdgeAgent 再通过 MQTT 发布到设备状态主题。`DEVICE_SIM_SOURCE_IPS` 用逗号分隔多个设备来源 IP。启动网页和转发器的终端都要设置同一列表，例如 PowerShell 使用 `$env:DEVICE_SIM_SOURCE_IPS="192.168.10.102,192.168.10.130"`。在项目目录另开终端运行 `npm run relay:edgeagent`。RK3588 部署包中的 EdgeAgent 则直接加入该组播并发布到 MQTT，`edgeagent.json` 的 `device-status-udp.allowed_peers` 与 `/etc/military-command-server/web.env` 的 `DEVICE_SIM_SOURCE_IPS` 都要包含相同来源。平台只订阅 MQTT。目标报文仍由 EdgeAgent 通过 MQTT 转发。服务解析 ScoutMonitor 033（1501）报文，在地图和右侧列表显示侦察目标与炸点目标。配置和连接状态在顶部显示。没有收到有效报文时，目标列表为空。
 
 同一类型、同一编号的目标保存最新位置和最近 60 个不同于前一点的轨迹坐标。目标入库后可从数据管理查询，地图在服务启动时恢复最近更新的 300 个目标。设备最新快照保存在 `devices.sqlite`，重启后可查看，收到新心跳后恢复在线。火力点场景配置和对外上报记录沿用各自的保存位置。
+
+设备状态组播的 `飞机位置` 可位于协议 2.0 的 `数据` 内或报文顶层。载荷位置需包含 `有效: true`、数值型 `经度`、`纬度`、`高程` 和可解析的 `更新时间`。平台按上报设备分别保留最近 60 个轨迹点及最新位置，忽略重复坐标和乱序位置。设备离线或标记位置无效时，地图标注末次有效位置。
+
+地图上方的「载荷」和「目标」默认都勾选，可单独开关。红色显示载荷及其轨迹，蓝色显示侦察目标和炸点目标。「定位载荷」将地图移到已收到的位置。侦察席手动坐标可在「配置」中另行设置。
 
 向火力点上报时，网页服务通过同一 MQTT Broker 把报文发给 EdgeAgent，由网关通过 TCP 转交外部接收端。阵位的「EdgeAgent 设备 ID」须与网关配置中的 `device_id` 一致，默认使用阵位编号。报文和回执格式见 [部署说明](tools/offline-rk3588/README.md#目标上报协议)。
 

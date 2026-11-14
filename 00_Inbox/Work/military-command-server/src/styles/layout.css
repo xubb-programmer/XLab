@@ -234,7 +234,7 @@
 
 /* 左侧栏：平台编队 */
 .sidebar-left {
-  width: min(290px, 40%);
+  width: min(350px, 45%);
   background: var(--bg-dark-1);
   border-right: 1px solid var(--border-subtle);
   display: grid;
@@ -292,6 +292,33 @@
   color: var(--text-secondary);
   font-size: 11px;
 }
+
+.map-layer-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 8px;
+  background: rgba(6, 18, 28, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 4px;
+}
+
+.map-layer-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.map-layer-controls input {
+  margin: 0;
+  accent-color: currentColor;
+}
+
+.map-layer-aircraft { color: var(--platform-red-bright); }
+.map-layer-target { color: #60a5fa; }
 
 .map-credits .cesium-widget-credits {
   position: static;

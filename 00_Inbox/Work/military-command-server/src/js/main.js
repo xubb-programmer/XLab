@@ -1,9 +1,11 @@
 // 无人机视频、位置与地图目标展示入口。
 import { eventBus } from "./core/event-bus.js";
 import { hasGeographicPosition } from "./core/coordinates.js";
+import { getPlatformDisplayName } from "./core/platform-labels.js";
 import { CesiumViewerManager } from "./core/viewer.js";
 import { targetService } from "./engine/target-service.js";
 import { ArtilleryLayer } from "./layers/artillery-layer.js";
+import { AircraftLayer } from "./layers/aircraft-layer.js";
 import { TargetLayer } from "./layers/target-layer.js";
 import { GuidanceLayer } from "./layers/guidance-layer.js";
 import { computeMultiAllocationPlan } from "./engine/allocation-strategy.js";
@@ -11,7 +13,6 @@ import { CameraHud } from "./ui/camera-hud.js";
 import { ArtilleryPanel } from "./ui/artillery-panel.js";
 import { TargetPanel } from "./ui/target-panel.js";
 import { StatsPanel } from "./ui/stats-panel.js";
-import { FirepowerConfigModal } from "./ui/firepower-config-modal.js";
 import { TargetReportModal } from "./ui/target-report-modal.js";
 import { initDeviceManager } from "./ui/device-simulation.js";
 import { ReconVideoMatrixModal } from "./ui/recon-video-matrix-modal.js";
@@ -87,7 +88,7 @@ function switchMainPage(pageName, options = {}) {
     if (options?.openNew) firepowerAffiliationModal?.openDrawerForNew();
   } else if (pageName === "data-management") {
     document.getElementById("management-title")?.focus();
-    eventBus.emit("management:open");
+    eventBus.emit("management:open", options.recordType);
   }
 }
 
@@ -108,25 +109,24 @@ function bindMainPageNavigation() {
     switchMainPage("firepower", { keepDrawer: true, openNew: true }));
 
   eventBus.on("page:switch", (pageName, options) => switchMainPage(pageName, options));
+  eventBus.on("management:openFirepower", () => switchMainPage("data-management", { recordType: "firepower" }));
   eventBus.on("firepower:openAffiliationModal", options => switchMainPage("firepower", options));
   eventBus.on("recon-video:open-matrix", preferredSource =>
     switchMainPage("video-matrix", { preferredSource }));
 }
 
-async function readTargets(onUpdate) {
-  let snapshot;
+async function readTargets() {
   try {
     const response = await fetch("/api/targets", {
       cache: "no-store", signal: AbortSignal.timeout(5000)
     });
     if (!response.ok) throw new Error("Target feed unavailable");
-    snapshot = await response.json();
+    const snapshot = await response.json();
     if (!Array.isArray(snapshot.targets)) throw new Error("Invalid target feed");
+    return snapshot;
   } catch {
-    snapshot = { state: "unavailable" };
+    return { state: "unavailable" };
   }
-  onUpdate(snapshot);
-  setTimeout(() => readTargets(onUpdate), 1000);
 }
 
 function readPlatforms(records, defaultName) {
@@ -197,13 +197,6 @@ async function bootstrap() {
   window.__targetService = targetService;
   window.__eventBus = eventBus;
 
-  // 初始化地图区域框选交互
-  viewerManager.initBoxSelection(() => targetService.getAllTargets());
-  const btnBoxSelect = document.getElementById("btn-box-select");
-  btnBoxSelect?.addEventListener("click", () => {
-    viewerManager.setBoxSelectMode(!viewerManager.isBoxSelectMode);
-  });
-
   for (const button of document.querySelectorAll(".sidebar-toggle")) {
     const sidebar = document.getElementById(button.getAttribute("aria-controls"));
     button.addEventListener("click", () => {
@@ -223,9 +216,128 @@ async function bootstrap() {
 
   // 4. 初始化三维场景图层渲染器
   const artilleryLayer = new ArtilleryLayer(viewerManager);
+  const aircraftLayer = new AircraftLayer(viewerManager.viewer);
   const targetLayer = new TargetLayer(viewerManager);
   const guidanceLayer = new GuidanceLayer(viewerManager);
   window.__guidanceLayer = guidanceLayer;
+
+  const btnBoxSelect = document.getElementById("btn-box-select");
+  viewerManager.initBoxSelection(() => targetLayer.visible ? targetService.getAllTargets() : []);
+  btnBoxSelect?.addEventListener("click", () => viewerManager.setBoxSelectMode(!viewerManager.isBoxSelectMode));
+
+  const aircraftToggle = document.getElementById("show-aircraft-layer");
+  const targetToggle = document.getElementById("show-target-layer");
+  aircraftToggle.addEventListener("change", () => {
+    aircraftLayer.setVisible(aircraftToggle.checked);
+    viewerManager.requestRender();
+  });
+  targetToggle.addEventListener("change", () => {
+    const visible = targetToggle.checked;
+    targetLayer.setVisible(visible);
+    guidanceLayer.targetsVisible = visible;
+    guidanceLayer.refreshVisibility();
+    if (!visible) viewerManager.setBoxSelectMode(false);
+    btnBoxSelect.disabled = !visible;
+    viewerManager.requestRender();
+  });
+  aircraftToggle.dispatchEvent(new Event("change"));
+  targetToggle.dispatchEvent(new Event("change"));
+  const locateAircraft = document.getElementById("btn-locate-aircraft");
+  const focusUavButton = document.getElementById("btn-view-uav");
+  let aircraftTracks = [];
+  let selectedReconSeat = null;
+
+  function getSelectedAircraftTrack() {
+    if (!selectedReconSeat) return null;
+    const id = selectedReconSeat.id;
+    let identity = id;
+    let deviceId = selectedReconSeat.deviceId || "";
+    if (typeof id === "string" && id.startsWith("[")) {
+      try {
+        const parts = JSON.parse(id);
+        if (Array.isArray(parts)) {
+          deviceId ||= typeof parts[0] === "string" ? parts[0] : "";
+          identity = typeof parts[1] === "string" ? parts[1] : id;
+        }
+      } catch {
+        // 非设备侦察席使用原始席位 ID 匹配载荷。
+      }
+    }
+    const exactMatch = aircraftTracks.find(track =>
+      track.identity === identity || track.id === identity || track.id === id
+    );
+    if (exactMatch) return exactMatch;
+    if (!deviceId) return null;
+    const deviceMatches = aircraftTracks.filter(track => track.deviceId === deviceId);
+    return deviceMatches.length === 1 ? deviceMatches[0] : null;
+  }
+
+  function updateLocateAircraftButton() {
+    if (!locateAircraft) return;
+    locateAircraft.disabled = aircraftTracks.length === 0;
+    const selectedTrack = getSelectedAircraftTrack();
+    const title = !selectedReconSeat
+      ? "请先点击左侧侦察席位卡片，选择要定位的载荷"
+      : selectedTrack
+        ? `定位 ${selectedReconSeat.name} 的载荷`
+        : `${selectedReconSeat.name} 暂无可定位的载荷位置`;
+    locateAircraft.title = title;
+    locateAircraft.setAttribute("aria-label", title);
+  }
+
+  function getSelectedReconUav() {
+    if (!selectedReconSeat) return null;
+    return deviceManager?.getUavs().find(uav => uav.id === selectedReconSeat.id) ?? null;
+  }
+
+  function updateFocusUavButton() {
+    if (!focusUavButton) return;
+    const uav = getSelectedReconUav();
+    focusUavButton.hidden = deviceManager.getUavs().length === 0;
+    focusUavButton.disabled = !hasGeographicPosition(uav);
+    const name = uav ? getPlatformDisplayName(uav, "recon") : "";
+    const title = !uav
+      ? "请先选择左侧侦察席"
+      : focusUavButton.disabled ? `${name} 尚未配置经纬高` : `定位 ${name}`;
+    focusUavButton.title = title;
+    focusUavButton.setAttribute("aria-label", title);
+  }
+
+  eventBus.on("recon-seat:selected", seat => {
+    selectedReconSeat = seat;
+    updateLocateAircraftButton();
+    if (deviceManager) updateFocusUavButton();
+  });
+
+  eventBus.on("aircraft:updated", aircraft => {
+    aircraftTracks = aircraft;
+    aircraftLayer.updateAircraft(aircraft);
+    updateLocateAircraftButton();
+    viewerManager.requestRender();
+  });
+  locateAircraft.addEventListener("click", () => {
+    if (!selectedReconSeat) {
+      locateAircraft.textContent = "先选侦察席";
+      eventBus.emit("log:event", { level: "warning", text: "请先点击左侧侦察席位卡片，再定位该席位的载荷。" });
+      setTimeout(() => { locateAircraft.textContent = "定位载荷"; }, 1800);
+      return;
+    }
+    const track = getSelectedAircraftTrack();
+    if (!track) {
+      locateAircraft.textContent = "暂无载荷位置";
+      eventBus.emit("log:event", { level: "warning", text: `${selectedReconSeat.name} 暂无可定位的载荷位置。` });
+      setTimeout(() => { locateAircraft.textContent = "定位载荷"; }, 1800);
+      return;
+    }
+    aircraftToggle.checked = true;
+    aircraftToggle.dispatchEvent(new Event("change"));
+    const position = Cesium.Cartesian3.fromDegrees(track.longitude, track.latitude, track.altitude);
+    const bounds = Cesium.BoundingSphere.fromPoints([position]);
+    viewerManager.viewer.camera.flyToBoundingSphere(bounds, {
+      offset: new Cesium.HeadingPitchRange(0, -Math.PI / 2, Math.max(2500, bounds.radius * 2.5))
+    });
+    eventBus.emit("log:event", { level: "info", text: `地图已定位至 ${selectedReconSeat.name} 的载荷。` });
+  });
 
   // 5. 初始化无人机视频窗口
   const cameraHud = new CameraHud();
@@ -243,44 +355,18 @@ async function bootstrap() {
     artilleryLayer,
     statsPanel,
     targetService,
-    scenarioPoints: points
+    scenarioPoints: points,
+    configuredUavs: uavs
   });
-  if (activeMainPage === "data-management") eventBus.emit("management:open");
-
-  // 6.1 初始化地面火力点手动配置弹窗
-  const firepowerModal = new FirepowerConfigModal(
-    viewerManager,
-    updatedPoint => {
-      const idx = points.findIndex(p => p.id === updatedPoint.id);
-      if (idx >= 0) points[idx] = { ...points[idx], ...updatedPoint };
-      else points.push(updatedPoint);
-
-      const currentUavs = deviceManager ? deviceManager.getUavs() : uavs;
-      const currentFixed = deviceManager ? deviceManager.getFixedPoints() : points;
-      artilleryPanel.update(currentUavs, currentFixed);
-      artilleryLayer.updatePlatforms(currentUavs, currentFixed);
-      statsPanel.update({ uavs: currentUavs, points: currentFixed, targets: targetService.getAllTargets(), source });
-      viewerManager.requestRender();
-
-      if (hasGeographicPosition(updatedPoint)) {
-        eventBus.emit("battery:selected", updatedPoint.id);
-      }
-    },
-    null,
-    (device, role) => deviceManager?.changeRole(device, role)
-  );
+  updateFocusUavButton();
 
   document.getElementById("btn-open-firepower-config")?.addEventListener("click", () => {
-    const currentPoints = deviceManager ? deviceManager.getFixedPoints() : points;
-    if (deviceManager) {
-      deviceManager.openConfig(currentPoints[0] || points[0], "firepower");
-    } else {
-      firepowerModal.open(points[0]);
-    }
+    const [point] = deviceManager.getFixedPoints();
+    if (point) deviceManager.openConfig(point, "firepower");
   });
 
   // 6.2 初始化目标上报至火力点交互弹窗
-  const targetReportModal = new TargetReportModal(targetService, () => points);
+  const targetReportModal = new TargetReportModal(targetService, deviceManager.getScenarioPoints);
 
   // 6.3 初始化地图多选悬浮工具条 (入口 2: 地图选取目标)
   const mapTargetHud = document.getElementById("map-target-selection-hud");
@@ -318,7 +404,7 @@ async function bootstrap() {
   // 6.4 初始化侦察载荷全视频链路总览矩阵 (全链路视频控制中心)
   reconVideoMatrixModal = new ReconVideoMatrixModal(viewerManager, () => {
     return deviceManager ? deviceManager.getUavs() : uavs;
-  }, uavs);
+  }, deviceManager.getScenarioUavs);
   if (activeMainPage === "video-matrix") reconVideoMatrixModal.open(activeMainPageOptions?.preferredSource);
 
   // 6.5 初始化战术火力整备与编制隶属管理弹窗 (树状图与动态挂载控制中心)
@@ -328,7 +414,6 @@ async function bootstrap() {
     if (activeMainPageOptions?.openNew) firepowerAffiliationModal.openDrawerForNew();
   }
 
-  const focusUavButton = document.getElementById("btn-view-uav");
   let source = "正在读取目标配置…";
 
   // 7. 统一帧更新与战术态势渲染管线
@@ -342,6 +427,7 @@ async function bootstrap() {
     // 严格遵循“人机在环·自主裁决”原则：仅在人工勾选目标时展示态势引导线，未选目标时保持三维地球纯净，不主动绘制
     const selected = targetService.getSelectedTargets();
     if (selected.length > 0) {
+      const points = deviceManager.getScenarioPoints();
       const plan = computeMultiAllocationPlan(selected, points);
       const assignments = (plan.targetPlans || []).map(p => {
         // 核心机制：优先遵从操作员人工裁决；未裁决时遵从系统智能推荐
@@ -375,18 +461,18 @@ async function bootstrap() {
     // 刷新各 UI 监控面板
     statsPanel.update({ uavs: currentUavs, points: currentFixed, targets, source });
     targetPanel.update(targets);
-    if (focusUavButton) focusUavButton.hidden = currentUavs.filter(hasGeographicPosition).length !== 1;
-
     viewerManager.requestRender();
   }
 
   // 8. 监听事件流驱动渲染
   eventBus.on("targets:updated", () => renderState());
   eventBus.on("devices:updated", () => {
+    updateFocusUavButton();
     statsPanel.update({
       uavs: deviceManager.getUavs(), points: deviceManager.getFixedPoints(),
       targets: targetService.getAllTargets(), source
     });
+    refreshGuidance();
   });
   eventBus.on("targets:selectionChanged", () => {
     refreshGuidance();
@@ -446,15 +532,10 @@ async function bootstrap() {
   });
 
   focusUavButton?.addEventListener("click", () => {
-    const currentUavs = deviceManager ? deviceManager.getUavs() : uavs;
-    const uav = currentUavs.find(hasGeographicPosition);
-    if (!uav) return;
-    viewerManager.flyToScenario({
-      longitude: uav.longitude,
-      latitude: uav.latitude,
-      altitude: Math.max(1000, (uav.altitude || 0) + 2000)
-    });
-    eventBus.emit("log:event", { level: "info", text: `视角切换至: 侦察无人机空域 (${uav.name})` });
+    const uav = getSelectedReconUav();
+    if (!hasGeographicPosition(uav)) return;
+    viewerManager.flyToEntity(uav.longitude, uav.latitude, uav.altitude);
+    eventBus.emit("log:event", { level: "info", text: `地图已定位至 ${getPlatformDisplayName(uav, "recon")}。` });
   });
 
   // 10. 目标分类过滤按钮
@@ -491,7 +572,7 @@ async function bootstrap() {
   renderState();
 
   let revision;
-  readTargets(snapshot => {
+  const refreshTargets = snapshot => {
     const nextSource = targetFeedLabels[snapshot.state] ?? targetFeedLabels.unavailable;
     const sourceChanged = source !== nextSource;
     source = nextSource;
@@ -504,19 +585,30 @@ async function bootstrap() {
       const currentFixed = deviceManager ? deviceManager.getFixedPoints() : [];
       statsPanel.update({ uavs: currentUavs, points: currentFixed, targets: targetService.getAllTargets(), source });
     }
-  });
+  };
+  let latestTargetRequest = 0;
+  async function refreshTargetMap() {
+    const request = ++latestTargetRequest;
+    const snapshot = await readTargets();
+    if (request === latestTargetRequest) refreshTargets(snapshot);
+  }
+
+  async function pollTargets() {
+    await refreshTargetMap();
+    setTimeout(pollTargets, 1000);
+  }
+
+  eventBus.on("management:changed", () => void refreshTargetMap());
+  void pollTargets();
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-  initDataManagement(() => ({
-    recon: deviceManager?.getUavs() ?? [],
-    firepower: deviceManager?.getFixedPoints() ?? []
-  }));
+  initDataManagement();
   bindMainPageNavigation();
   targetPanel = new TargetPanel(targetService, viewerManager);
   targetPanel.update(targetService.getAllTargets());
 
   bootstrap().catch(err => {
-    console.error("[URAGS Boot Error]", err);
+    console.error("[Military Command Server]", err);
   });
 });

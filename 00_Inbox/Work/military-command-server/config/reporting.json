@@ -1,19 +1,15 @@
 {
   "defaultEndpoint": {
-    "action": "target",
     "timeoutMs": 6000
   },
   "endpoints": {
     "FIRE-01": {
-      "action": "target",
       "timeoutMs": 6000
     },
     "FIRE-02": {
-      "action": "target",
       "timeoutMs": 6000
     },
     "FIRE-03": {
-      "action": "target",
       "timeoutMs": 6000
     }
   }

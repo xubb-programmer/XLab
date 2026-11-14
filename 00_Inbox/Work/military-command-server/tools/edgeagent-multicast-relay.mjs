@@ -4,7 +4,8 @@ import { isIPv4 } from "node:net";
 import { networkInterfaces } from "node:os";
 
 const group = process.env.DEVICE_SIM_GROUP || "239.255.0.1";
-const sourceIp = process.env.DEVICE_SIM_SOURCE_IP || "192.168.10.130";
+const sourceIps = (process.env.DEVICE_SIM_SOURCE_IPS || "192.168.10.130")
+  .split(",").map(address => address.trim()).filter(Boolean);
 const multicastPort = Number(process.env.DEVICE_SIM_UDP_PORT || 5678);
 const agentPort = Number(process.env.EDGEAGENT_UDP_PORT || 18082);
 const distro = process.env.EDGEAGENT_WSL_DISTRO || "Ubuntu-20.04";
@@ -37,12 +38,13 @@ function findEdgeAgentHost() {
 }
 
 if (!isIPv4(group) || Number(group.split(".")[0]) < 224 || Number(group.split(".")[0]) > 239
-    || !isIPv4(sourceIp) || !Number.isInteger(multicastPort) || multicastPort < 1 || multicastPort > 65535
+    || !sourceIps.length || !sourceIps.every(isIPv4)
+    || !Number.isInteger(multicastPort) || multicastPort < 1 || multicastPort > 65535
     || !Number.isInteger(agentPort) || agentPort < 1 || agentPort > 65535) {
   throw new Error("组播转发配置无效");
 }
 
-const interfaceIp = findInterfaceIp(sourceIp);
+const interfaceIp = findInterfaceIp(sourceIps[0]);
 const agentHost = findEdgeAgentHost();
 if (!isIPv4(interfaceIp) || !isIPv4(agentHost)) throw new Error("转发网卡或 EdgeAgent 地址无效");
 
@@ -59,7 +61,7 @@ function close() {
 }
 
 receiver.on("message", (message, peer) => {
-  if (peer.address !== sourceIp) return;
+  if (!sourceIps.includes(peer.address)) return;
   sender.send(message, agentPort, agentHost, error => {
     if (error) console.error(`[EdgeAgent组播转发] 转发失败: ${error.message}`);
   });
@@ -72,7 +74,7 @@ receiver.on("error", error => {
 receiver.bind(multicastPort, "0.0.0.0", () => {
   try {
     receiver.addMembership(group, interfaceIp);
-    console.log(`[EdgeAgent组播转发] ${group}:${multicastPort} (${interfaceIp}) -> ${agentHost}:${agentPort}; source=${sourceIp}`);
+    console.log(`[EdgeAgent组播转发] ${group}:${multicastPort} (${interfaceIp}) -> ${agentHost}:${agentPort}; sources=${sourceIps.join(",")}`);
   } catch (error) {
     console.error(`[EdgeAgent组播转发] 加入组播失败: ${error.message}`);
     close();

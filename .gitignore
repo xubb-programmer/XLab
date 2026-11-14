@@ -33,3 +33,38 @@
 *.elf
 *.map
 *.out
+
+# Node & Web 依赖与构建产物
+**/node_modules/
+**/dist/
+**/scratch/
+
+# SQLite 数据库与缓存
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# Visual Studio & C# 构建配置
+**/.vs/
+**/*.csproj.user
+**/bin/
+**/obj/
+*.bak
+
+# 临时压缩包与独立子工程
+*.7z
+*.zip
+00_Inbox/Work/usb_mouse_sync/
+
+# 归档与历史备份
+/07_Archive/
+
+# 根目录临时调试截图与日志
+/*.png
+/temp_*.txt
+/codex-tg-cdp-screen.png
+/remote-target-guidance-*.png
+

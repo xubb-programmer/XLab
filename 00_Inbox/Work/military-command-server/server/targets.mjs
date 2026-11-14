@@ -79,6 +79,11 @@ export async function openTargetFeed(config, operations) {
     snapshot: () => ({
       state, instance, revision, targets: [...records.values()].reverse()
     }),
+    removeTarget(id, generation) {
+      operations.removeLiveTarget(id, generation);
+      records.delete(id);
+      revision++;
+    },
     sendEdgeAction: () => Promise.resolve({ state: "not_sent", pause: true, error: "MQTT 未配置或不可用，上报未发出" }),
     close: () => client?.end(true)
   };

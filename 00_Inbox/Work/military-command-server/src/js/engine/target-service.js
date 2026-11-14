@@ -55,15 +55,23 @@ export class TargetService {
     });
 
     // 清理已从当前数据源消失的目标 ID
-    const currentIdSet = new Set(this.targets.map(t => t.id));
+    const currentTargets = new Map(this.targets.map(target => [target.id, target]));
+    const replaced = new Set();
+    for (const [id, previous] of previousTargets) {
+      if (!currentTargets.has(id) || currentTargets.get(id).generation !== previous.generation) {
+        this.reportedMap.delete(id);
+        this.adjudicatedMap.delete(id);
+        replaced.add(id);
+      }
+    }
     let changed = false;
     for (const id of this.selectedIds) {
-      if (!currentIdSet.has(id)) {
+      if (!currentTargets.has(id) || replaced.has(id)) {
         this.selectedIds.delete(id);
         changed = true;
       }
     }
-    if (this.lastSelectedId && !currentIdSet.has(this.lastSelectedId)) {
+    if (this.lastSelectedId && !this.selectedIds.has(this.lastSelectedId)) {
       this.lastSelectedId = Array.from(this.selectedIds).pop() || null;
     }
 

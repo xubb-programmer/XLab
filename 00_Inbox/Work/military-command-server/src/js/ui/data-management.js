@@ -30,12 +30,12 @@ function position(row) {
 }
 
 function valuesFor(type, row) {
-  const source = row.isScenario ? "场景配置" : row.live ? "设备上报" : "手动录入";
-  if (type === "recon") return [getPlatformName(row, "recon"), row.deviceId, row.ip || "—", position(row), row.online ? "在线" : "离线", source];
+  const source = row.kind === "scenario" ? "场景配置" : row.live ? "设备上报" : "手动录入";
+  if (type === "recon") return [getPlatformName(row, "recon"), row.deviceId || row.id, row.ip || "—", position(row), row.online ? "在线" : "离线", source];
   if (type === "firepower") return [
     row.name, row.deviceId || row.id,
     row.battalion && row.company ? `${row.battalion} / ${row.company}` : "—",
-    row.mountedDeviceId || "—", row.ip || "—", row.online ? "在线" : "离线", source
+    row.mountedDeviceId || row.mountedAt || "—", row.ip || "—", row.online ? "在线" : "离线", source
   ];
   return [row.name, row.targetNumber, targetTypes[row.type], position(row),
     row.trajectory?.length ?? 0, row.source === "udp" ? "设备上报" : source];
@@ -46,14 +46,6 @@ const columns = {
   firepower: ["名称", "编号", "营连", "挂载设备", "通信 IP", "状态", "来源"],
   targets: ["名称", "编号", "类型", "位置", "轨迹点数", "来源"]
 };
-
-function matchesLiveRecord(type, record, query) {
-  const fields = type === "targets"
-    ? [record.id, record.name, record.targetNumber]
-    : [record.id, record.deviceId, record.name, getPlatformName(record, type), record.ip,
-      record.battalion, record.company, record.mountedDeviceId];
-  return fields.some(value => String(value ?? "").toLowerCase().includes(query));
-}
 
 function action(label, run, danger = false) {
   const button = document.createElement("button");
@@ -92,7 +84,7 @@ function makeField(container, field, value, { readonly = false, required = true 
   container.append(wrapper);
 }
 
-export function initDataManagement(getLiveRecords = () => ({})) {
+export function initDataManagement() {
   const get = id => document.getElementById(`management-${id}`);
   const search = get("search");
   if (!search) return;
@@ -123,18 +115,48 @@ export function initDataManagement(getLiveRecords = () => ({})) {
     return `${type}${id}`;
   }
 
-  async function remove(record) {
-    if (busy || !window.confirm(`删除「${record.name}」？`)) return;
-    const path = endpoint(record);
+  async function changeRecord(change) {
+    if (busy) return;
     busy = true;
     try {
-      await request(path, { method: "DELETE" });
+      await change();
+      eventBus.emit("management:changed");
       await load();
     } catch (failure) {
+      await load();
       status.textContent = failure.message;
     } finally {
       busy = false;
     }
+  }
+
+  function remove(record, scenarioRevision) {
+    const effects = {
+      device: "设备下次有效上报后会重新入库，沿用原有配置。",
+      "live-target": "当前轨迹将清除。目标再次上报时将重新入库。",
+      scenario: record.mountedDeviceId
+        ? `将解除设备 ${record.mountedDeviceName || record.mountedDeviceId} 的挂载，并删除阵位。`
+        : ""
+    };
+    const message = [`删除「${record.name || record.id}」？`, effects[record.kind]].filter(Boolean).join("\n");
+    if (busy || !window.confirm(message)) return;
+    const params = new URLSearchParams({ kind: record.kind });
+    if (record.kind === "scenario") params.set("revision", scenarioRevision);
+    if (record.kind === "live-target") params.set("generation", record.generation);
+    const path = `${endpoint(record)}?${params}`;
+    void changeRecord(() => request(path, { method: "DELETE" }));
+  }
+
+  function unmount(pointId, scenarioRevision) {
+    if (busy || !window.confirm(`解除阵位「${pointId}」的设备挂载？`)) return;
+    void changeRecord(async () => {
+      const response = await fetch("/api/scenario/firepower/mount", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pointId, deviceId: "", scenarioRevision })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "解除挂载失败");
+    });
   }
 
   async function load({ background = false } = {}) {
@@ -151,25 +173,14 @@ export function initDataManagement(getLiveRecords = () => ({})) {
       tableSignature = undefined;
     }
     try {
-      const normalized = query.toLowerCase();
-      const live = (getLiveRecords()[type] ?? []).filter(record => matchesLiveRecord(type, record, normalized));
-      const livePage = live.slice(offset, offset + pageSize).map(record => ({ ...record, live: true }));
-      const params = new URLSearchParams({ q: query, offset: String(Math.max(0, offset - live.length)) });
-      let manual;
-      try {
-        manual = await request(`${type}?${params}`, { signal: AbortSignal.timeout(8000) });
-      } catch (failure) {
-        if (!live.length) throw failure;
-        manual = { records: [], total: 0, unavailable: true };
-      }
+      const params = new URLSearchParams({ q: query, offset: String(offset) });
+      const { records, total, scenarioRevision } = await request(`${type}?${params}`, { signal: AbortSignal.timeout(8000) });
       if (revision !== loading) return;
-      const records = [...livePage, ...manual.records.slice(0, pageSize - livePage.length)];
-      const total = live.length + manual.total;
       if (!records.length && offset > 0) {
         offset = Math.max(0, Math.floor((total - 1) / pageSize) * pageSize);
         return load({ background });
       }
-      const signature = JSON.stringify([records, total, offset, manual.unavailable]);
+      const signature = JSON.stringify([records, total, offset, scenarioRevision]);
       if (signature === tableSignature) return;
       tableSignature = signature;
       const fragment = document.createDocumentFragment();
@@ -178,13 +189,19 @@ export function initDataManagement(getLiveRecords = () => ({})) {
         for (const value of valuesFor(type, record)) cell(row, "td", value);
         const controls = cell(row, "td", "");
         controls.className = "management-row-actions";
-        if (record.live) controls.append(action("查看", () => openEditor(record)));
-        else controls.append(action("编辑", () => openEditor(record)), action("删除", () => void remove(record), true));
+        controls.append(action(record.live ? "查看" : "编辑", () => openEditor(record)));
+        const pointId = record.mountedAt || (record.kind === "scenario" && record.mountedDeviceId && record.id);
+        if (pointId) controls.append(action("解绑", () => unmount(pointId, scenarioRevision)));
+        const deleteButton = action("删除", () => remove(record, scenarioRevision), true);
+        if (record.kind === "device" && record.mountedAt) {
+          deleteButton.disabled = true;
+          deleteButton.title = "请先解除挂载";
+        }
+        controls.append(deleteButton);
         fragment.append(row);
       }
       rows.replaceChildren(fragment);
       status.textContent = total ? `共 ${total} 条` : "暂无记录";
-      if (manual.unavailable) status.textContent += " · 手工台账暂不可用";
       previous.disabled = offset === 0;
       next.disabled = offset + pageSize >= total;
       get("page-count").textContent = total ? `${offset + 1}–${offset + records.length} / ${total}` : "";
@@ -231,7 +248,7 @@ export function initDataManagement(getLiveRecords = () => ({})) {
       }
     } else if (type === "recon") {
       const readonly = Boolean(record && !record.manual);
-      addField(["deviceId", "设备 ID"], "", { readonly });
+      addField(["deviceId", "设备 ID"], record?.id ?? "", { readonly });
       addField(["ip", "通信 IP"], "", { readonly, required: false });
     } else {
       addField(["battalion", "营"], "1营");
@@ -248,12 +265,15 @@ export function initDataManagement(getLiveRecords = () => ({})) {
     dialog.showModal();
   }
 
-  tabs.forEach(tab => tab.addEventListener("click", () => {
-    type = tab.dataset.recordType;
-    offset = 0;
-    tabs.forEach(item => item.setAttribute("aria-pressed", String(item === tab)));
+  function selectTab(recordType) {
+    if (type !== recordType) {
+      type = recordType;
+      offset = 0;
+      tabs.forEach(tab => tab.setAttribute("aria-pressed", String(tab.dataset.recordType === type)));
+    }
     void load();
-  }));
+  }
+  tabs.forEach(tab => tab.addEventListener("click", () => selectTab(tab.dataset.recordType)));
   search.addEventListener("submit", event => {
     event.preventDefault();
     query = search.elements.q.value.trim();
@@ -304,5 +324,5 @@ export function initDataManagement(getLiveRecords = () => ({})) {
   eventBus.on("targets:updated", () => refreshLiveRows("targets"));
   eventBus.on("devices:updated", () => refreshLiveRows(type === "firepower" ? "firepower" : "recon"));
   eventBus.on("firepower:affiliationChanged", () => refreshLiveRows("firepower"));
-  eventBus.on("management:open", () => void load());
+  eventBus.on("management:open", recordType => selectTab(recordType ?? type));
 }

@@ -13,6 +13,8 @@ const deviceIds = new Set(devices.map(device => device.device_id));
 const channelIds = new Set(edge.channels.map(channel => channel.channel_id));
 const points = scenario.firepowerPoints ?? [scenario.firepowerPoint].filter(Boolean);
 let added = 0;
+const renameNode = edge.node_id === "target_guidance_edge" && template?.node_id === "military_command_server_edge";
+if (renameNode) edge.node_id = template.node_id;
 
 for (const point of points) {
   // 显式设备 ID 也可能指向已接入同一 Broker 的另一台 EdgeAgent。
@@ -78,7 +80,8 @@ if (edge.config_version === 2 && template?.config_version === 2) {
   }
 }
 
-if (added) {
+if (added || renameNode) {
   await writeFile(outputPath, JSON.stringify(edge, null, 2) + "\n", { flag: "wx" });
-  console.log(`已补齐 ${added} 项 EdgeAgent 默认配置`);
+  if (added) console.log(`已补齐 ${added} 项 EdgeAgent 默认配置`);
+  if (renameNode) console.log(`已更新 EdgeAgent 默认节点名称：${edge.node_id}`);
 }

@@ -6,28 +6,6 @@
     "latitude": 24.52,
     "altitude": 26000
   },
-  "uavs": [
-    {
-      "id": "UAV-RECON-01",
-      "name": "侦察无人机-01",
-      "callsign": ""
-    }
-  ],
-  "firepowerPoints": [
-    {
-      "id": "FIRE-8342",
-      "name": "1号火力点",
-      "battalion": "1营",
-      "company": "1连",
-      "mountedDeviceId": "ZTYL_02",
-      "longitude": 118.568705,
-      "latitude": 24.527625,
-      "altitude": 0,
-      "strikeRange": "20 km",
-      "maxTargets": 1,
-      "ip": "192.168.10.130",
-      "port": 5567,
-      "unmountedIp": "127.0.0.1"
-    }
-  ]
+  "uavs": [],
+  "firepowerPoints": []
 }

@@ -24,6 +24,7 @@ export class ArtilleryPanel {
     this.firepowerList = document.getElementById("firepower-list-container");
     this.videoCards = new Map();
     this.pointCards = new Map();
+    this.selectedReconId = null;
 
     eventBus.on("battery:selected", id => this.highlightPoint(id));
     eventBus.on("selection:cleared", () => this.highlightPoint(null));
@@ -32,14 +33,39 @@ export class ArtilleryPanel {
   update(uavs, points, simulation = null) {
     this.videoCards.clear();
     this.pointCards.clear();
-    if (this.cameraHud.activeUav?.simulation && !uavs.some(uav => uav.id === this.cameraHud.activeUav.id)) {
+    if (this.cameraHud.activeUav && !uavs.some(uav => uav.id === this.cameraHud.activeUav.id)) {
       this.cameraHud.toggle(this.cameraHud.activeUav);
     }
     this.renderList(this.uavList, uavs.map(uav => this.makeUavCard(uav, simulation)),
       simulation ? "等待侦察席广播..." : "【无侦察席】");
     this.renderList(this.firepowerList, points.map(point => this.makePointCard(point, simulation)),
       simulation ? "暂无火力点 (可从侦察席转换)" : "【无火力点】");
+    if (this.selectedReconId && !uavs.some(uav => uav.id === this.selectedReconId)) {
+      this.selectedReconId = null;
+      eventBus.emit("recon-seat:selected", null);
+    }
+    if (!this.selectedReconId && uavs.length === 1) this.selectReconSeat(uavs[0]);
+    this.updateReconSeatSelection();
     this.updateVideoButtons();
+  }
+
+  selectReconSeat(uav) {
+    this.selectedReconId = uav?.id ?? null;
+    this.updateReconSeatSelection();
+    eventBus.emit("recon-seat:selected", uav ? {
+      id: uav.id,
+      deviceId: getPlatformDeviceId(uav),
+      name: getPlatformDisplayName(uav, "recon")
+    } : null);
+  }
+
+  updateReconSeatSelection() {
+    for (const [id, card] of this.videoCards) {
+      const selected = id === this.selectedReconId;
+      card.classList.toggle("is-locate-selected", selected);
+      if (selected) card.setAttribute("aria-current", "true");
+      else card.removeAttribute("aria-current");
+    }
   }
 
   renderList(list, cards, emptyText) {
@@ -90,7 +116,7 @@ export class ArtilleryPanel {
           <strong class="meta-val-id mono">${escapeHtml(deviceId || "未绑定设备")}</strong>
         </div>
         <div class="essential-actions-group" aria-label="侦察席在线状态">
-          <span class="status-essential-tag btn-uav-video ${isOnline ? 'online' : 'standby'}" title="${videoCount} 路视频源，点击卡片打开视频">
+          <span class="status-essential-tag btn-uav-video ${isOnline ? 'online' : 'standby'}" title="${videoCount} 路视频源，点击卡片选择侦察席并打开视频">
             ${isOnline ? '● 就绪' : '○ 离线'}
           </span>
         </div>
@@ -121,6 +147,7 @@ export class ArtilleryPanel {
     card.querySelector(".btn-tactical-edit-point")?.addEventListener("click", e => {
       e.stopPropagation();
       if (simulation) {
+        this.selectReconSeat(uav);
         simulation.edit(uav, "recon");
       }
     });
@@ -169,6 +196,7 @@ export class ArtilleryPanel {
 
     card.tabIndex = 0;
     const openVideo = () => {
+      this.selectReconSeat(uav);
       this.cameraHud.toggle(uav);
       this.updateVideoButtons();
     };
