@@ -54,7 +54,7 @@ sudo bash install.sh
 
 | 现场项 | 初始值与后续配置 |
 | --- | --- |
-| 网页 | 默认在板上访问 `http://127.0.0.1:4177/`。用内网电脑访问时，把 `web.env` 的 `MILITARY_COMMAND_SERVER_BIND_HOST` 改为板卡的内网 IP，并限制访问来源，再重启 `military-command-server`。 |
+| 网页 | 默认在板上访问 `http://192.168.0.201:4177/`。用内网电脑访问时，把 `web.env` 的 `MILITARY_COMMAND_SERVER_BIND_HOST` 改为板卡的内网 IP，并限制访问来源，再重启 `military-command-server`。 |
 | MQTT | 默认使用本机 `127.0.0.1:1883`。若板上已有 Broker，沿用其配置，并核对网页和 EdgeAgent 的账号及主题。 |
 | ScoutMonitor | UDP 目标端口为 `28080`。将 ScoutMonitor 的内网 IP 以 `IP:0` 形式加入 `edgeagent.json` 中的 `allowed_peers`，再重启 `server-edge`。 |
 | 侦察与火力设备状态 | EdgeAgent 直接加入 `239.255.0.1:5678` 组播并发布到 `edge/v1/devices/device-status-device/data`。在 `edgeagent.json` 的 `device-status-udp.allowed_peers` 中逐项填写所有发送端的 `IP:0`，在 `web.env` 中以逗号分隔填写相同的 `DEVICE_SIM_SOURCE_IPS`，例如 `192.168.10.102,192.168.10.130`，然后重启 `server-edge` 和 `military-command-server`。网页从本机 MQTT 订阅该主题。 |
@@ -73,7 +73,7 @@ sudo bash install.sh
 也可从 Windows PowerShell 建立 SSH 转发，让 Windows 浏览器使用本机显卡渲染。保持终端开启，在浏览器打开 `http://127.0.0.1:14177/`：
 
 ```powershell
-ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:14177:127.0.0.1:4177 ztl@192.168.0.201
+ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:14177:192.168.0.201:4177 ztl@192.168.0.201
 ```
 
 ## 目标上报协议

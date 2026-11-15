@@ -46,7 +46,7 @@ sudo bash install.sh
 ```bash
 systemctl is-enabled mosquitto server-edge military-command-server
 systemctl is-active mosquitto server-edge military-command-server
-curl -fsS http://127.0.0.1:4177/api/targets
+curl -fsS http://192.168.0.201:4177/api/targets
 ```
 
 在已安装 Chromium 的板卡桌面终端打开指挥界面。
@@ -58,6 +58,37 @@ curl -fsS http://127.0.0.1:4177/api/targets
 现场接入时，在 `/etc/military-command-server/edgeagent.json` 配置 UDP 发送端白名单、组播来源及 `fire-01-tcp` 的接收地址和端口，修改后重启 `server-edge.service`。在同目录的 `video.json` 配置 RTSP，修改后重启 `military-command-server.service`。「即时通讯」和「侦察车智能助手」分别依赖板上已有的 LANChat 和语音助手服务。
 
 Ubuntu 包已通过完整性校验，原生 Ubuntu 20.04 ARM64 板上的断网首装待现场验证。打包及更多现场配置见 [离线部署](tools/offline-rk3588/README.md)。
+
+## RK3588 配置文件清单
+
+当前 Ubuntu 板上有 **8 份生效的业务配置**。网页后端 5 份，EdgeAgent 1 份，Mosquitto 2 份。另有 **3 份 systemd 服务单元**，含启动配置时合计 **11 份**。以下路径均以板上实际安装为准。
+
+| 服务 | 文件 | 用法与生效方式 |
+| --- | --- | --- |
+| 网页 | `/etc/military-command-server/web.env` | `MILITARY_COMMAND_SERVER_BIND_HOST=192.168.0.201` 和 `PORT=4177` 控制 HTTP 监听。换板时填实际已配置的静态 IP。`DEVICE_SIM_SOURCE_IPS` 用逗号分隔组播来源 IP，与 EdgeAgent 的来源白名单对应。修改后重启网页服务。 |
+| 网页 | `/etc/military-command-server/targets.json` | `brokerUrl` 指向 Mosquitto，当前为 `mqtt://127.0.0.1:1883`。`topic` 订阅目标，`deviceStatusTopic` 订阅设备状态。启用认证时填写 `username`、`password`；`deviceStatusRelayIp` 用于转发来源识别。修改后重启网页服务。 |
+| 网页 | `/etc/military-command-server/video.json` | 在 `streams` 中用 `uavId` 关联设备，每路设置 `id`、`label`、`rtspUrl`。可指定 `ffmpegPath` 和 `rtspTimeoutOption`；离线包使用 `stimeout`。修改后重启网页服务。 |
+| 网页 | `/etc/military-command-server/reporting.json` | `defaultEndpoint.timeoutMs` 设置默认上报等待时间，`endpoints` 按阵位编号（如 `FIRE-01`）覆盖。TCP 地址在 EdgeAgent 中配置。后端初始化上报处理器时读取，修改后重启网页服务。 |
+| 网页 | `/var/lib/military-command-server/scenarios/scenario-default.json` | 保存地图模式、场景中心、侦察平台及火力点。阵位通过 `deviceId` 绑定 EdgeAgent 上报设备。优先用页面管理阵位及挂载；离线手工编辑时先停网页服务，完成后再启动并刷新页面。 |
+| EdgeAgent | `/etc/military-command-server/edgeagent.json` | `broker` 配置 MQTT；`channels` 定义连接；`devices` 用 `device_id` 绑定 `channel_id`。目标通道 `target-input-udp` 监听 UDP 28080，状态通道 `device-status-udp` 加入 `239.255.0.1:5678`，两者的 `allowed_peers` 用 `IP:0` 放行指定来源的任意源端口。上报通道 `fire-01-tcp` 的 `remote_host` 和 `remote_port` 填现场接收端，对应设备 `fire-01-device`。修改后重启 `server-edge`。 |
+| Mosquitto | `/etc/mosquitto/mosquitto.conf` | 服务用 `-c` 加载该主配置。当前启用持久化，数据目录为 `/var/lib/mosquitto/`，并通过 `include_dir` 加载 `/etc/mosquitto/conf.d/` 下的 `.conf`。 |
+| Mosquitto | `/etc/mosquitto/conf.d/military-command-server-local.conf` | 当前配置为 `listener 1883 127.0.0.1` 和 `allow_anonymous true`。这是板内 MQTT 监听，与网页端口 4177 分开。改 MQTT 监听或认证时同步更新两个 MQTT 客户端配置，先重启 Mosquitto，再重启 EdgeAgent 和网页服务。 |
+
+systemd 启动配置包括 `/etc/systemd/system/military-command-server.service`（加载 `web.env`，指定各 JSON 和 SQLite 路径）、`/etc/systemd/system/server-edge.service`（指定网关 JSON、工作目录和日志）和 `/lib/systemd/system/mosquitto.service`（发行版提供，指定 MQTT 主配置）。修改单元后执行 `sudo systemctl daemon-reload`，再重启对应服务。
+
+已清理板上 4 份历史备份：`edgeagent.json.bak`、`edgeagent.json.bak-20261114-1406`、`web.env.bak-20261114-1405` 和 `web.env.bak-multi-ip-20261114`。这些文件原位于 `/etc/military-command-server/`，服务启动时不加载备份。Mosquitto 的 `aclfile.example`、`pskfile.example`、`pwfile.example` 和 `conf.d/README` 也是示例或说明。离线地图的 `manifest.json` 和 `tiles.db` 属于地图资源；运行 SQLite 库属于业务数据。
+
+源码中的配置来源为 `config/targets.example.json`、`config/video.example.json`、`config/reporting.example.json`、`public/scenarios/scenario-default.json` 和 `tools/offline-rk3588/edgeagent.json`。本地 `npm start` 读取 `config/targets.json`、`config/video.json`、`config/reporting.json`，前两份可从示例复制。离线包在 `config/` 和 `services/` 提供模板；`web.env` 由安装器在首次安装时生成，Mosquitto 主配置由系统包提供。升级沿用已有现场配置。
+
+配置完成后，根据修改范围执行：
+
+```bash
+sudo systemctl restart mosquitto server-edge military-command-server
+systemctl is-active mosquitto server-edge military-command-server
+curl -fsS http://192.168.0.201:4177/api/targets
+```
+
+目标接口应返回 `"state":"subscribed"`。主 README 在离线包内名为 `PROJECT-README.md`，板上可在 `/opt/jw/military-command-server/README.md` 查阅。
 
 ## 切换卫星底图
 

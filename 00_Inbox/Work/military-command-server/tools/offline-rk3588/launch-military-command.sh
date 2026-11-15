@@ -52,4 +52,4 @@ fi
 exec /usr/bin/chromium "${browser_flags[@]}" --use-gl="$gl" --enable-webgl \
   --disable-accelerated-video-decode --disable-features=VaapiVideoDecoder \
   --user-data-dir="$browser_dir/$profile" \
-  --no-first-run --start-maximized http://127.0.0.1:4177/
+  --no-first-run --start-maximized http://192.168.0.201:4177/

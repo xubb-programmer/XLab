@@ -124,7 +124,7 @@ for config in targets video reporting edgeagent; do
   seed_config "$bundle/config/$config.json" "$conf/$config.json"
 done
 if [[ ! -e "$conf/web.env" ]]; then
-  printf 'MILITARY_COMMAND_SERVER_BIND_HOST=127.0.0.1\nPORT=4177\nDEVICE_SIM_SOURCE_IPS=192.168.10.130\n' > "$tmp/web.env"
+  printf 'MILITARY_COMMAND_SERVER_BIND_HOST=192.168.0.201\nPORT=4177\nDEVICE_SIM_SOURCE_IPS=192.168.10.130\n' > "$tmp/web.env"
   seed_config "$tmp/web.env" "$conf/web.env"
 fi
 scenario="$state/scenarios/scenario-default.json"
