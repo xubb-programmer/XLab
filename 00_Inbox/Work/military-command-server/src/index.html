@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#060b11">
-  <title>单兵作战智能化指挥平台</title>
+  <title>单兵作战辅助平台</title>
   <link rel="stylesheet" href="/cesium/Widgets/widgets.css">
   <link rel="stylesheet" href="/styles/main.css?v=2.1">
-  <link rel="stylesheet" href="/styles/layout.css?v=2.2">
+  <link rel="stylesheet" href="/styles/layout.css?v=2.3">
   <link rel="stylesheet" href="/styles/components.css?v=2.2">
   <script>window.CESIUM_BASE_URL = "/cesium/";</script>
   <script>
@@ -79,7 +79,7 @@
     }
   </script>
   <script defer src="/cesium/Cesium.js"></script>
-  <script type="module" src="/js/main.js?v=2.4"></script>
+  <script type="module" src="/js/main.js?v=2.5"></script>
 </head>
 <body>
   <div class="app-container">
@@ -93,15 +93,15 @@
             transform="translate(16.9 10.3) rotate(54)" fill="currentColor" stroke="none"/>
         </svg>
         <div class="brand-title">
-          <h1>单兵作战智能化指挥平台</h1>
-          <p>INDIVIDUAL COMBAT INTELLIGENT COMMAND PLATFORM</p>
+          <h1>单兵作战辅助平台</h1>
+          <p>INDIVIDUAL COMBAT SUPPORT PLATFORM</p>
         </div>
       </div>
 
       <!-- 顶部工作台主入口导航 -->
       <nav class="topbar-nav" aria-label="软件功能作业入口导航">
-        <button type="button" id="nav-btn-tactical" class="topbar-nav-tab active" title="三维态势与火力协同作战大厅">
-          <span class="nav-tab-text">战术协同大厅</span>
+        <button type="button" id="nav-btn-tactical" class="topbar-nav-tab active" title="打开综合态势">
+          <span class="nav-tab-text">综合态势</span>
         </button>
         <button type="button" id="nav-btn-battery-config" class="topbar-nav-tab" title="火力点参数整备">
           <span class="nav-tab-text">火力整备</span>
@@ -110,11 +110,11 @@
           <span class="nav-tab-text">视频总览</span>
           <span id="nav-video-source-count" class="video-source-count-badge">检测中…</span>
         </button>
+        <a class="topbar-nav-tab" href="https://127.0.0.1:18007/?v=0903a" target="_blank" rel="noopener">侦察车智能助手</a>
+        <a class="topbar-nav-tab" href="military-command://lanchat">即时通讯</a>
+        <a class="topbar-nav-tab" href="military-command://scout-monitor">情报辅助分析系统</a>
         <button type="button" id="nav-btn-settings" class="topbar-nav-tab">
           <span class="nav-tab-text">设置</span>
-        </button>
-        <button type="button" id="nav-btn-tools" class="topbar-nav-tab">
-          <span class="nav-tab-text">工具</span>
         </button>
       </nav>
 
@@ -146,7 +146,7 @@
     </header>
 
     <!-- 工作台三栏主分割视窗 -->
-    <main id="page-tactical" class="workspace page-view" aria-label="战术协同大厅">
+    <main id="page-tactical" class="workspace page-view" aria-label="综合态势">
       <aside id="platform-sidebar" class="sidebar-left" aria-label="侦察席与火力点">
         <section class="panel-section platform-list-panel" aria-labelledby="uav-list-heading">
           <header class="panel-header uav-panel-header">
@@ -162,6 +162,7 @@
             </button>
           </header>
           <p id="device-simulation-status" class="device-simulation-status" role="status" hidden></p>
+          <p id="situation-report-status" class="device-simulation-status" role="status" hidden></p>
           <div id="uav-list-container" class="panel-body-scroll" tabindex="0" role="group" aria-labelledby="uav-list-heading"></div>
         </section>
 
@@ -331,6 +332,10 @@
                 <span class="modal-meta-label">设备编号 ID</span>
                 <strong id="cfg-fp-disp-id" class="modal-meta-val mono badge-meta-id">—</strong>
               </div>
+              <div id="cfg-fp-mounted-meta" class="modal-meta-field" hidden>
+                <span class="modal-meta-label">挂载设备</span>
+                <strong id="cfg-fp-disp-mounted" class="modal-meta-val">—</strong>
+              </div>
               <div class="modal-meta-field">
                 <span class="modal-meta-label">通信 IP 地址</span>
                 <strong id="cfg-fp-disp-ip" class="modal-meta-val mono highlight-cyan">—</strong>
@@ -338,6 +343,19 @@
               <div class="modal-meta-field">
                 <span class="modal-meta-label">运行状态</span>
                 <strong id="cfg-fp-disp-status" class="modal-meta-val status-online">● 在线</strong>
+              </div>
+            </div>
+
+            <div id="cfg-recon-mount" class="form-row" hidden>
+              <span class="form-label">火力挂载</span>
+              <div class="modal-helper-row">
+                <strong id="cfg-recon-mount-status" class="modal-meta-val" aria-live="polite"></strong>
+                <button type="button" id="cfg-recon-mount-edit" class="btn btn-sm btn-tactical-tool">更改阵位</button>
+              </div>
+              <div id="cfg-recon-mount-picker" class="modal-helper-row" hidden>
+                <select id="cfg-recon-mount-point" class="text-input" aria-label="选择挂载火力点"></select>
+                <button type="button" id="cfg-recon-mount-confirm" class="btn btn-sm btn-tactical-tool">确认</button>
+                <button type="button" id="cfg-recon-mount-remove" class="btn btn-sm btn-tactical-tool">解绑</button>
               </div>
             </div>
 
@@ -542,7 +560,7 @@
           <span class="footer-legend-item"><span class="legend-dot note"></span> 点击画面右上方 ⛶ 可快速特写单屏</span>
         </div>
         <div class="matrix-footer-actions">
-          <button type="button" id="btn-matrix-close-foot" class="btn btn-secondary">返回战术协同大厅</button>
+          <button type="button" id="btn-matrix-close-foot" class="btn btn-secondary">返回综合态势</button>
         </div>
       </footer>
     </section>
@@ -593,7 +611,7 @@
           <button type="button" id="btn-tree-reset-default" class="btn btn-xs btn-tactical-tool" title="重置为标准三阵位建制">
             <span>重置编制</span>
           </button>
-          <button type="button" class="btn btn-xs btn-secondary" id="btn-close-affiliation-modal" title="返回战术协同大厅">
+          <button type="button" class="btn btn-xs btn-secondary" id="btn-close-affiliation-modal" title="返回综合态势">
             <span>返回大厅</span>
           </button>
         </div>
@@ -790,17 +808,9 @@
           <span class="footer-legend-item"><span class="legend-dot note"></span> 可在侦察席或设备池中直接选取设备挂载至阵位</span>
         </div>
         <div class="affiliation-footer-actions">
-          <button type="button" id="btn-affiliation-close-foot" class="btn btn-secondary">返回战术协同大厅</button>
+          <button type="button" id="btn-affiliation-close-foot" class="btn btn-secondary">返回综合态势</button>
         </div>
       </footer>
-    </section>
-
-    <section id="page-tools" class="page-view fullpage-view" aria-label="工具" hidden>
-      <div class="view-body management-page">
-        <a class="btn" href="https://127.0.0.1:18007/?v=0903a" target="_blank" rel="noopener">侦察车智能助手</a>
-        <a class="btn" href="military-command://lanchat">即时通讯</a>
-        <button class="btn" type="button" disabled>情报辅助分析</button>
-      </div>
     </section>
 
     <section id="page-settings" class="page-view fullpage-view" aria-label="设置" hidden>

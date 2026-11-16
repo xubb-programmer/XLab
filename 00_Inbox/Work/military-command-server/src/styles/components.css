@@ -1099,6 +1099,19 @@ button.artillery-card:hover {
   padding: 4px 0 2px 0;
 }
 
+.card-essential-info-row > .essential-actions-group {
+  margin-left: auto;
+}
+
+.situation-report-control:has(.btn:disabled) {
+  cursor: not-allowed;
+}
+
+.situation-report-control .btn:disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
 .essential-meta-item {
   display: inline-flex;
   align-items: baseline;
@@ -2056,6 +2069,16 @@ button.artillery-card:hover {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  min-width: 0;
+}
+
+#cfg-fp-mounted-meta {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+#cfg-recon-mount-point {
+  flex: 2;
   min-width: 0;
 }
 
@@ -4448,87 +4471,6 @@ button.artillery-card:hover {
 }
 
 /* 侧栏卡片挂载状态增强 */
-.card-affiliation-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px dashed rgba(255, 255, 255, 0.08);
-  font-size: 11px;
-}
-
-.recon-mount-status {
-  display: flex;
-  flex: 1 1 auto;
-  align-items: center;
-  min-width: 0;
-  gap: 6px;
-}
-
-.recon-mount-tag {
-  min-width: 0;
-  overflow: hidden;
-  font-size: 10px;
-  padding: 1px 5px;
-  border-radius: 3px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.recon-mount-action {
-  flex: 0 0 auto;
-}
-
-.recon-mount-tag.is-mounted {
-  background: rgba(0, 240, 255, 0.15);
-  border: 1px solid rgba(0, 240, 255, 0.35);
-  color: #00f0ff;
-  font-weight: 600;
-}
-
-.recon-mount-tag.is-unmounted {
-  background: rgba(255, 255, 255, 0.04);
-  color: #64748b;
-}
-
-.btn-tactical-mount {
-  flex: 0 0 auto;
-  min-width: 68px;
-  padding: 2px 6px;
-  font-size: 10px;
-  white-space: nowrap;
-  background: rgba(0, 240, 255, 0.1);
-  border-color: rgba(0, 240, 255, 0.3);
-  color: #00f0ff;
-}
-
-.btn-tactical-mount:hover {
-  background: #00f0ff;
-  color: #000;
-}
-
-.recon-mount-quick-picker {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 6px;
-  padding: 4px;
-  background: rgba(6, 12, 19, 0.9);
-  border: 1px solid rgba(0, 240, 255, 0.25);
-  border-radius: 4px;
-}
-
-.recon-mount-quick-picker .btn {
-  flex: 0 0 auto;
-  white-space: nowrap;
-}
-
-.recon-quick-select {
-  flex: 1;
-}
-
 .management-page {
   overflow: auto;
   padding: 20px clamp(12px, 4vw, 48px);

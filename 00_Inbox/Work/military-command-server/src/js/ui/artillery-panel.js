@@ -21,6 +21,7 @@ export class ArtilleryPanel {
     this.cameraHud = cameraHud;
     this.viewerManager = viewerManager;
     this.uavList = document.getElementById("uav-list-container");
+    this.situationReportStatus = document.getElementById("situation-report-status");
     this.firepowerList = document.getElementById("firepower-list-container");
     this.videoCards = new Map();
     this.pointCards = new Map();
@@ -88,11 +89,13 @@ export class ArtilleryPanel {
     card.className = "uav-recon-card tactical-card" + (positioned ? "" : " is-unlocated");
     card.dataset.id = uav.id;
 
-    const deviceId = getPlatformDeviceId(uav);
     const displayName = getPlatformDisplayName(uav, "recon");
     const videoCount = uav.videoSources ?? uav.videoChannels?.length ?? 0;
     const isOnline = uav.online === true;
-    const mounted = uav.mountedTo;
+    const canReport = Boolean(uav.deviceIp && simulation?.reportSituation);
+    const reportHint = canReport
+      ? `向 ${uav.deviceIp}:28081 发送 UDP 态势上报指令`
+      : "等待侦察设备上报 IP";
 
     card.innerHTML = `
       <div class="card-corner-tl"></div>
@@ -111,10 +114,9 @@ export class ArtilleryPanel {
       </div>
 
       <div class="card-essential-info-row">
-        <div class="essential-meta-item">
-          <span class="meta-label">设备ID</span>
-          <strong class="meta-val-id mono">${escapeHtml(deviceId || "未绑定设备")}</strong>
-        </div>
+        <span class="situation-report-control" title="${escapeHtml(reportHint)}">
+          <button type="button" class="btn btn-sm" ${canReport ? "" : "disabled"}>态势上报</button>
+        </span>
         <div class="essential-actions-group" aria-label="侦察席在线状态">
           <span class="status-essential-tag btn-uav-video ${isOnline ? 'online' : 'standby'}" title="${videoCount} 路视频源，点击卡片选择侦察席并打开视频">
             ${isOnline ? '● 就绪' : '○ 离线'}
@@ -122,26 +124,6 @@ export class ArtilleryPanel {
         </div>
       </div>
 
-      <div class="card-affiliation-row">
-        <div class="recon-mount-status">
-          <span class="meta-label">火力挂载</span>
-          <span class="recon-mount-tag ${mounted ? 'is-mounted' : 'is-unmounted'}" title="${mounted ? `已挂载至 ${escapeHtml(mounted.battalion)}-${escapeHtml(mounted.company)}-${escapeHtml(mounted.name)}` : '未挂载火力点'}">
-            ${mounted ? `${escapeHtml(mounted.battalion)}·${escapeHtml(mounted.company)}·${escapeHtml(mounted.name)}` : '空闲未挂载'}
-          </span>
-        </div>
-        <div class="recon-mount-action">
-          <button type="button" class="btn btn-xs btn-tactical-mount" title="选择挂载至哪个火力点">
-            <span class="btn-text">${mounted ? '更改阵位' : '挂载阵位'}</span>
-          </button>
-        </div>
-      </div>
-      <div class="recon-mount-quick-picker" hidden>
-        <select class="recon-quick-select text-input text-input-xs">
-          <option value="">选择挂载火力点…</option>
-        </select>
-        <button type="button" class="btn btn-xs btn-confirm-mount">确认</button>
-        ${mounted ? '<button type="button" class="btn btn-xs btn-unmount-recon">解绑</button>' : ''}
-      </div>
     `;
 
     card.querySelector(".btn-tactical-edit-point")?.addEventListener("click", e => {
@@ -152,47 +134,24 @@ export class ArtilleryPanel {
       }
     });
 
-    const mountBtn = card.querySelector(".btn-tactical-mount");
-    const picker = card.querySelector(".recon-mount-quick-picker");
-    const select = card.querySelector(".recon-quick-select");
-    const confirmBtn = card.querySelector(".btn-confirm-mount");
-    const unmountBtn = card.querySelector(".btn-unmount-recon");
-
-    mountBtn?.addEventListener("click", e => {
-      e.stopPropagation();
-      if (!simulation?.mount || !simulation?.getFirepowerPoints) return;
-      const isOpen = !picker.hidden;
-      if (isOpen) {
-        picker.hidden = true;
-      } else {
-        const points = simulation.getFirepowerPoints();
-        select.innerHTML = `<option value="">选择挂载火力点…</option>` +
-          points.map(p => `<option value="${escapeHtml(p.id)}" ${mounted && mounted.id === p.id ? 'selected' : ''}>${escapeHtml(p.battalion || '1营')}-${escapeHtml(p.company || '1连')}-${escapeHtml(p.name)}</option>`).join("");
-        picker.hidden = false;
+    const reportControl = card.querySelector(".situation-report-control");
+    reportControl.addEventListener("click", e => e.stopPropagation());
+    const reportBtn = reportControl.querySelector("button");
+    reportBtn.addEventListener("click", async () => {
+      if (!canReport || reportBtn.disabled) return;
+      const status = this.situationReportStatus;
+      reportBtn.disabled = true;
+      status.hidden = false;
+      status.textContent = `${displayName}：正在发送态势上报指令…`;
+      try {
+        const { address, port } = await simulation.reportSituation(uav.id);
+        status.textContent = `${displayName}：指令已发往 ${address}:${port}（UDP）`;
+      } catch (error) {
+        status.textContent = `${displayName}：${error.message}`;
+      } finally {
+        reportBtn.disabled = false;
       }
     });
-
-    confirmBtn?.addEventListener("click", async e => {
-      e.stopPropagation();
-      const ptId = select.value;
-      if (ptId && simulation?.mount) {
-        confirmBtn.disabled = true;
-        try {
-          if (await simulation.mount(ptId, deviceId || uav.id)) picker.hidden = true;
-        } finally {
-          confirmBtn.disabled = false;
-        }
-      }
-    });
-
-    unmountBtn?.addEventListener("click", async e => {
-      e.stopPropagation();
-      if (mounted?.id && simulation?.mount) {
-        if (await simulation.mount(mounted.id, "")) picker.hidden = true;
-      }
-    });
-
-    picker?.addEventListener("click", e => e.stopPropagation());
 
     card.tabIndex = 0;
     const openVideo = () => {
@@ -202,7 +161,7 @@ export class ArtilleryPanel {
     };
     card.addEventListener("click", openVideo);
     card.addEventListener("keydown", event => {
-      if (event.key !== "Enter" && event.key !== " ") return;
+      if (event.target !== card || (event.key !== "Enter" && event.key !== " ")) return;
       event.preventDefault();
       openVideo();
     });
@@ -212,16 +171,13 @@ export class ArtilleryPanel {
 
   makePointCard(point, simulation) {
     const positioned = hasGeographicPosition(point);
-    const isDevicePoint = Boolean(point.device || point.simulation);
     const card = document.createElement("article");
     card.className = "artillery-card tactical-card" + (positioned ? " is-positioned" : " is-unlocated");
     card.dataset.id = point.id;
 
-    const deviceId = getPlatformDeviceId(point);
     const isOnline = point.online === true;
     const displayName = getPlatformDisplayName(point, "firepower");
     const affiliation = `${point.battalion || "1营"} / ${point.company || "1连"}`;
-    const mountedDev = point.mountedDeviceId || "";
 
     card.innerHTML = `
       <div class="card-corner-tl"></div>
@@ -241,10 +197,6 @@ export class ArtilleryPanel {
       </div>
 
       <div class="card-essential-info-row">
-        <div class="essential-meta-item">
-          <span class="meta-label">挂载设备</span>
-          <strong class="meta-val-id mono ${mountedDev ? 'highlight-cyan' : ''}">${escapeHtml(mountedDev || "未挂载")}</strong>
-        </div>
         <div class="essential-actions-group">
           <span class="status-essential-tag ${isOnline ? 'online' : 'standby'}" title="${isOnline ? 'EdgeAgent转发设备在线就绪' : '未挂载或设备离线'}">
             ${isOnline ? '● 在线' : '○ 离线'}
@@ -259,7 +211,7 @@ export class ArtilleryPanel {
     const editBtn = card.querySelector(".btn-tactical-edit-point");
     editBtn?.addEventListener("click", e => {
       e.stopPropagation();
-      if (isDevicePoint && simulation?.edit) {
+      if (simulation?.edit) {
         simulation.edit(point);
       } else {
         eventBus.emit("firepower:openConfigModal", point);
@@ -275,7 +227,7 @@ export class ArtilleryPanel {
       });
     } else {
       card.addEventListener("click", () => {
-        if (isDevicePoint && simulation?.edit) {
+        if (simulation?.edit) {
           simulation.edit(point);
         } else {
           eventBus.emit("firepower:openConfigModal", point);

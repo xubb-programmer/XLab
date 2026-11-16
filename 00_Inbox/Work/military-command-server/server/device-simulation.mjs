@@ -1,3 +1,4 @@
+import { createSocket } from "node:dgram";
 import { existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { isIPv4 } from "node:net";
@@ -9,6 +10,31 @@ import { mountedDeviceIds } from "./device-mounts.mjs";
 
 const namespace = "/api/device-simulation";
 const MAX_UDP_BYTES = 65_507;
+const SITUATION_REPORT_PORT = 28081;
+const SITUATION_REPORT_COMMAND = Buffer.from(JSON.stringify({
+  "定时上报": true,
+  "上报间隔毫秒": 2000,
+  "上报地址": "192.168.0.201",
+  "上报端口": 28080,
+  "目标编号": null,
+  "目标类型": null,
+  "最大速度米每秒": null
+}), "utf8");
+
+async function sendSituationReport(address) {
+  const socket = createSocket("udp4");
+  try {
+    await new Promise((resolve, reject) => {
+      socket.once("error", reject);
+      socket.send(SITUATION_REPORT_COMMAND, SITUATION_REPORT_PORT, address, error => {
+        if (error) reject(error);
+        else resolve();
+      });
+    });
+  } finally {
+    socket.close();
+  }
+}
 
 function integerSetting(name, fallback, minimum, maximum) {
   const value = Number(process.env[name] ?? fallback);
@@ -103,7 +129,7 @@ export async function openDeviceSimulation(rtspTimeoutOption, mqttConfig, scenar
         const config = { ...registry.videoConfig(key, mountedDeviceIds((await scenario.read()).firepowerPoints)), ffmpegPath, rtspTimeoutOption };
         return serveVideo(req, res, config, `/api${path}`, url.searchParams.get("id"), key);
       }
-      if (req.method !== "POST" || !["/role", "/coordinates"].includes(path)) {
+      if (req.method !== "POST" || !["/role", "/coordinates", "/situation-report"].includes(path)) {
         return json(res, 404, { error: "找不到此模拟操作" });
       }
       if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}`) {
@@ -122,6 +148,19 @@ export async function openDeviceSimulation(rtspTimeoutOption, mqttConfig, scenar
         let body;
         try { body = JSON.parse(content); } catch { return json(res, 400, { error: "请求内容无效" }); }
         if (typeof body?.key !== "string" || !body.key) return json(res, 400, { error: "请选择一个设备" });
+        if (path === "/situation-report") {
+          const address = registry.deviceIpForKey(body.key);
+          if (!address || !isIPv4(address) || Number(address.split(".")[0]) < 1 || Number(address.split(".")[0]) > 223) {
+            return json(res, 409, { error: "该侦察席没有有效的设备单播 IP" });
+          }
+          try {
+            await sendSituationReport(address);
+          } catch (error) {
+            console.error("发送态势上报指令失败", error);
+            return json(res, 502, { error: "发送态势上报指令失败" });
+          }
+          return json(res, 200, { sent: true, address, port: SITUATION_REPORT_PORT });
+        }
         const result = await scenario.enqueue(async () => {
           const current = await scenario.read();
           const mounts = mountedDeviceIds(current.firepowerPoints);

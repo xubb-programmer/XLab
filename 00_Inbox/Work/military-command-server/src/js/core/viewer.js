@@ -56,8 +56,10 @@ export class CesiumViewerManager {
     const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
     const rendererInfo = gl?.getExtension("WEBGL_debug_renderer_info");
     const renderer = rendererInfo ? gl.getParameter(rendererInfo.UNMASKED_RENDERER_WEBGL) : "";
-    // XRDP 等使用 CPU 渲染的会话降低绘图缓冲区分辨率，保留画布和控件的显示尺寸。
-    if (/llvmpipe|softpipe|swiftshader|software rasterizer|microsoft basic render/i.test(renderer)) {
+    const softwareRenderer = /llvmpipe|softpipe|swiftshader|software rasterizer|microsoft basic render/i.test(renderer);
+    const maliRenderer = /\bmali\b/i.test(renderer);
+    // 降低 Mali 和软件渲染的绘图缓冲区分辨率，保留画布和控件的显示尺寸。
+    if (softwareRenderer || maliRenderer) {
       this.viewer.resolutionScale = 0.5;
       this.scene.msaaSamples = 1;
       this.scene.postProcessStages.fxaa.enabled = false;

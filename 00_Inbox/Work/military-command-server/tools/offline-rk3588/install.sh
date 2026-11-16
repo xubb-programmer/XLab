@@ -124,7 +124,13 @@ for config in targets video reporting edgeagent; do
   seed_config "$bundle/config/$config.json" "$conf/$config.json"
 done
 if [[ ! -e "$conf/web.env" ]]; then
-  printf 'MILITARY_COMMAND_SERVER_BIND_HOST=192.168.0.201\nPORT=4177\nDEVICE_SIM_SOURCE_IPS=192.168.10.130\n' > "$tmp/web.env"
+  source_ips=$("$bundle/node/bin/node" -e '
+    const config = JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"));
+    const channel = config.channels.find(channel => channel.channel_id === "device-status-udp");
+    if (!channel?.allowed_peers?.length) process.exit(1);
+    process.stdout.write(channel.allowed_peers.map(peer => peer.slice(0, peer.lastIndexOf(":"))).join(","));
+  ' "$bundle/config/edgeagent.json")
+  printf 'MILITARY_COMMAND_SERVER_BIND_HOST=192.168.0.201\nPORT=4177\nDEVICE_SIM_SOURCE_IPS=%s\n' "$source_ips" > "$tmp/web.env"
   seed_config "$tmp/web.env" "$conf/web.env"
 fi
 scenario="$state/scenarios/scenario-default.json"

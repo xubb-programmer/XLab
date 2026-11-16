@@ -6,5 +6,9 @@ case ${1:-} in
     cd /opt/jw/lanchat
     exec ./run.sh
     ;;
+  military-command://scout-monitor|military-command://scout-monitor/)
+    cd /opt/jw/qbcl/binr
+    exec ./ScoutMonitor.sh
+    ;;
   *) exit 2 ;;
 esac

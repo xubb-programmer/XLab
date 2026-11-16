@@ -92,7 +92,7 @@ node "$here/merge-maps.mjs" "$bundle/web/dist/offline-maps/combined-theaters" \
 mv "$bundle/web/public/scenarios" "$bundle/config/scenarios"
 cp "$web/config/video.example.json" "$bundle/config/video.json"
 cp "$web/config/reporting.example.json" "$bundle/config/reporting.json"
-cp "$here/edgeagent.json" "$bundle/config/edgeagent.json"
+node "$here/expand-lan-peers.mjs" "$here/edgeagent.json" > "$bundle/config/edgeagent.json"
 node --input-type=module - "$bundle/config" <<'JS'
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

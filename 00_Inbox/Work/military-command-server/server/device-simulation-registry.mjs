@@ -253,6 +253,9 @@ export function openRegistry(databasePath, onlineMs) {
     deviceIdForKey(key) {
       return getObservation(key)?.deviceId ?? select.get(key)?.device_id;
     },
+    deviceIpForKey(key) {
+      return getObservation(key)?.deviceIp;
+    },
     importSnapshots(reports) {
       const insert = database.prepare("INSERT OR IGNORE INTO device_snapshots (identity, report) VALUES (?, ?)");
       database.exec("BEGIN IMMEDIATE");

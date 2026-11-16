@@ -56,11 +56,11 @@ sudo bash install.sh
 | --- | --- |
 | 网页 | 默认在板上访问 `http://192.168.0.201:4177/`。用内网电脑访问时，把 `web.env` 的 `MILITARY_COMMAND_SERVER_BIND_HOST` 改为板卡的内网 IP，并限制访问来源，再重启 `military-command-server`。 |
 | MQTT | 默认使用本机 `127.0.0.1:1883`。若板上已有 Broker，沿用其配置，并核对网页和 EdgeAgent 的账号及主题。 |
-| ScoutMonitor | UDP 目标端口为 `28080`。将 ScoutMonitor 的内网 IP 以 `IP:0` 形式加入 `edgeagent.json` 中的 `allowed_peers`，再重启 `server-edge`。 |
-| 侦察与火力设备状态 | EdgeAgent 直接加入 `239.255.0.1:5678` 组播并发布到 `edge/v1/devices/device-status-device/data`。在 `edgeagent.json` 的 `device-status-udp.allowed_peers` 中逐项填写所有发送端的 `IP:0`，在 `web.env` 中以逗号分隔填写相同的 `DEVICE_SIM_SOURCE_IPS`，例如 `192.168.10.102,192.168.10.130`，然后重启 `server-edge` 和 `military-command-server`。网页从本机 MQTT 订阅该主题。 |
+| ScoutMonitor | UDP 目标端口为 `28080`，接受 `192.168.0.0/24`、`192.168.10.0/24` 的主机地址和本机回环。打包时将网段展开为 EdgeAgent 支持的 `IP:0` 列表。 |
+| 侦察与火力设备状态 | EdgeAgent 加入 `239.255.0.1:5678` 组播，接受同样两个局域网网段，发布到 `edge/v1/devices/device-status-device/data`。首次安装根据包内 `device-status-udp.allowed_peers` 生成 `web.env` 的 `DEVICE_SIM_SOURCE_IPS`。调整已有部署时需同步更新两处，再重启 `server-edge` 和 `military-command-server`。 |
 | RTSP 视频 | 在 `video.json` 按无人机填写内网 RTSP 地址。随目标发行版打包的 FFmpeg 使用 `stimeout`，更换 FFmpeg 版本时按实际支持的选项调整。 |
 | 无人机实时经纬高 | 由设备状态组播的 `飞机位置` 提供，可在地图上独立显示载荷位置与轨迹。 |
-| 目标上报 | 在 `edgeagent.json` 填写外部接收端的 IP 和端口。设备 `fire-01-device` 的示例地址为 `127.0.0.1:5567`。 |
+| 目标上报 | 在 `edgeagent.json` 填写外部接收端的 IP 和端口。设备 `fire-01-device` 连接 `192.168.10.102:5567`，设备 `fire-02-device` 通过 `fire-02-tcp` 连接 `192.168.0.102:5567`。 |
 | 离线底图 | 页面默认离线，地图左上角可切换在线或离线。用 `/var/lib/military-command-server/scenarios/scenario-default.json` 中的 `mapMode` 配置初始模式。厦门、朱日和和赤峰从随包合并 SQLite 图集读取，各自按图层范围显示，覆盖外使用概览。影像瓦片只提供底图，实际地面高程需另有数据来源。 |
 | 数据管理 | 从主界面的「设置 → 数据管理」查看实时记录和手工台账。设备上报目标及手工记录保存在 `/var/lib/military-command-server/management/records.sqlite`，设备最新快照保存在 `/var/lib/military-command-server/device-simulation/devices.sqlite`。重启后可恢复，设备收到新心跳后恢复在线。 |
 
@@ -68,7 +68,7 @@ sudo bash install.sh
 
 从板卡桌面会话运行 `/opt/jw/military-command-server/current/launch-military-command.sh`（源码目录中为 `bash tools/offline-rk3588/launch-military-command.sh`）。脚本在本地 X11 `:0` 会话使用板载 Mali EGL，在 XRDP 虚拟桌面使用 Mesa GLX。可在 `chrome://gpu` 查看 WebGL 渲染器。远程桌面里检测到软件渲染时，地图会降低绘图分辨率以改善交互。
 
-从板卡桌面启动指挥界面时，启动脚本为当前用户注册工具入口。「即时通讯」启动 LANChat，「侦察车智能助手」在新标签页打开板上的 HTTPS 页面。即时通讯首次打开可能弹出外部应用确认。
+从板卡桌面启动指挥界面时，启动脚本为当前用户注册工具入口。「即时通讯」启动 LANChat，「情报辅助分析系统」运行板上的 `/opt/jw/qbcl/binr/ScoutMonitor.sh`，「侦察车智能助手」在新标签页打开板上的 HTTPS 页面。桌面工具首次打开可能弹出外部应用确认。
 
 也可从 Windows PowerShell 建立 SSH 转发，让 Windows 浏览器使用本机显卡渲染。保持终端开启，在浏览器打开 `http://127.0.0.1:14177/`：
 

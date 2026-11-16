@@ -6,10 +6,11 @@ import { getPlatformDeviceId } from "../core/platform-labels.js";
 const activeEditors = new WeakMap();
 
 export class FirepowerConfigModal {
-  constructor(viewerManager, saveSimulationCoordinates, changeSimulationRole = null) {
+  constructor(viewerManager, saveSimulationCoordinates, changeSimulationRole = null, reconMount = null) {
     this.viewerManager = viewerManager;
     this.saveSimulationCoordinates = saveSimulationCoordinates;
     this.changeSimulationRole = changeSimulationRole;
+    this.reconMount = reconMount;
     this.currentPoint = null;
     this.isSaving = false;
 
@@ -46,6 +47,15 @@ export class FirepowerConfigModal {
     this.dispId = document.getElementById("cfg-fp-disp-id");
     this.dispIp = document.getElementById("cfg-fp-disp-ip");
     this.dispStatus = document.getElementById("cfg-fp-disp-status");
+    this.mountedMeta = document.getElementById("cfg-fp-mounted-meta");
+    this.dispMounted = document.getElementById("cfg-fp-disp-mounted");
+    this.mountSection = document.getElementById("cfg-recon-mount");
+    this.mountStatus = document.getElementById("cfg-recon-mount-status");
+    this.mountEdit = document.getElementById("cfg-recon-mount-edit");
+    this.mountPicker = document.getElementById("cfg-recon-mount-picker");
+    this.mountSelect = document.getElementById("cfg-recon-mount-point");
+    this.mountConfirm = document.getElementById("cfg-recon-mount-confirm");
+    this.mountRemove = document.getElementById("cfg-recon-mount-remove");
 
     this.initEvents();
     this.close();
@@ -77,6 +87,29 @@ export class FirepowerConfigModal {
     this.btnCancelPicking?.addEventListener("click", () => {
       if (activeEditors.get(this.modal) === this) this.cancelPickingPoint();
     });
+
+    this.mountEdit?.addEventListener("click", () => {
+      if (activeEditors.get(this.modal) !== this || !this.reconMount) return;
+      if (!this.mountPicker.hidden) {
+        this.mountPicker.hidden = true;
+        return;
+      }
+      this.renderReconMount(this.reconMount.getMountedPoint(this.currentPoint));
+      const points = this.reconMount.getFirepowerPoints();
+      this.mountSelect.replaceChildren(new Option(points.length ? "选择挂载火力点…" : "暂无可挂载火力点", ""));
+      for (const point of points) {
+        const label = `${point.battalion || "1营"}·${point.company || "1连"}·${point.name}`;
+        this.mountSelect.add(new Option(label, point.id));
+      }
+      this.mountSelect.value = points.some(point => point.id === this.mountedTo?.id) ? this.mountedTo.id : "";
+      this.mountConfirm.disabled = !this.mountSelect.value || this.mountSelect.value === this.mountedTo?.id;
+      this.mountPicker.hidden = false;
+    });
+    this.mountSelect?.addEventListener("change", () => {
+      this.mountConfirm.disabled = !this.mountSelect.value || this.mountSelect.value === this.mountedTo?.id;
+    });
+    this.mountConfirm?.addEventListener("click", () => this.updateReconMount(false));
+    this.mountRemove?.addEventListener("click", () => this.updateReconMount(true));
 
     this.btnRoleToFirepower?.addEventListener("click", async () => {
       if (activeEditors.get(this.modal) !== this) return;
@@ -136,6 +169,14 @@ export class FirepowerConfigModal {
 
     if (!preserveValues) {
       this.showSaveError();
+      this.mountedMeta.hidden = isRecon;
+      this.dispMounted.textContent = this.currentPoint.mountedDeviceId
+        ? this.currentPoint.mountedDeviceName || this.currentPoint.mountedDeviceId
+        : "未挂载";
+      this.mountSection.hidden = !isRecon || !this.reconMount;
+      if (!this.mountSection.hidden) {
+        this.renderReconMount(this.reconMount.getMountedPoint(this.currentPoint));
+      }
       if (this.dispName) {
         this.dispName.textContent = this.currentPoint.name || this.currentPoint.deviceId || "—";
       }
@@ -216,6 +257,35 @@ export class FirepowerConfigModal {
     this.modal.hidden = false;
     this.modal.classList.remove("is-hidden");
     this.modal.style.display = "flex";
+  }
+
+  renderReconMount(point) {
+    this.mountedTo = point;
+    this.mountStatus.textContent = point ? `${point.battalion}·${point.company}·${point.name}` : "空闲未挂载";
+    this.mountEdit.textContent = point ? "更改阵位" : "挂载阵位";
+    this.mountRemove.hidden = !point;
+    this.mountPicker.hidden = true;
+  }
+
+  async updateReconMount(remove) {
+    if (activeEditors.get(this.modal) !== this || this.mountPicker.hidden || this.isSaving) return;
+    const pointId = remove ? this.mountedTo?.id : this.mountSelect.value;
+    if (!pointId) return;
+    const deviceId = remove ? "" : getPlatformDeviceId(this.currentPoint) || this.currentPoint.id;
+    this.isSaving = true;
+    this.mountEdit.disabled = this.mountSelect.disabled = this.mountConfirm.disabled = this.mountRemove.disabled = true;
+    this.showSaveError();
+    try {
+      if (await this.reconMount.mountDevice(pointId, deviceId)) {
+        this.renderReconMount(this.reconMount.getMountedPoint(this.currentPoint));
+      } else {
+        this.showSaveError(remove ? "解绑失败，请重试" : "保存火力挂载失败，请重试");
+      }
+    } finally {
+      this.isSaving = false;
+      this.mountEdit.disabled = this.mountSelect.disabled = this.mountRemove.disabled = false;
+      this.mountConfirm.disabled = !this.mountSelect.value || this.mountSelect.value === this.mountedTo?.id;
+    }
   }
 
   close() {

@@ -511,8 +511,7 @@ export function initDeviceManager(viewer, panel, options = {}) {
 
   const callbacks = {
     edit: (device, role) => editor.open(device, false, role),
-    mount: (firepowerId, deviceId) => mountDevice(firepowerId, deviceId),
-    getFirepowerPoints: () => [...scenarioFirepower],
+    reportSituation: key => request("situation-report", { key }),
     openAffiliation: () => eventBus.emit("firepower:openAffiliationModal"),
     async changeRole(device, role) {
       if (saving) throw new Error("设备配置正在保存，请稍后重试");
@@ -568,7 +567,12 @@ export function initDeviceManager(viewer, panel, options = {}) {
       }
       return save("coordinates", { key, coordinates, name });
     },
-    (device, role) => callbacks.changeRole(device, role)
+    (device, role) => callbacks.changeRole(device, role),
+    {
+      getFirepowerPoints: () => scenarioFirepower,
+      getMountedPoint: device => currentUavs.find(uav => uav.id === device.id)?.mountedTo ?? null,
+      mountDevice
+    }
   );
 
   function render({ uavs = [], firepower = [], mounted = [], aircraft, firepowerPoints, scenarioUavs: nextUavs, scenarioRevision: nextRevision }) {
@@ -697,7 +701,7 @@ export function initDeviceManager(viewer, panel, options = {}) {
         invalid: "设备状态通道配置无效",
         dependency_missing: "未安装 MQTT 组件",
         connecting: "正在连接EdgeAgent…",
-        subscribed: `设备状态通道已订阅 · ${result.source}`,
+        subscribed: "已订阅",
         subscription_failed: "EdgeAgent设备状态主题订阅失败",
         connection_error: "EdgeAgent数据连接失败",
         disconnected: "EdgeAgent数据连接已断开"

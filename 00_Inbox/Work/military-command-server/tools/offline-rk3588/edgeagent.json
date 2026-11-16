@@ -25,7 +25,7 @@
       "type": "udp",
       "bind_address": "0.0.0.0",
       "bind_port": 5678,
-      "allowed_peers": ["192.168.10.130:0"],
+      "allowed_peers": ["192.168.10.102:0", "192.168.10.130:0", "192.168.0.102:0"],
       "max_datagram_bytes": 65507,
       "multicast": {
         "enabled": true,
@@ -37,7 +37,15 @@
       "channel_id": "fire-01-tcp",
       "type": "tcp",
       "role": "client",
-      "remote_host": "127.0.0.1",
+      "remote_host": "192.168.10.102",
+      "remote_port": 5567,
+      "frame": { "kind": "delimiter", "delimiter": "\n" }
+    },
+    {
+      "channel_id": "fire-02-tcp",
+      "type": "tcp",
+      "role": "client",
+      "remote_host": "192.168.0.102",
       "remote_port": 5567,
       "frame": { "kind": "delimiter", "delimiter": "\n" }
     }
@@ -45,6 +53,7 @@
   "devices": [
     { "device_id": "target-input-device", "channel_id": "target-input-udp", "qos": 0, "message_format": "json" },
     { "device_id": "device-status-device", "channel_id": "device-status-udp", "qos": 0, "message_format": "json" },
-    { "device_id": "fire-01-device", "channel_id": "fire-01-tcp", "qos": 1, "message_format": "json" }
+    { "device_id": "fire-01-device", "channel_id": "fire-01-tcp", "qos": 1, "message_format": "json" },
+    { "device_id": "fire-02-device", "channel_id": "fire-02-tcp", "qos": 1, "message_format": "json" }
   ]
 }

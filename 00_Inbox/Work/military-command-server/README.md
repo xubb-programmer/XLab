@@ -80,6 +80,10 @@ systemd 启动配置包括 `/etc/systemd/system/military-command-server.service`
 
 源码中的配置来源为 `config/targets.example.json`、`config/video.example.json`、`config/reporting.example.json`、`public/scenarios/scenario-default.json` 和 `tools/offline-rk3588/edgeagent.json`。本地 `npm start` 读取 `config/targets.json`、`config/video.json`、`config/reporting.json`，前两份可从示例复制。离线包在 `config/` 和 `services/` 提供模板；`web.env` 由安装器在首次安装时生成，Mosquitto 主配置由系统包提供。升级沿用已有现场配置。
 
+目标上报 `28080/UDP` 和设备状态组播 `239.255.0.1:5678` 默认接收 `192.168.0.0/24` 与 `192.168.10.0/24` 两个局域网网段的设备。打包时展开网段，首次安装同步生成网页的组播来源配置。已有部署调整组播来源时，请同时更新 EdgeAgent 的 `device-status-udp.allowed_peers` 和 `web.env` 的 `DEVICE_SIM_SOURCE_IPS`。
+
+使用 `192.168.0.102:5567/TCP` 接收目标上报时，在 EdgeAgent 配置 `fire-02-tcp` 和 `fire-02-device`，并把对应场景阵位的 `deviceId` 设为 `fire-02-device`。两条 TCP 通道按阵位绑定分别使用。已有部署可参考离线包模板，将这条通道及其设备绑定合入生效的 `edgeagent.json`，再重启 `server-edge`。
+
 配置完成后，根据修改范围执行：
 
 ```bash
@@ -121,6 +125,8 @@ curl -fsS http://192.168.0.201:4177/api/targets
 从 `config/targets.example.json` 复制出 `config/targets.json`，填写 EdgeAgent 使用的 `brokerUrl`（`mqtt://` 或 `mqtts://`），按需填写 `username` 和 `password`。目标主题默认为 `edge/v1/devices/target-input-device/data`，设备状态主题默认为 `edge/v1/devices/device-status-device/data`。
 
 Windows + WSL 开发时，设备状态的 Windows 组播转发器接收 `239.255.0.1:5678`，把原始报文单播送入 WSL EdgeAgent 的 `18082` 端口；EdgeAgent 再通过 MQTT 发布到设备状态主题。`DEVICE_SIM_SOURCE_IPS` 用逗号分隔多个设备来源 IP。启动网页和转发器的终端都要设置同一列表，例如 PowerShell 使用 `$env:DEVICE_SIM_SOURCE_IPS="192.168.10.102,192.168.10.130"`。在项目目录另开终端运行 `npm run relay:edgeagent`。RK3588 部署包中的 EdgeAgent 则直接加入该组播并发布到 MQTT，`edgeagent.json` 的 `device-status-udp.allowed_peers` 与 `/etc/military-command-server/web.env` 的 `DEVICE_SIM_SOURCE_IPS` 都要包含相同来源。平台只订阅 MQTT。目标报文仍由 EdgeAgent 通过 MQTT 转发。服务解析 ScoutMonitor 033（1501）报文，在地图和右侧列表显示侦察目标与炸点目标。配置和连接状态在顶部显示。没有收到有效报文时，目标列表为空。
+
+侦察卡片的「态势上报」向该设备上报的 IP 和 UDP 28081 端口单播一次 UTF-8 JSON 指令。设备按指令每 2000 毫秒向固定地址 `192.168.0.201:28080` 上报。指令保留「目标编号」「目标类型」「最大速度米每秒」三个字段，值均为 JSON `null`。网页提示指令的发送结果。
 
 同一类型、同一编号的目标保存最新位置和最近 60 个不同于前一点的轨迹坐标。目标入库后可从数据管理查询，地图在服务启动时恢复最近更新的 300 个目标。设备最新快照保存在 `devices.sqlite`，重启后可查看，收到新心跳后恢复在线。火力点场景配置和对外上报记录沿用各自的保存位置。
 
