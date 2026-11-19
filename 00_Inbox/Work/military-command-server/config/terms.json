@@ -165,11 +165,11 @@
     "targetHubTitle": "目标与事件记录",
     "targetHubDesc": "实时上报的目标批次、大地坐标、类型属性与行动轨迹数据。",
     "targetHubAction": "检索并查看目标记录",
-    "viewList": "查看列表 ➔",
+    "viewList": "查看列表",
     "openDataManagement": "进入全量数据管理控制台",
     "scenarioStorage": "场景存储:",
     "dataHubHint": "支持批量导入导出与设备状态同步",
-    "refreshDataCounts": "🔄 刷新台账数据",
+    "refreshDataCounts": "刷新台账数据",
     "refreshDataCountsTitle": "刷新监测席、作业单元与目标数量"
   }
 }

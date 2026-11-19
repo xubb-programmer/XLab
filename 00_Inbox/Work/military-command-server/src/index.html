@@ -192,7 +192,6 @@
         <!-- 初始视口点选拾取横幅 -->
         <div id="map-picking-banner" class="map-picking-banner" hidden style="display: none;">
           <div class="picking-banner-content">
-            <span class="picking-banner-icon">📍</span>
             <span class="picking-banner-text" data-term="settings.pickingBanner">正在从地图点选初始位置：请在三维地球上点击目标点</span>
             <button type="button" id="btn-cancel-map-picking" class="btn btn-xs btn-secondary">取消点选</button>
           </div>
@@ -201,7 +200,6 @@
         <!-- 初始视口飞向预览横幅 -->
         <div id="map-preview-banner" class="map-preview-banner" hidden style="display: none;">
           <div class="preview-banner-content">
-            <span class="preview-banner-icon">👁️</span>
             <span class="preview-banner-text" data-term="settings.previewBanner">正在预览初始地图视口</span>
             <button type="button" id="btn-back-from-preview" class="btn btn-xs btn-primary" data-term="settings.backToSettings">返回设置</button>
           </div>
@@ -299,7 +297,6 @@
     <!-- 地图点选工位顶部悬浮提示栏 -->
     <aside id="map-picking-hud" class="map-picking-hud is-hidden" hidden style="display: none;" aria-live="polite">
       <div class="picking-hud-content">
-        <span class="picking-hud-icon pulse" aria-hidden="true">📍</span>
         <span class="picking-hud-text" data-term="ui.pickPositionHud" data-term-html="true">请在三维地图上<strong>单击任意位置</strong>以标定作业点位坐标</span>
       </div>
       <div class="picking-hud-actions">
@@ -850,7 +847,6 @@
         <div class="settings-card">
           <div class="settings-card-header">
             <div class="settings-card-title-group">
-              <span class="settings-card-icon" aria-hidden="true">🌐</span>
               <strong class="settings-card-title" data-term="settings.initialViewTitle">初始地图显示位置</strong>
               <span class="badge badge-meta-id" data-term="settings.initialViewBadge">三维视口基准</span>
             </div>
@@ -899,15 +895,12 @@
             <div class="settings-action-toolbar">
               <div class="toolbar-left-actions">
                 <button type="button" id="btn-map-pick-coord" class="btn btn-primary" data-term-title="settings.pickFromMapTitle" title="在三维地图上直接点击任意位置拾取经纬度">
-                  <span class="btn-icon">📍</span>
                   <span data-term="settings.pickFromMap">从地图点选拾取</span>
                 </button>
                 <button type="button" id="btn-map-capture-current" class="btn btn-secondary" data-term-title="settings.captureCurrentTitle" title="提取当前三维地球视窗正中与相机的高度">
-                  <span class="btn-icon">📷</span>
                   <span data-term="settings.captureCurrent">获取当前视窗中心</span>
                 </button>
                 <button type="button" id="btn-map-preview-fly" class="btn btn-secondary" data-term-title="settings.flyPreviewTitle" title="视口立即飞向当前输入的坐标与高度进行效果预览">
-                  <span class="btn-icon">👁️</span>
                   <span data-term="settings.flyPreview">飞向预览</span>
                 </button>
               </div>
@@ -940,7 +933,6 @@
         <div class="settings-card settings-data-card">
           <div class="settings-card-header">
             <div class="settings-card-title-group">
-              <span class="settings-card-icon" aria-hidden="true">📊</span>
               <strong class="settings-card-title" data-term="settings.dataHubTitle">业务数据管理</strong>
               <span class="badge badge-meta-id" data-term="settings.dataHubBadge">台账与场景数据</span>
             </div>
@@ -953,7 +945,6 @@
             <!-- 3组数据台账分类卡片列表 -->
             <div class="settings-data-grid">
               <div class="data-hub-item" id="data-hub-recon">
-                <div class="data-hub-item-icon">📡</div>
                 <div class="data-hub-item-info">
                   <div class="data-hub-item-title-row">
                     <strong class="data-hub-item-title" data-term="settings.reconHubTitle">监测席台账</strong>
@@ -962,12 +953,11 @@
                   <p class="data-hub-item-desc" data-term="settings.reconHubDesc">在线发现与场景配置的巡检监测节点，管理 IP 与视频通道。</p>
                 </div>
                 <button type="button" class="btn btn-xs btn-primary btn-data-hub-action" data-record-type="recon" data-term-title="settings.reconHubAction" title="查看并管理监测席台账">
-                  <span data-term="settings.viewList">查看列表 ➔</span>
+                  <span data-term="settings.viewList">查看列表</span>
                 </button>
               </div>
 
               <div class="data-hub-item" id="data-hub-firepower">
-                <div class="data-hub-item-icon">⚙️</div>
                 <div class="data-hub-item-info">
                   <div class="data-hub-item-title-row">
                     <strong class="data-hub-item-title" data-term="settings.firepowerHubTitle">作业单元台账</strong>
@@ -976,12 +966,11 @@
                   <p class="data-hub-item-desc" data-term="settings.firepowerHubDesc">地面作业点位坐标、服务半径、设备绑定及组织架构层级。</p>
                 </div>
                 <button type="button" class="btn btn-xs btn-primary btn-data-hub-action" data-record-type="firepower" data-term-title="settings.firepowerHubAction" title="查看并管理作业单元台账">
-                  <span data-term="settings.viewList">查看列表 ➔</span>
+                  <span data-term="settings.viewList">查看列表</span>
                 </button>
               </div>
 
               <div class="data-hub-item" id="data-hub-targets">
-                <div class="data-hub-item-icon">📍</div>
                 <div class="data-hub-item-info">
                   <div class="data-hub-item-title-row">
                     <strong class="data-hub-item-title" data-term="settings.targetHubTitle">目标与事件记录</strong>
@@ -990,7 +979,7 @@
                   <p class="data-hub-item-desc" data-term="settings.targetHubDesc">实时上报的目标批次、大地坐标、类型属性与行动轨迹数据。</p>
                 </div>
                 <button type="button" class="btn btn-xs btn-primary btn-data-hub-action" data-record-type="targets" data-term-title="settings.targetHubAction" title="检索并查看目标记录">
-                  <span data-term="settings.viewList">查看列表 ➔</span>
+                  <span data-term="settings.viewList">查看列表</span>
                 </button>
               </div>
             </div>
@@ -999,7 +988,6 @@
             <div class="settings-action-toolbar">
               <div class="toolbar-left-actions">
                 <button class="btn btn-primary" id="btn-open-data-management" type="button">
-                  <span class="btn-icon">📋</span>
                   <span data-term="settings.openDataManagement">进入全量数据管理控制台</span>
                 </button>
               </div>
@@ -1015,7 +1003,7 @@
               </div>
               <div class="footer-right">
                 <button type="button" id="btn-refresh-data-counts" class="btn btn-secondary" data-term-title="settings.refreshDataCountsTitle" title="刷新监测席、作业单元与目标数量">
-                  <span data-term="settings.refreshDataCounts">🔄 刷新台账数据</span>
+                  <span data-term="settings.refreshDataCounts">刷新台账数据</span>
                 </button>
               </div>
             </div>

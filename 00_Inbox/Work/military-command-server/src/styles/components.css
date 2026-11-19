@@ -4636,15 +4636,17 @@ button.artillery-card:hover {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 14px;
+  padding: 12px 16px;
   background: var(--bg-dark-3);
   border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--border-medium);
   border-radius: 5px;
   transition: all 0.2s;
 }
 
 .data-hub-item:hover {
   border-color: var(--cyan-glow);
+  border-left-color: var(--cyan-glow);
   background: var(--bg-dark-4);
 }
 
