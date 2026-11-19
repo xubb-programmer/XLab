@@ -96,7 +96,7 @@ export class MapSettings {
         if (Number.isFinite(lat) && this.inputLat) this.inputLat.value = lat.toFixed(6);
         if (Number.isFinite(alt) && this.inputAlt) this.inputAlt.value = Math.round(alt);
         this.flashInputs();
-        this.showStatus(`已填入预设位置：「${btn.textContent.trim()}」`, "info");
+        this.showStatus(`已填入预设：「${btn.textContent.trim()}」`, "info");
       });
     });
 
@@ -166,7 +166,7 @@ export class MapSettings {
       if (showNotification) {
         const reconLabel = t("roles.recon", "监测席");
         const fpLabel = t("roles.firepower", "作业单元");
-        this.showStatus(`业务台账数据已刷新：${reconLabel} ${uavCount} 台，${fpLabel} ${pointCount} 处，目标 ${targetCount} 项。`, "info");
+        this.showStatus(`台账数据已刷新：${reconLabel} ${uavCount}，${fpLabel} ${pointCount}，目标 ${targetCount}。`, "info");
       }
     } catch (err) {
       console.warn("[MapSettings] 刷新台账数据失败", err);
@@ -205,7 +205,7 @@ export class MapSettings {
         this.finishMapPick();
         eventBus.emit("page:switch", "settings");
         this.flashInputs();
-        this.showStatus(`已从地图点选拾取坐标：经度 ${this.inputLon.value}°，纬度 ${this.inputLat.value}°`, "success");
+        this.showStatus(`已拾取坐标：${this.inputLon.value}°, ${this.inputLat.value}°`, "success");
       },
       () => {
         this.finishMapPick();
@@ -258,7 +258,7 @@ export class MapSettings {
       if (this.inputAlt) this.inputAlt.value = Math.max(100, Math.round(camCarto.height));
 
       this.flashInputs();
-      this.showStatus(`已读取当前视窗中心：经度 ${this.inputLon.value}°，纬度 ${this.inputLat.value}°，高度 ${this.inputAlt.value} 米`, "success");
+      this.showStatus(`已获取视心：${this.inputLon.value}°, ${this.inputLat.value}° · ${this.inputAlt.value}m`, "success");
     } catch (err) {
       console.warn("[MapSettings] 读取视窗坐标失败", err);
       this.showStatus("读取视窗坐标失败，请在地图激活后重试", "error");
@@ -327,7 +327,7 @@ export class MapSettings {
       }
 
       this.flashInputs();
-      this.showStatus(`初始地图显示位置已保存成功！经度 ${coords.longitude.toFixed(6)}°，纬度 ${coords.latitude.toFixed(6)}°，高度 ${coords.altitude} 米。`, "success");
+      this.showStatus(`位置配置已保存：${coords.longitude.toFixed(6)}°, ${coords.latitude.toFixed(6)}° · ${coords.altitude}m`, "success");
     } catch (err) {
       console.error("[MapSettings] 保存初始视口异常", err);
       // 服务端若离线或未通，仍然保存在前端本地存储供后续使用
@@ -335,7 +335,7 @@ export class MapSettings {
       const scenario = this.getScenarioData();
       if (scenario) scenario.center = coords;
 
-      this.showStatus(`服务端保存受阻 (${err.message})，已先保存在本机浏览器设置中生效。`, "error");
+      this.showStatus(`服务端保存受阻 (${err.message})，已先保存在本机生效。`, "error");
     }
   }
 
@@ -348,7 +348,7 @@ export class MapSettings {
     if (this.inputAlt) this.inputAlt.value = Math.round(Number(target.altitude ?? this.defaultCenter.altitude));
 
     this.flashInputs();
-    this.showStatus("已恢复为系统基准默认位置，点击「保存初始位置」即可应用。", "info");
+    this.showStatus("已恢复默认位置，点击「保存配置」应用。", "info");
   }
 
   readAndValidateInputs() {

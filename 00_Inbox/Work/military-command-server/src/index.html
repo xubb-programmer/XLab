@@ -847,11 +847,11 @@
         <div class="settings-card">
           <div class="settings-card-header">
             <div class="settings-card-title-group">
-              <strong class="settings-card-title" data-term="settings.initialViewTitle">初始地图显示位置</strong>
-              <span class="badge badge-meta-id" data-term="settings.initialViewBadge">三维视口基准</span>
+              <strong class="settings-card-title" data-term="settings.initialViewTitle">初始地图位置</strong>
+              <span class="badge badge-meta-id" data-term="settings.initialViewBadge">视口基准</span>
             </div>
             <p class="settings-card-desc" data-term="settings.initialViewDesc">
-              设置系统启动、刷新页面或点击「态势视角 / 俯视视角」时，三维地图默认定位的中心经纬度坐标与相机视点高度。
+              系统默认三维地图中心坐标与相机视点高度。
             </p>
           </div>
 
@@ -859,8 +859,7 @@
             <div class="settings-coords-grid">
               <div class="form-group">
                 <label for="setting-center-lon" class="form-label">
-                  <span data-term="settings.centerLon">中心经度 (Longitude)</span>
-                  <span class="input-unit">° (-180.0 ~ 180.0)</span>
+                  <span data-term="settings.centerLon">经度 LON (°)</span>
                 </label>
                 <div class="input-with-action">
                   <input type="number" id="setting-center-lon" name="longitude" class="text-input mono"
@@ -870,8 +869,7 @@
 
               <div class="form-group">
                 <label for="setting-center-lat" class="form-label">
-                  <span data-term="settings.centerLat">中心纬度 (Latitude)</span>
-                  <span class="input-unit">° (-90.0 ~ 90.0)</span>
+                  <span data-term="settings.centerLat">纬度 LAT (°)</span>
                 </label>
                 <div class="input-with-action">
                   <input type="number" id="setting-center-lat" name="latitude" class="text-input mono"
@@ -881,8 +879,7 @@
 
               <div class="form-group">
                 <label for="setting-center-alt" class="form-label">
-                  <span data-term="settings.centerAlt">视点高度 (Altitude)</span>
-                  <span class="input-unit">米 (m, 相机高度)</span>
+                  <span data-term="settings.centerAlt">高度 ALT (m)</span>
                 </label>
                 <div class="input-with-action">
                   <input type="number" id="setting-center-alt" name="altitude" class="text-input mono"
@@ -894,19 +891,19 @@
             <!-- 地图点选拾取与辅助快捷操作行 -->
             <div class="settings-action-toolbar">
               <div class="toolbar-left-actions">
-                <button type="button" id="btn-map-pick-coord" class="btn btn-primary" data-term-title="settings.pickFromMapTitle" title="在三维地图上直接点击任意位置拾取经纬度">
-                  <span data-term="settings.pickFromMap">从地图点选拾取</span>
+                <button type="button" id="btn-map-pick-coord" class="btn btn-primary" data-term-title="settings.pickFromMapTitle" title="在三维地图上点击拾取坐标">
+                  <span data-term="settings.pickFromMap">地图点选</span>
                 </button>
-                <button type="button" id="btn-map-capture-current" class="btn btn-secondary" data-term-title="settings.captureCurrentTitle" title="提取当前三维地球视窗正中与相机的高度">
-                  <span data-term="settings.captureCurrent">获取当前视窗中心</span>
+                <button type="button" id="btn-map-capture-current" class="btn btn-secondary" data-term-title="settings.captureCurrentTitle" title="提取当前三维视窗正中坐标与视点高度">
+                  <span data-term="settings.captureCurrent">获取当前视心</span>
                 </button>
-                <button type="button" id="btn-map-preview-fly" class="btn btn-secondary" data-term-title="settings.flyPreviewTitle" title="视口立即飞向当前输入的坐标与高度进行效果预览">
-                  <span data-term="settings.flyPreview">飞向预览</span>
+                <button type="button" id="btn-map-preview-fly" class="btn btn-secondary" data-term-title="settings.flyPreviewTitle" title="飞向当前坐标与高度进行效果预览">
+                  <span data-term="settings.flyPreview">视口预览</span>
                 </button>
               </div>
 
               <div class="toolbar-preset-group">
-                <span class="preset-label" data-term="settings.presets">快捷预设:</span>
+                <span class="preset-label" data-term="settings.presets">预设:</span>
                 <button type="button" class="btn btn-xs btn-preset" data-lon="113.000000" data-lat="42.400000" data-alt="85000" data-term="settings.presetZhurihe">朱日和·赤峰</button>
                 <button type="button" class="btn btn-xs btn-preset" data-lon="118.520000" data-lat="24.520000" data-alt="26000" data-term="settings.presetSoutheast">东南沿海</button>
                 <button type="button" class="btn btn-xs btn-preset" data-lon="108.000000" data-lat="35.000000" data-alt="5000000" data-term="settings.presetNationwide">全国概览</button>
@@ -918,11 +915,11 @@
 
             <div class="settings-card-footer">
               <div class="footer-left">
-                <button type="button" id="btn-map-reset-default" class="btn btn-secondary" data-term="settings.resetDefault">恢复默认位置</button>
+                <button type="button" id="btn-map-reset-default" class="btn btn-secondary" data-term="settings.resetDefault">恢复默认</button>
               </div>
               <div class="footer-right">
                 <button type="button" id="btn-map-save-center" class="btn btn-primary-red">
-                  <span data-term="settings.saveInitialView">保存初始位置</span>
+                  <span data-term="settings.saveInitialView">保存配置</span>
                 </button>
               </div>
             </div>
@@ -934,10 +931,10 @@
           <div class="settings-card-header">
             <div class="settings-card-title-group">
               <strong class="settings-card-title" data-term="settings.dataHubTitle">业务数据管理</strong>
-              <span class="badge badge-meta-id" data-term="settings.dataHubBadge">台账与场景数据</span>
+              <span class="badge badge-meta-id" data-term="settings.dataHubBadge">台账数据</span>
             </div>
             <p class="settings-card-desc" data-term="settings.dataHubDesc">
-              维护平台监测席点位、作业单元台账及实时目标记录，支持分类快速检索、增删改查与场景数据导出。
+              平台监测席位、作业单元及目标记录台账。
             </p>
           </div>
 
@@ -950,10 +947,10 @@
                     <strong class="data-hub-item-title" data-term="settings.reconHubTitle">监测席台账</strong>
                     <span class="badge-count" id="setting-stat-recon">0 台</span>
                   </div>
-                  <p class="data-hub-item-desc" data-term="settings.reconHubDesc">在线发现与场景配置的巡检监测节点，管理 IP 与视频通道。</p>
+                  <p class="data-hub-item-desc" data-term="settings.reconHubDesc">巡检监测节点与视频通道。</p>
                 </div>
-                <button type="button" class="btn btn-xs btn-primary btn-data-hub-action" data-record-type="recon" data-term-title="settings.reconHubAction" title="查看并管理监测席台账">
-                  <span data-term="settings.viewList">查看列表</span>
+                <button type="button" class="btn btn-xs btn-primary btn-data-hub-action" data-record-type="recon" data-term-title="settings.reconHubAction" title="查看监测席台账">
+                  <span data-term="settings.viewList">查看</span>
                 </button>
               </div>
 
@@ -963,10 +960,10 @@
                     <strong class="data-hub-item-title" data-term="settings.firepowerHubTitle">作业单元台账</strong>
                     <span class="badge-count" id="setting-stat-firepower">0 处</span>
                   </div>
-                  <p class="data-hub-item-desc" data-term="settings.firepowerHubDesc">地面作业点位坐标、服务半径、设备绑定及组织架构层级。</p>
+                  <p class="data-hub-item-desc" data-term="settings.firepowerHubDesc">作业点位坐标与服务半径。</p>
                 </div>
-                <button type="button" class="btn btn-xs btn-primary btn-data-hub-action" data-record-type="firepower" data-term-title="settings.firepowerHubAction" title="查看并管理作业单元台账">
-                  <span data-term="settings.viewList">查看列表</span>
+                <button type="button" class="btn btn-xs btn-primary btn-data-hub-action" data-record-type="firepower" data-term-title="settings.firepowerHubAction" title="查看作业单元台账">
+                  <span data-term="settings.viewList">查看</span>
                 </button>
               </div>
 
@@ -976,10 +973,10 @@
                     <strong class="data-hub-item-title" data-term="settings.targetHubTitle">目标与事件记录</strong>
                     <span class="badge-count" id="setting-stat-targets">0 项</span>
                   </div>
-                  <p class="data-hub-item-desc" data-term="settings.targetHubDesc">实时上报的目标批次、大地坐标、类型属性与行动轨迹数据。</p>
+                  <p class="data-hub-item-desc" data-term="settings.targetHubDesc">实时目标与轨迹数据。</p>
                 </div>
-                <button type="button" class="btn btn-xs btn-primary btn-data-hub-action" data-record-type="targets" data-term-title="settings.targetHubAction" title="检索并查看目标记录">
-                  <span data-term="settings.viewList">查看列表</span>
+                <button type="button" class="btn btn-xs btn-primary btn-data-hub-action" data-record-type="targets" data-term-title="settings.targetHubAction" title="查看目标记录">
+                  <span data-term="settings.viewList">查看</span>
                 </button>
               </div>
             </div>
@@ -988,22 +985,20 @@
             <div class="settings-action-toolbar">
               <div class="toolbar-left-actions">
                 <button class="btn btn-primary" id="btn-open-data-management" type="button">
-                  <span data-term="settings.openDataManagement">进入全量数据管理控制台</span>
+                  <span data-term="settings.openDataManagement">进入数据管理</span>
                 </button>
               </div>
               <div class="toolbar-preset-group">
-                <span class="preset-label" data-term="settings.scenarioStorage">场景存储:</span>
+                <span class="preset-label" data-term="settings.scenarioStorage">存储:</span>
                 <span class="badge badge-meta-id highlight-cyan">scenario-default.json</span>
               </div>
             </div>
 
             <div class="settings-card-footer">
-              <div class="footer-left">
-                <span class="text-muted" style="font-size:0.8rem;" data-term="settings.dataHubHint">支持批量导入导出与设备状态同步</span>
-              </div>
+              <div class="footer-left"></div>
               <div class="footer-right">
-                <button type="button" id="btn-refresh-data-counts" class="btn btn-secondary" data-term-title="settings.refreshDataCountsTitle" title="刷新监测席、作业单元与目标数量">
-                  <span data-term="settings.refreshDataCounts">刷新台账数据</span>
+                <button type="button" id="btn-refresh-data-counts" class="btn btn-secondary" data-term-title="settings.refreshDataCountsTitle" title="刷新席位、单元与目标数量">
+                  <span data-term="settings.refreshDataCounts">刷新数据</span>
                 </button>
               </div>
             </div>
