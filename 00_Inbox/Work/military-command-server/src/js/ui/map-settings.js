@@ -1,4 +1,5 @@
 import { eventBus } from "../core/event-bus.js";
+import { t } from "../core/terms.js";
 
 /**
  * 网页设置 - 初始地图显示位置配置控制器
@@ -163,7 +164,9 @@ export class MapSettings {
       if (elTgt) elTgt.textContent = `${targetCount} 项`;
 
       if (showNotification) {
-        this.showStatus(`业务台账数据已刷新：监测席 ${uavCount} 台，作业单元 ${pointCount} 处，目标 ${targetCount} 项。`, "info");
+        const reconLabel = t("roles.recon", "监测席");
+        const fpLabel = t("roles.firepower", "作业单元");
+        this.showStatus(`业务台账数据已刷新：${reconLabel} ${uavCount} 台，${fpLabel} ${pointCount} 处，目标 ${targetCount} 项。`, "info");
       }
     } catch (err) {
       console.warn("[MapSettings] 刷新台账数据失败", err);

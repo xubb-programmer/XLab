@@ -70,7 +70,24 @@ const managementDb = resolveConfig("INTELLIGENT_COOPERATIVE_SERVER_MANAGEMENT_DB
 const operations = openOperationalStore(managementDb);
 const managementRegistry = openPreviewRegistry(managementDb);
 const offlineMapDir = resolve(root, "dist/offline-maps/combined-theaters");
-const termsConfigPath = resolveConfig("INTELLIGENT_COOPERATIVE_SERVER_TERMS_CONFIG", "config/terms.json");
+function resolveTermsConfig() {
+  const custom = process.env.INTELLIGENT_COOPERATIVE_SERVER_TERMS_CONFIG ||
+    process.env.INTELLIGENT_COMMAND_SERVER_TERMS_CONFIG ||
+    process.env.DISPATCH_SERVER_TERMS_CONFIG ||
+    process.env.COMMAND_SERVER_TERMS_CONFIG;
+  if (custom && custom.trim()) {
+    return resolve(root, custom.trim());
+  }
+  const inDeployment = resolve(root, "deployment-terms.json");
+  if (existsSync(inDeployment)) return inDeployment;
+  const inConfigDeployment = resolve(root, "config/deployment-terms.json");
+  if (existsSync(inConfigDeployment)) return inConfigDeployment;
+  const inEtc = "/etc/intelligent-cooperative-server/terms.json";
+  if (existsSync(inEtc)) return inEtc;
+  return resolve(root, "config/terms.json");
+}
+
+const termsConfigPath = resolveTermsConfig();
 let offlineMapDb;
 let offlineMapTileQuery;
 const targetsConfig = await loadTargetsConfig(appConfig.targets || appConfig.mqtt || {});

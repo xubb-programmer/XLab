@@ -5,7 +5,9 @@
     "reconAssistant": "巡检车智能助手",
     "analysisAssistant": "数据智能分析系统",
     "dataLinkStatus": "协同数据链状态",
-    "viewSwitchPitch": "视角切换至: 态势俯仰全景视角 (-45°)"
+    "viewSwitchPitch": "视角切换至: 态势俯仰全景视角 (-45°)",
+    "backToTactical": "返回综合态势",
+    "topbarTactical": "综合态势"
   },
   "roles": {
     "recon": "监测席",
@@ -71,6 +73,7 @@
     "sendTargetTitle": "发送该目标至作业单元接收终端"
   },
   "targets": {
+    "target": "目标",
     "reconTarget": "监测目标",
     "burstTarget": "告警事件",
     "statReconBurst": "监测目标／告警事件"
@@ -122,5 +125,51 @@
     "reasonClosestOutOfRange": "超出所有可用工位服务半径，该工位相对最近（超距 {margin} km）。",
     "recommendAllInRange": "推荐就近分流（{count} 目标均在服务半径内）",
     "recommendPartialInRange": "就近分流（{inRange}/{total} 目标在服务半径内）"
+  },
+  "settings": {
+    "title": "系统与态势设置",
+    "navTitle": "设置",
+    "platformConfig": "平台配置",
+    "viewportAndData": "三维视口与数据管理",
+    "backToTactical": "返回综合态势",
+    "backToSettings": "返回设置",
+    "initialViewTitle": "初始地图显示位置",
+    "initialViewBadge": "三维视口基准",
+    "initialViewDesc": "设置系统启动、刷新页面或点击「态势视角 / 俯视视角」时，三维地图默认定位的中心经纬度坐标与相机视点高度。",
+    "centerLon": "中心经度 (Longitude)",
+    "centerLat": "中心纬度 (Latitude)",
+    "centerAlt": "视点高度 (Altitude)",
+    "pickFromMap": "从地图点选拾取",
+    "pickFromMapTitle": "在三维地图上直接点击任意位置拾取经纬度",
+    "captureCurrent": "获取当前视窗中心",
+    "captureCurrentTitle": "提取当前三维地球视窗正中与相机的高度",
+    "flyPreview": "飞向预览",
+    "flyPreviewTitle": "视口立即飞向当前输入的坐标与高度进行效果预览",
+    "presets": "快捷预设:",
+    "presetZhurihe": "朱日和·赤峰",
+    "presetSoutheast": "东南沿海",
+    "presetNationwide": "全国概览",
+    "resetDefault": "恢复默认位置",
+    "saveInitialView": "保存初始位置",
+    "pickingBanner": "正在从地图点选初始位置：请在三维地球上点击目标点",
+    "previewBanner": "正在预览初始地图视口",
+    "dataHubTitle": "业务数据管理",
+    "dataHubBadge": "台账与场景数据",
+    "dataHubDesc": "维护平台监测席点位、作业单元台账及实时目标记录，支持分类快速检索、增删改查与场景数据导出。",
+    "reconHubTitle": "监测席台账",
+    "reconHubDesc": "在线发现与场景配置的巡检监测节点，管理 IP 与视频通道。",
+    "reconHubAction": "查看并管理监测席台账",
+    "firepowerHubTitle": "作业单元台账",
+    "firepowerHubDesc": "地面作业点位坐标、服务半径、设备绑定及组织架构层级。",
+    "firepowerHubAction": "查看并管理作业单元台账",
+    "targetHubTitle": "目标与事件记录",
+    "targetHubDesc": "实时上报的目标批次、大地坐标、类型属性与行动轨迹数据。",
+    "targetHubAction": "检索并查看目标记录",
+    "viewList": "查看列表 ➔",
+    "openDataManagement": "进入全量数据管理控制台",
+    "scenarioStorage": "场景存储:",
+    "dataHubHint": "支持批量导入导出与设备状态同步",
+    "refreshDataCounts": "🔄 刷新台账数据",
+    "refreshDataCountsTitle": "刷新监测席、作业单元与目标数量"
   }
 }
