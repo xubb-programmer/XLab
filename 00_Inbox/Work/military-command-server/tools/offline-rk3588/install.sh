@@ -24,22 +24,24 @@ architecture=$(dpkg --print-architecture 2>/dev/null || true)
   die "此系统包要求 ${build[architecture]:-未知} ARM64，当前架构为 ${architecture:-未知}。"
 [[ $("$bundle/node/bin/node" -p 'process.arch') == arm64 ]] || die '包内 Node.js 无法在本机运行。'
 
-name=military-command-server
+name=intelligent-cooperative-server
 prefix=/opt/jw/$name
 conf=/etc/$name
 state=/var/lib/$name
-tmp=$(mktemp -d /var/tmp/military-command-server-apt.XXXXXX)
+tmp=$(mktemp -d /var/tmp/intelligent-cooperative-server-apt.XXXXXX)
 staging=
-services=(server-edge.service military-command-server.service)
-broker_file=/etc/mosquitto/conf.d/military-command-server-local.conf
-old_broker_file=/etc/mosquitto/conf.d/target-guidance-local.conf
+services=(server-edge.service intelligent-cooperative-server.service)
+broker_file=/etc/mosquitto/conf.d/intelligent-cooperative-server-local.conf
+old_broker_file=/etc/mosquitto/conf.d/intelligent-command-server-local.conf
+older_broker_file=/etc/mosquitto/conf.d/dispatch-server-local.conf
+ancient_broker_file=/etc/mosquitto/conf.d/command-server-local.conf
 source "$bundle/migrate-installation.sh"
 trap finish_install EXIT
 switch_release() {
   ln -sfn "$1" "$prefix/.current.new" &&
     mv -Tf "$prefix/.current.new" "$prefix/current"
 }
-exec 9>/run/lock/military-command-server-install.lock
+exec 9>/run/lock/intelligent-cooperative-server-install.lock
 flock -n 9 || die '已有安装任务在运行。'
 check_migration
 chmod 0755 "$tmp"
@@ -84,23 +86,37 @@ apt-get "${apt_local[@]}" -s --no-install-recommends --no-remove install "${runt
 # A fresh Mosquitto install must listen only on loopback, including first start.
 if [[ $(dpkg-query -W -f='${Status}' mosquitto 2>/dev/null || true) != 'install ok installed' ]]; then
   install -d -m 0755 /etc/mosquitto/conf.d
-  if [[ ! -e "$broker_file" && ! -e "$old_broker_file" ]]; then
-    printf 'listener 1883 127.0.0.1\nallow_anonymous true\n' > "$broker_file"
+  if [[ ! -e "$broker_file" && ! -e "$old_broker_file" && ! -e "$older_broker_file" ]]; then
+    if [[ -f "$bundle/config/mosquitto/intelligent-cooperative-server-local.conf" ]]; then
+      install -m 0644 "$bundle/config/mosquitto/intelligent-cooperative-server-local.conf" "$broker_file"
+    elif [[ -f "$bundle/config/mosquitto/intelligent-command-server-local.conf" ]]; then
+      install -m 0644 "$bundle/config/mosquitto/intelligent-command-server-local.conf" "$broker_file"
+    elif [[ -f "$bundle/config/mosquitto/dispatch-server-local.conf" ]]; then
+      install -m 0644 "$bundle/config/mosquitto/dispatch-server-local.conf" "$broker_file"
+    else
+      printf 'listener 1883 127.0.0.1\nallow_anonymous true\n' > "$broker_file"
+    fi
   fi
 fi
 apt-get "${apt_local[@]}" -y --no-install-recommends --no-remove install "${runtime[@]}"
 
 install -d -m 0755 "$prefix/releases"
 
-release_id=$(sha256sum "$bundle/SHA256SUMS" | cut -c1-16)
+build_date=$(date +%Y%m%d)
+release_hash=$(sha256sum "$bundle/SHA256SUMS" | cut -c1-8)
+release_id="${build_date}-${release_hash}"
 release="$prefix/releases/$release_id"
 if [[ ! -d "$release" ]]; then
   staging=$(mktemp -d "$prefix/releases/.stage.XXXXXX")
   cp -a "$bundle"/{bin,node,web} "$staging/"
-  install -m 0755 "$bundle/launch-military-command.sh" "$staging/launch-military-command.sh"
+  install -m 0755 "$bundle/launch-intelligent-cooperative.sh" "$staging/launch-intelligent-cooperative.sh"
   install -m 0755 "$bundle/open-desktop-tool.sh" "$staging/open-desktop-tool.sh"
-  install -m 0644 "$bundle/military-command-tools.desktop" "$staging/military-command-tools.desktop"
+  install -m 0644 "$bundle/intelligent-cooperative-tools.desktop" "$staging/intelligent-cooperative-tools.desktop"
   ln -s "$state/scenarios" "$staging/web/public/scenarios"
+  if [[ -d "$state/offline-maps" ]]; then
+    mkdir -p "$staging/web/dist"
+    ln -sfn "$state/offline-maps" "$staging/web/dist/offline-maps"
+  fi
   chown -R root:root "$staging"
   chmod -R go-w "$staging"
   chmod 0755 "$staging"
@@ -120,18 +136,30 @@ install -d -m 0750 -o "$name" -g "$name" "$state" "$state/scenarios" "$state/edg
 seed_config() {
   if [[ ! -e "$2" ]]; then install -m 0640 -o root -g "$name" "$1" "$2"; fi
 }
-for config in targets video reporting edgeagent; do
-  seed_config "$bundle/config/$config.json" "$conf/$config.json"
+for config in app edgeagent terms; do
+  if [[ -f "$bundle/config/$config.json" ]]; then
+    seed_config "$bundle/config/$config.json" "$conf/$config.json"
+  fi
 done
-if [[ ! -e "$conf/web.env" ]]; then
+if [[ -f "$conf/app.json" ]]; then
   source_ips=$("$bundle/node/bin/node" -e '
     const config = JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"));
     const channel = config.channels.find(channel => channel.channel_id === "device-status-udp");
     if (!channel?.allowed_peers?.length) process.exit(1);
     process.stdout.write(channel.allowed_peers.map(peer => peer.slice(0, peer.lastIndexOf(":"))).join(","));
-  ' "$bundle/config/edgeagent.json")
-  printf 'MILITARY_COMMAND_SERVER_BIND_HOST=192.168.0.201\nPORT=4177\nDEVICE_SIM_SOURCE_IPS=%s\n' "$source_ips" > "$tmp/web.env"
-  seed_config "$tmp/web.env" "$conf/web.env"
+  ' "$bundle/config/edgeagent.json" || true)
+  if [[ -n "$source_ips" ]]; then
+    "$bundle/node/bin/node" -e '
+      const fs = require("node:fs");
+      const path = process.argv[1];
+      const app = JSON.parse(fs.readFileSync(path, "utf8"));
+      app.server = app.server || {};
+      if (!app.server.deviceSimSourceIps) {
+        app.server.deviceSimSourceIps = process.argv[2];
+        fs.writeFileSync(path, JSON.stringify(app, null, 2) + "\n");
+      }
+    ' "$conf/app.json" "$source_ips"
+  fi
 fi
 scenario="$state/scenarios/scenario-default.json"
 if [[ ! -e "$scenario" ]]; then
@@ -143,7 +171,7 @@ done
 
 edge_config="$conf/edgeagent.json"
 "$bundle/node/bin/node" "$bundle/migrate-edge-reporting.mjs" \
-  "$edge_config" "$scenario" "$conf/reporting.json" "$tmp/edgeagent-migrated.json" "$bundle/config/edgeagent.json"
+  "$edge_config" "$scenario" "$conf/app.json" "$tmp/edgeagent-migrated.json" "$bundle/config/edgeagent.json"
 replace_edge_config() {
   local next
   next=$(mktemp "$conf/.edgeagent.XXXXXX")
@@ -160,13 +188,14 @@ systemctl daemon-reload
 systemctl enable --now mosquitto.service
 systemctl enable "${services[@]}"
 service_ready() (
-  set -a
-  . "$conf/web.env"
-  set +a
-  host=${MILITARY_COMMAND_SERVER_BIND_HOST:-127.0.0.1}
-  [[ "$host" != 0.0.0.0 ]] || host=127.0.0.1
-  if [[ "$host" == *:* ]]; then host="[$host]"; fi
-  "$prefix/current/node/bin/node" --input-type=module - "http://$host:${PORT:-4177}" <<'JS'
+  url=$("$prefix/current/node/bin/node" -e '
+    const conf = JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"));
+    const host = process.env.INTELLIGENT_COOPERATIVE_SERVER_BIND_HOST || conf.server?.host || "127.0.0.1";
+    const port = process.env.PORT || conf.server?.port || 4177;
+    const urlHost = host.includes(":") ? `[${host}]` : host;
+    process.stdout.write(`http://${urlHost}:${port}`);
+  ' "$conf/app.json")
+  "$prefix/current/node/bin/node" --input-type=module - "$url" <<'JS'
 const url = process.argv[2];
 for (let i = 0; i < 15; i++) {
   try {
@@ -179,9 +208,26 @@ process.exit(1);
 JS
 )
 if ! systemctl restart "${services[@]}" || ! service_ready || ! systemctl is-active --quiet server-edge.service; then
-  die '启动检查未通过，请查看 journalctl -u military-command-server -u server-edge -u mosquitto。'
+  die '启动检查未通过，请查看 journalctl -u intelligent-cooperative-server -u server-edge -u mosquitto。'
 fi
 install_complete=1
 update_release_links
 
-printf '离线部署完成。网页端口和监听地址见 %s/web.env。\n' "$conf"
+prune_old_releases() {
+  local current_target count=0 keep=1 dir clean_dir
+  current_target=$(readlink -f "$prefix/current" 2>/dev/null || true)
+  rm -rf "$prefix/releases"/.stage.* 2>/dev/null || true
+  while IFS= read -r dir; do
+    [[ -n "$dir" ]] || continue
+    clean_dir="${dir%/}"
+    [[ -d "$clean_dir" ]] || continue
+    if [[ "$clean_dir" == "$current_target" ]]; then continue; fi
+    ((count++))
+    if ((count > keep)); then
+      rm -rf -- "$clean_dir"
+    fi
+  done < <(ls -1td "$prefix/releases"/*/ 2>/dev/null || true)
+}
+prune_old_releases
+
+printf '离线部署完成。平台配置见 %s/app.json。\n' "$conf"

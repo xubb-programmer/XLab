@@ -1,3 +1,5 @@
+import { t } from "./terms.js";
+
 function text(value) {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -26,16 +28,19 @@ export function getPlatformName(platform, role) {
   const configuredName = platform?.customName ? text(platform.name) : cleanReportedName(platform?.name);
   if (configuredName) {
     if (role === "firepower") {
-      if (configuredName.endsWith("号")) return `${configuredName}火力点`;
-      if (configuredName.endsWith("阵位")) return configuredName.replace(/阵位$/, "火力点");
+      const firepowerLabel = t("roles.firepower", "作业单元");
+      if (configuredName.endsWith("号")) return `${configuredName}${firepowerLabel}`;
+      if (configuredName.endsWith("工位") || configuredName.endsWith("点位")) {
+        return configuredName.replace(/(?:工位|点位)$/, firepowerLabel);
+      }
     }
     return configuredName;
   }
-  const roleName = role === "firepower" ? "火力点" : "侦察席";
+  const roleName = role === "firepower" ? t("roles.firepower", "作业单元") : t("roles.recon", "监测席");
   return `${roleName}-${getPlatformDeviceId(platform) || "未绑定设备"}`;
 }
 
 export function getPlatformDisplayName(platform, role) {
-  const roleName = role === "firepower" ? "火力点" : "侦察席";
+  const roleName = role === "firepower" ? t("roles.firepower", "作业单元") : t("roles.recon", "监测席");
   return `${roleName} · ${getPlatformName(platform, role)}`;
 }

@@ -190,7 +190,7 @@ export function openRegistry(databasePath, onlineMs) {
   function display(report, settings, now, duplicates, role) {
     const active = observations.get(report.identity)?.key === report.key && online(report, now);
     const customName = text(settings?.custom_name);
-    const roleDefault = role === "firepower" ? "火力点" : "侦察席";
+    const roleDefault = role === "firepower" ? "作业单元" : "监测席";
     const { aircraftTrack, ...device } = publicReport(report, active);
     return {
       ...device,
@@ -220,8 +220,8 @@ export function openRegistry(databasePath, onlineMs) {
       if (!prior || report.lastSeen > prior.lastSeen) mountedById.set(report.deviceId, report);
     }
     const mounted = [...mountedById.values()].map(report => display(report, select.get(report.key), now, duplicates, "firepower"));
-    // 挂载只改变火力阵位的通信绑定，不改变设备的侦察席身份。
-    // 因此已挂载设备仍保留在侦察列表，视频和飞机轨迹也继续使用同一份快照。
+    // 挂载只改变工位的通信绑定，不改变设备的监测席身份。
+    // 因此已挂载设备仍保留在监测列表，视频和飞机轨迹也继续使用同一份快照。
     const uavs = [...observations.values()]
       .map(report => display(report, select.get(report.key), now, duplicates, "recon"));
     const aircraft = [];
@@ -284,7 +284,7 @@ export function openRegistry(databasePath, onlineMs) {
       const report = getObservation(key) || (settings?.firepower && JSON.parse(settings.last_report));
       if (!report) throw changeError(404, "设备快照不存在");
       if (mounts.has(report.deviceId)) throw changeError(409, "设备已挂载，请先解除挂载");
-      // 设备改过 ID 时，旧的独立火力点仍可能引用同一个硬件身份。
+      // 设备改过 ID 时，旧的独立作业单元仍可能引用同一个硬件身份。
       if (observations.has(report.identity) && observations.get(report.identity).key !== key) {
         throw changeError(409, "设备编号已变化，请核对设备身份");
       }
@@ -299,7 +299,7 @@ export function openRegistry(databasePath, onlineMs) {
     snapshot,
     videoConfig(key, mounts = new Set()) {
       const report = getObservation(key);
-      // 独立火力标记和阵位挂载都不影响侦察视频访问。
+      // 独立作业标记和点位挂载都不影响监测视频访问。
       const usable = report && online(report, Date.now());
       const streams = usable ? report.videoChannels.map(channel => ({ ...channel, uavId: key })) : [];
       return { state: streams.some(channel => channel.rtspUrl) ? "configured" : "unconfigured", streams };

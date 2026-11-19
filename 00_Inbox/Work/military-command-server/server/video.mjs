@@ -6,9 +6,11 @@ const STREAM_TYPE = `multipart/x-mixed-replace; boundary=${BOUNDARY}`;
 const DEFAULT_UAV_ID = "UAV-RECON-01";
 const CONFIG_ID = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/;
 
-export async function loadVideoConfig(file) {
+export async function loadVideoConfig(source) {
   try {
-    const config = JSON.parse((await readFile(file, "utf8")).replace(/^\uFEFF/, ""));
+    const config = typeof source === "object" && source !== null
+      ? source
+      : JSON.parse((await readFile(source, "utf8")).replace(/^\uFEFF/, ""));
     if (!config || typeof config !== "object" || Array.isArray(config)) return { state: "invalid" };
 
     const { rtspUrl = "", ffmpegPath = "ffmpeg", rtspTimeoutOption = "timeout", streams: channels = [] } = config;

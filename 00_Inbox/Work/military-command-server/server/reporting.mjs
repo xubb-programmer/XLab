@@ -14,10 +14,11 @@ export class ReportError extends Error {
   }
 }
 
-export async function loadReportingConfig(filePath) {
+export async function loadReportingConfig(source) {
   try {
-    const raw = await readFile(filePath, "utf8");
-    const config = JSON.parse(raw.replace(/^\uFEFF/, ""));
+    const config = typeof source === "object" && source !== null
+      ? source
+      : JSON.parse((await readFile(source, "utf8")).replace(/^\uFEFF/, ""));
     return { defaultEndpoint: { ...defaultEndpoint, ...config.defaultEndpoint }, endpoints: config.endpoints || {} };
   } catch {
     return { defaultEndpoint, endpoints: {} };
@@ -43,10 +44,10 @@ export function readReportRequest(payload) {
   const plan = assignments.map(item => {
     const { targetId, firepowerId } = item ?? {};
     if (typeof targetId !== "string" || !targetId.trim() || typeof firepowerId !== "string" || !firepowerId.trim()) {
-      throw new ReportError(400, "目标或阵位编号无效");
+      throw new ReportError(400, "目标或工位编号无效");
     }
     const key = JSON.stringify([targetId, firepowerId]);
-    if (seen.has(key)) throw new ReportError(400, "同一目标在同一阵位重复指派");
+    if (seen.has(key)) throw new ReportError(400, "同一目标在同一工位重复指派");
     seen.add(key);
     const target = targets.get(targetId);
     const entry = [targetId, firepowerId, target?.longitude, target?.latitude, target?.altitude];
@@ -66,13 +67,13 @@ export function validateReportAssignments(assignments, firepowerPoints) {
   const counts = new Map();
   for (const item of assignments) {
     const point = points.get(item.firepowerId);
-    if (!point) throw new ReportError(400, "所选阵位不存在，请更新阵位配置后重试");
+    if (!point) throw new ReportError(400, "所选工位不存在，请更新工位配置后重试");
     const deviceId = point.deviceId || point.id;
     if (typeof deviceId !== "string" || !edgeDeviceIdPattern.test(deviceId)) {
-      throw new ReportError(400, `阵位 ${point.name || point.id} 的 EdgeAgent 设备 ID 无效`);
+      throw new ReportError(400, `工位 ${point.name || point.id} 的 EdgeAgent 设备 ID 无效`);
     }
     if (item.deviceId && item.deviceId !== deviceId) {
-      throw new ReportError(409, `阵位 ${point.name || point.id} 的设备绑定已修改，请核对后重新发起上报`);
+      throw new ReportError(409, `工位 ${point.name || point.id} 的设备绑定已修改，请核对后重新发起上报`);
     }
     counts.set(point.id, (counts.get(point.id) || 0) + 1);
   }

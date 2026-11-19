@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 # Sourced by install.sh after the bundle is verified and before service cutover.
 
-old_name=target-guidance
+old_name=dispatch-server
+for candidate in intelligent-command-server dispatch-server command-server target-guidance; do
+  if [[ -e "/etc/$candidate" || -e "/var/lib/$candidate" ]] || getent passwd "$candidate" >/dev/null 2>&1; then
+    old_name=$candidate
+    break
+  fi
+done
 old_conf=/etc/$old_name
 old_state=/var/lib/$old_name
 old_cache=/var/cache/$old_name
@@ -38,9 +44,19 @@ check_migration() {
   elif path_exists "$old_state" || path_exists "$old_conf"; then
     die "旧服务账户缺失，请先核对旧配置和数据归属。"
   fi
-  if systemctl is-active --quiet "$old_name.service" || systemctl is-active --quiet "$old_name-edge.service"; then
-    die "检测到仍在运行的旧版服务，请先切换到当前服务单元。"
-  fi
+  for old_svc in intelligent-command-server dispatch-server command-server target-guidance; do
+    if [[ "$old_svc" != "$name" ]]; then
+      if systemctl is-active --quiet "$old_svc.service"; then
+        systemctl stop "$old_svc.service" 2>/dev/null || true
+      fi
+      if systemctl is-enabled --quiet "$old_svc.service"; then
+        systemctl disable "$old_svc.service" 2>/dev/null || true
+      fi
+      if [[ -f "/etc/systemd/system/$old_svc.service" ]]; then
+        rm -f "/etc/systemd/system/$old_svc.service"
+      fi
+    fi
+  done
   return 0
 }
 
@@ -74,9 +90,9 @@ migrate_installation() {
     done
     if [[ -f "$conf/web.env" ]]; then
       sed -i -E \
-        -e "s|^([[:space:]]*)TARGET_GUIDANCE_|\1MILITARY_COMMAND_SERVER_|" \
-        -e "/^[[:space:]]*(MILITARY_COMMAND_SERVER_(SCENARIO|VIDEO_CONFIG|TARGETS_CONFIG|REPORTING_CONFIG|REPORTING_DB|MANAGEMENT_DB)|DEVICE_SIM_STATE_DIR)=/s#/etc/$old_name/#$conf/#g" \
-        -e "/^[[:space:]]*(MILITARY_COMMAND_SERVER_(SCENARIO|VIDEO_CONFIG|TARGETS_CONFIG|REPORTING_CONFIG|REPORTING_DB|MANAGEMENT_DB)|DEVICE_SIM_STATE_DIR)=/s#/var/lib/$old_name/#$state/#g" \
+        -e "s|^([[:space:]]*)(TARGET_GUIDANCE_|COMMAND_SERVER_|DISPATCH_SERVER_|INTELLIGENT_COMMAND_SERVER_)|\1INTELLIGENT_COOPERATIVE_SERVER_|" \
+        -e "/^[[:space:]]*(INTELLIGENT_COOPERATIVE_SERVER_(SCENARIO|VIDEO_CONFIG|TARGETS_CONFIG|REPORTING_CONFIG|REPORTING_DB|MANAGEMENT_DB)|DEVICE_SIM_STATE_DIR)=/s#/etc/$old_name/#$conf/#g" \
+        -e "/^[[:space:]]*(INTELLIGENT_COOPERATIVE_SERVER_(SCENARIO|VIDEO_CONFIG|TARGETS_CONFIG|REPORTING_CONFIG|REPORTING_DB|MANAGEMENT_DB)|DEVICE_SIM_STATE_DIR)=/s#/var/lib/$old_name/#$state/#g" \
         "$conf/web.env"
     fi
   fi

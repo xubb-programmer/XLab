@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Intelligent Cooperative Server Desktop Tools
+Exec=/opt/jw/intelligent-cooperative-server/current/open-desktop-tool.sh %u
+NoDisplay=true
+Terminal=false
+MimeType=x-scheme-handler/intelligent-cooperative;x-scheme-handler/intelligent-cooperative-tools;x-scheme-handler/intelligent-command;x-scheme-handler/intelligent-command-tools;x-scheme-handler/dispatch-tools;

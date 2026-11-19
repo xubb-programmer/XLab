@@ -151,7 +151,7 @@ export async function openDeviceSimulation(rtspTimeoutOption, mqttConfig, scenar
         if (path === "/situation-report") {
           const address = registry.deviceIpForKey(body.key);
           if (!address || !isIPv4(address) || Number(address.split(".")[0]) < 1 || Number(address.split(".")[0]) > 223) {
-            return json(res, 409, { error: "该侦察席没有有效的设备单播 IP" });
+            return json(res, 409, { error: "该监测席没有有效的设备单播 IP" });
           }
           try {
             await sendSituationReport(address);
@@ -166,7 +166,7 @@ export async function openDeviceSimulation(rtspTimeoutOption, mqttConfig, scenar
           const mounts = mountedDeviceIds(current.firepowerPoints);
           const deviceId = registry.deviceIdForKey(body.key);
           if (path === "/role" && body.role === "firepower" && mounts.has(deviceId)) {
-            return { status: 409, error: "该设备已挂载到火力阵位，如需设置独立火力点请先解除挂载" };
+            return { status: 409, error: "该设备已挂载到作业点位，如需设置独立作业单元请先解除挂载" };
           }
           if (path === "/role") registry.changeRole(body.key, body.role);
           else registry.saveCoordinates(body.key, body.coordinates, body.name);

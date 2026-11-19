@@ -1,5 +1,6 @@
 import { escapeHtml } from "../core/html.js";
 import { eventBus } from "../core/event-bus.js";
+import { t } from "../core/terms.js";
 
 export class TargetPanel {
   constructor(targetService, viewerManager) {
@@ -121,7 +122,7 @@ export class TargetPanel {
         <div class="card-essential-info-row target-essential-row">
           <div class="essential-meta-item">
             ${reportInfo
-              ? `<span class="link-tag-reported" title="已上报至 ${escapeHtml(reportInfo.firepowerName)}">已上报 · ${escapeHtml(reportInfo.firepowerName)}</span>`
+              ? `<span class="link-tag-reported" title="${t("action.reportedTo", "已下派至")} ${escapeHtml(reportInfo.firepowerName)}">${t("action.reportedStatus", "已下派")} · ${escapeHtml(reportInfo.firepowerName)}</span>`
               : `<span class="link-tag-online">● 态势正常</span>`
             }
           </div>
@@ -129,7 +130,7 @@ export class TargetPanel {
             <button type="button" class="btn btn-sm btn-locate-target" title="三维视点对准该目标">
               <span>定位</span>
             </button>
-            <button type="button" class="btn btn-sm btn-report-single-target btn-primary-red" title="发送该目标至火力点接收终端">
+            <button type="button" class="btn btn-sm btn-report-single-target btn-primary-red" title="${t("action.sendTargetTitle", "发送该目标至作业单元接收终端")}">
               <span>发送</span>
             </button>
           </div>
@@ -143,7 +144,7 @@ export class TargetPanel {
         this.targetService.toggleTarget(target.id);
       });
 
-      // 战术定位
+      // 态势定位
       card.querySelector(".btn-locate-target")?.addEventListener("click", e => {
         e.stopPropagation();
         this.targetService.selectTarget(target.id);
@@ -182,7 +183,7 @@ export class TargetPanel {
       this.btnBatchReport.disabled = count === 0;
       const textSpan = this.btnBatchReport.querySelector("span");
       if (textSpan) {
-        textSpan.textContent = count > 0 ? `上报 (${count})` : "上报火力";
+        textSpan.textContent = count > 0 ? `${t("action.batchDispatchPrefix", "下派")} (${count})` : t("action.reportToFirepower", "下派任务");
       }
     }
     if (this.chkSelectAll) {

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#060b11">
-  <title>单兵作战辅助平台</title>
+  <title data-term="app.title">智能协同作业调度平台</title>
   <link rel="stylesheet" href="/cesium/Widgets/widgets.css">
   <link rel="stylesheet" href="/styles/main.css?v=2.1">
   <link rel="stylesheet" href="/styles/layout.css?v=2.3">
@@ -93,7 +93,7 @@
             transform="translate(16.9 10.3) rotate(54)" fill="currentColor" stroke="none"/>
         </svg>
         <div class="brand-title">
-          <h1>单兵作战辅助平台</h1>
+          <h1 data-term="app.title">智能协同作业调度平台</h1>
           <p>INDIVIDUAL COMBAT SUPPORT PLATFORM</p>
         </div>
       </div>
@@ -103,16 +103,16 @@
         <button type="button" id="nav-btn-tactical" class="topbar-nav-tab active" title="打开综合态势">
           <span class="nav-tab-text">综合态势</span>
         </button>
-        <button type="button" id="nav-btn-battery-config" class="topbar-nav-tab" title="火力点参数整备">
-          <span class="nav-tab-text">火力整备</span>
+        <button type="button" id="nav-btn-battery-config" class="topbar-nav-tab" data-term-title="ui.firepowerConfig" title="作业单元参数整备">
+          <span class="nav-tab-text" data-term="roles.mountFirepower">单元整备</span>
         </button>
         <button type="button" id="nav-btn-video-matrix" class="topbar-nav-tab highlight-recon" title="打开视频总览">
           <span class="nav-tab-text">视频总览</span>
           <span id="nav-video-source-count" class="video-source-count-badge">检测中…</span>
         </button>
-        <a class="topbar-nav-tab" href="https://127.0.0.1:18007/?v=0903a" target="_blank" rel="noopener">侦察车智能助手</a>
-        <a class="topbar-nav-tab" href="military-command://lanchat">即时通讯</a>
-        <a class="topbar-nav-tab" href="military-command://scout-monitor">情报辅助分析系统</a>
+        <a class="topbar-nav-tab" href="https://127.0.0.1:18007/?v=0903a" target="_blank" rel="noopener" data-term="app.reconAssistant">巡检车智能助手</a>
+        <a class="topbar-nav-tab" href="intelligent-cooperative://lanchat">即时通讯</a>
+        <a class="topbar-nav-tab" href="intelligent-cooperative://scout-monitor" data-term="app.analysisAssistant">数据智能分析系统</a>
         <button type="button" id="nav-btn-settings" class="topbar-nav-tab">
           <span class="nav-tab-text">设置</span>
         </button>
@@ -120,19 +120,19 @@
 
       <div class="topbar-stats">
         <div class="stat-item">
-          <span class="stat-label">侦察席</span>
+          <span class="stat-label" data-term="roles.recon">监测席</span>
           <span id="stat-platform-count" class="stat-value">—</span>
         </div>
         <div class="stat-item">
-          <span class="stat-label">火力点</span>
+          <span class="stat-label" data-term="roles.firepower">作业单元</span>
           <span id="stat-firepower-count" class="stat-value">—</span>
         </div>
         <div class="stat-item">
-          <span class="stat-label">侦察目标／炸点目标</span>
+          <span class="stat-label" data-term="targets.statReconBurst">监测目标／告警事件</span>
           <span id="stat-target-count" class="stat-value">—</span>
         </div>
         <div class="stat-item">
-          <span class="stat-label">战术数据链状态</span>
+          <span class="stat-label" data-term="app.dataLinkStatus">协同数据链状态</span>
           <span id="stat-data-source" class="stat-value stat-link">
             <span class="status-dot-point standby" aria-hidden="true"></span>
             <span>正在连接…</span>
@@ -140,14 +140,14 @@
         </div>
         <div class="stat-item">
           <span class="stat-label">北京时间</span>
-          <span id="military-clock" class="stat-value military-clock-time">—</span>
+          <span id="system-clock" class="stat-value system-clock-time">—</span>
         </div>
       </div>
     </header>
 
     <!-- 工作台三栏主分割视窗 -->
     <main id="page-tactical" class="workspace page-view" aria-label="综合态势">
-      <aside id="platform-sidebar" class="sidebar-left" aria-label="侦察席与火力点">
+      <aside id="platform-sidebar" class="sidebar-left" aria-label="监测席与作业单元">
         <section class="panel-section platform-list-panel" aria-labelledby="uav-list-heading">
           <header class="panel-header uav-panel-header">
             <h3 id="uav-list-heading">
@@ -155,9 +155,9 @@
                 <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/>
                 <circle cx="12" cy="12" r="3"/>
               </svg>
-              侦察席
+              <span data-term="roles.recon">监测席</span>
             </h3>
-            <button type="button" id="btn-uav-recon-video-matrix" class="btn btn-xs btn-tactical-tool" title="打开所有侦察载荷视频链路总览矩阵">
+            <button type="button" id="btn-uav-recon-video-matrix" class="btn btn-xs btn-tactical-tool" data-term-title="ui.openReconVideoMatrix" title="打开所有监测载荷视频链路总览矩阵">
               <span>视频总览</span>
             </button>
           </header>
@@ -173,11 +173,11 @@
                 <path d="M 7 17 V 3 H 20 L 16.5 7 L 20 11 H 7"/>
                 <path d="M 3 21 L 6 17 H 18 L 21 21 Z"/>
               </svg>
-              <span id="firepower-heading-text">火力点</span>
+              <span id="firepower-heading-text" data-term="roles.firepower">作业单元</span>
             </h3>
             <div class="panel-header-actions">
-              <button type="button" id="btn-tactical-add-firepower" class="btn btn-xs btn-tactical-tool highlight-tool" title="新增火力至编制中">
-                <span>+ 新增火力</span>
+              <button type="button" id="btn-tactical-add-firepower" class="btn btn-xs btn-tactical-tool highlight-tool" data-term-title="roles.addFirepowerTitle" title="新增作业单元至架构中">
+                <span data-term="roles.addFirepower">+ 新增单元</span>
               </button>
             </div>
           </header>
@@ -189,8 +189,26 @@
       <section class="map-viewport">
         <div id="cesium-container"></div>
 
+        <!-- 初始视口点选拾取横幅 -->
+        <div id="map-picking-banner" class="map-picking-banner" hidden style="display: none;">
+          <div class="picking-banner-content">
+            <span class="picking-banner-icon">🎯</span>
+            <span class="picking-banner-text">正在从地图点选初始位置：请在三维地球上点击目标点</span>
+            <button type="button" id="btn-cancel-map-picking" class="btn btn-xs btn-secondary">取消点选</button>
+          </div>
+        </div>
+
+        <!-- 初始视口飞向预览横幅 -->
+        <div id="map-preview-banner" class="map-preview-banner" hidden style="display: none;">
+          <div class="preview-banner-content">
+            <span class="preview-banner-icon">🚀</span>
+            <span class="preview-banner-text">正在预览初始地图视口</span>
+            <button type="button" id="btn-back-from-preview" class="btn btn-xs btn-primary">返回设置</button>
+          </div>
+        </div>
+
         <button type="button" class="sidebar-toggle sidebar-toggle-left" aria-controls="platform-sidebar"
-          aria-expanded="true" aria-label="收起侦察载荷与火力点侧栏" title="收起侦察载荷与火力点侧栏">
+          aria-expanded="true" data-term-aria="ui.collapseSidebar" aria-label="收起监测载荷与作业单元侧栏" data-term-title="ui.collapseSidebar" title="收起监测载荷与作业单元侧栏">
           <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
             <path d="M 3 1.5 L 10 6 L 3 10.5 Z"/>
           </svg>
@@ -203,7 +221,7 @@
         </button>
 
         <div class="map-overlay-tools">
-          <button id="btn-view-tactical" class="btn btn-sm" type="button">战术视角</button>
+          <button id="btn-view-tactical" class="btn btn-sm" type="button" data-term="app.tacticalView">态势视角</button>
           <button id="btn-view-top" class="btn btn-sm" type="button">俯视视角</button>
           <button id="btn-box-select" class="btn btn-sm btn-map-icon" type="button" aria-label="框选目标（点击开启，或按住Shift键在地图上拖动框选）" title="框选目标（点击开启，或按住Shift键在地图上拖动框选）">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -219,7 +237,7 @@
               <polyline points="15.5 4.5 20 4.5 20 9"></polyline>
             </svg>
           </button>
-          <button id="btn-view-uav" class="btn btn-sm" type="button" hidden>定位侦察席</button>
+          <button id="btn-view-uav" class="btn btn-sm" type="button" hidden data-term="ui.locateRecon">定位监测席</button>
           <button id="btn-map-mode" class="btn btn-sm btn-map-mode is-offline" type="button" aria-label="底图模式切换" title="当前：离线底图（点击切换在线）"></button>
           <span id="map-mode-status" class="map-offline-status" role="status" hidden></span>
           <div class="map-layer-controls" role="group" aria-label="地图图层">
@@ -231,8 +249,8 @@
       </section>
 
       <!-- 右侧栏：地图目标列表 -->
-      <aside id="target-sidebar" class="sidebar-right" aria-label="侦察目标与炸点目标">
-        <!-- 侦察目标与炸点目标列表 -->
+      <aside id="target-sidebar" class="sidebar-right" aria-label="监测目标与告警事件">
+        <!-- 监测目标与告警事件列表 -->
         <div class="panel-section" style="flex: 1; min-height: 0;">
           <div class="panel-header">
             <h3>
@@ -241,15 +259,15 @@
                 <circle cx="12" cy="9" r="1.8"/>
                 <path d="M 7 17.5 C 5.5 17.9 4.5 18.5 4.5 19.3 C 4.5 20.5 7.9 21.5 12 21.5 S 19.5 20.5 19.5 19.3 C 19.5 18.5 18.5 17.9 17 17.5"/>
               </svg>
-              侦察目标与炸点目标
+              <span data-term="targets.statReconBurst">监测目标与告警事件</span>
             </h3>
           </div>
           
           <!-- 快速目标分类筛选器 -->
           <div style="display:flex; gap:6px; padding:6px 10px; background:var(--bg-dark-1); border-bottom:1px solid var(--border-subtle);">
             <button id="filter-btn-all" class="btn btn-sm active" type="button">全部目标</button>
-            <button id="filter-btn-recon" class="btn btn-sm" type="button">侦察目标</button>
-            <button id="filter-btn-burst" class="btn btn-sm" type="button">炸点目标</button>
+            <button id="filter-btn-recon" class="btn btn-sm" type="button" data-term="targets.reconTarget">监测目标</button>
+            <button id="filter-btn-burst" class="btn btn-sm" type="button" data-term="targets.burstTarget">告警事件</button>
           </div>
 
           <!-- 批量上报操作工具栏 (入口 1: 卡片多选工具栏) -->
@@ -260,9 +278,9 @@
             </label>
             <span class="selection-status-text">已选 <strong id="selected-target-count" class="mono">0</strong> 个</span>
             <div class="selection-bar-actions">
-              <button type="button" id="btn-report-history" class="btn btn-sm btn-secondary">上报记录</button>
-              <button type="button" id="btn-batch-report-firepower" class="btn btn-sm btn-primary-red" disabled title="将选中的目标上报至火力点">
-                <span>上报火力</span>
+              <button type="button" id="btn-report-history" class="btn btn-sm btn-secondary" data-term="action.taskHistory">下派记录</button>
+              <button type="button" id="btn-batch-report-firepower" class="btn btn-sm btn-primary-red" disabled data-term-title="ui.batchReportTitle" title="将选中的目标下派至作业单元">
+                <span data-term="action.reportToFirepower">下派任务</span>
               </button>
             </div>
           </div>
@@ -278,11 +296,11 @@
       </aside>
     </main>
 
-    <!-- 地图点选火力阵位顶部悬浮提示栏 -->
+    <!-- 地图点选工位顶部悬浮提示栏 -->
     <aside id="map-picking-hud" class="map-picking-hud is-hidden" hidden style="display: none;" aria-live="polite">
       <div class="picking-hud-content">
         <span class="picking-hud-icon pulse" aria-hidden="true">🎯</span>
-        <span class="picking-hud-text">请在三维地图上<strong>单击任意位置</strong>以标定火力阵位坐标</span>
+        <span class="picking-hud-text" data-term="ui.pickPositionHud" data-term-html="true">请在三维地图上<strong>单击任意位置</strong>以标定作业点位坐标</span>
       </div>
       <div class="picking-hud-actions">
         <button type="button" id="btn-cancel-picking" class="btn btn-sm btn-secondary">
@@ -297,8 +315,8 @@
         <span class="selection-hud-text">已选 <strong id="map-hud-selected-count" class="mono">0</strong> 目标</span>
       </div>
       <div class="selection-hud-actions">
-        <button type="button" id="btn-map-hud-report" class="btn btn-sm btn-primary-red" title="上报已选目标至火力点">
-          <span>上报火力</span>
+        <button type="button" id="btn-map-hud-report" class="btn btn-sm btn-primary-red" title="下派已选目标至作业单元">
+          <span data-term="action.reportToFirepower">下派任务</span>
         </button>
         <button type="button" id="btn-map-hud-clear" class="btn btn-sm btn-secondary" title="清除地图选中目标">
           <span>清空</span>
@@ -306,7 +324,7 @@
       </div>
     </aside>
 
-    <!-- 地面火力点手动配置弹窗 -->
+    <!-- 地面作业单元手动配置弹窗 -->
     <div id="firepower-config-modal" class="modal-backdrop is-hidden" hidden style="display: none;">
       <div class="modal-dialog firepower-modal" role="dialog" aria-labelledby="firepower-modal-title" aria-modal="true">
         <div class="card-corner-tl"></div>
@@ -315,7 +333,7 @@
         <header class="modal-header">
           <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
             <span class="status-dot-point online" aria-hidden="true"></span>
-            <strong id="firepower-modal-title">地面火力点阵位场景配置</strong>
+            <strong id="firepower-modal-title" data-term="ui.firepowerModalTitle">地面作业单元点位场景配置</strong>
           </div>
           <button type="button" class="btn-close-modal" id="btn-close-firepower-modal" aria-label="关闭">✕</button>
         </header>
@@ -347,21 +365,21 @@
             </div>
 
             <div id="cfg-recon-mount" class="form-row" hidden>
-              <span class="form-label">火力挂载</span>
+              <span class="form-label" data-term="roles.mountFirepower">单元挂载</span>
               <div class="modal-helper-row">
                 <strong id="cfg-recon-mount-status" class="modal-meta-val" aria-live="polite"></strong>
-                <button type="button" id="cfg-recon-mount-edit" class="btn btn-sm btn-tactical-tool">更改阵位</button>
+                <button type="button" id="cfg-recon-mount-edit" class="btn btn-sm btn-tactical-tool">更改工位</button>
               </div>
               <div id="cfg-recon-mount-picker" class="modal-helper-row" hidden>
-                <select id="cfg-recon-mount-point" class="text-input" aria-label="选择挂载火力点"></select>
+                <select id="cfg-recon-mount-point" class="text-input" aria-label="选择挂载作业单元"></select>
                 <button type="button" id="cfg-recon-mount-confirm" class="btn btn-sm btn-tactical-tool">确认</button>
                 <button type="button" id="cfg-recon-mount-remove" class="btn btn-sm btn-tactical-tool">解绑</button>
               </div>
             </div>
 
             <div class="form-row" data-operational-point-field>
-              <label class="form-label" for="cfg-fp-name">火力点名称</label>
-              <input type="text" id="cfg-fp-name" class="text-input" placeholder="例如: 地面火力输出点" required>
+              <label class="form-label" for="cfg-fp-name" data-term="roles.firepowerNameLabel">作业单元名称</label>
+              <input type="text" id="cfg-fp-name" class="text-input" data-term-placeholder="roles.firepowerPlaceholder" placeholder="例如: 地面任务输出点" required>
             </div>
 
             <div class="form-row-grid-3">
@@ -381,7 +399,7 @@
 
             <div class="form-row-grid-2" data-operational-point-field>
               <div class="form-field">
-                <label class="form-label" for="cfg-fp-range">打击范围 (km)</label>
+                <label class="form-label" for="cfg-fp-range" data-term="action.strikeRangeKm">覆盖范围 (km)</label>
                 <input type="text" id="cfg-fp-range" class="text-input mono" placeholder="如: 40 km" required>
               </div>
               <div class="form-field">
@@ -416,8 +434,8 @@
 
           <footer class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
             <div class="modal-footer-left">
-              <button type="button" id="btn-modal-role-to-recon" class="btn btn-secondary" hidden>取消独立火力点</button>
-              <button type="button" id="btn-modal-role-to-firepower" class="btn btn-secondary" hidden>同时作为火力点</button>
+              <button type="button" id="btn-modal-role-to-recon" class="btn btn-secondary" hidden data-term="roles.cancelFirepower">取消独立作业单元</button>
+              <button type="button" id="btn-modal-role-to-firepower" class="btn btn-secondary" hidden data-term="roles.asFirepower">同时作为作业单元</button>
             </div>
             <div class="modal-footer-right" style="display:flex; gap:10px;">
               <button type="button" id="btn-cancel-firepower" class="btn btn-secondary">取消</button>
@@ -430,7 +448,7 @@
       </div>
     </div>
 
-    <!-- 目标上报至火力点交互弹窗 -->
+    <!-- 目标下派至作业单元交互弹窗 -->
     <div id="target-report-modal" class="modal-backdrop is-hidden" hidden style="display: none;">
       <div class="modal-dialog target-report-modal-dialog" role="dialog" aria-labelledby="target-report-modal-title" aria-modal="true">
         <div class="card-corner-tl"></div>
@@ -439,7 +457,7 @@
         <header class="modal-header">
           <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
             <span class="status-dot-point online" aria-hidden="true"></span>
-            <strong id="target-report-modal-title">目标上报至火力点 · 协同分配方案</strong>
+            <strong id="target-report-modal-title" data-term="action.reportModalTitle">目标下派至作业单元 · 协同分配方案</strong>
           </div>
           <button type="button" class="btn-close-modal" id="btn-close-report-modal" aria-label="关闭">✕</button>
         </header>
@@ -447,11 +465,11 @@
         <form id="form-target-report" class="tactical-form">
           <div class="modal-body">
             <div id="report-history-row" class="form-row" hidden>
-              <label class="form-label" for="report-history-select">上报批次</label>
+              <label class="form-label" for="report-history-select" data-term="action.taskBatch">下派批次</label>
               <select id="report-history-select" class="text-input"></select>
             </div>
             <div id="report-plan">
-            <!-- 火力打击多对多协同分配策略建议总览 -->
+            <!-- 任务处置多对多协同分配策略建议总览 -->
             <div id="report-allocation-strategy-box" class="allocation-strategy-box">
               <div class="strategy-header">
                 <div class="strategy-title">
@@ -461,7 +479,7 @@
                   <button type="button" id="btn-apply-strategy-recommendation" class="btn btn-xs btn-tactical-tool" title="一键采用系统推荐方案">
                     <span>应用建议</span>
                   </button>
-                  <select id="batch-assign-all-select" class="text-input text-input-xs" title="全部指定阵位">
+                  <select id="batch-assign-all-select" class="text-input text-input-xs" title="全部指定工位">
                     <option value="">全部指定为…</option>
                   </select>
                 </div>
@@ -471,7 +489,7 @@
                   解算中…
                 </div>
                 <div id="strategy-battery-load-bar" class="battery-load-bar">
-                  <!-- 动态显示各阵位承揽目标负荷 -->
+                  <!-- 动态显示各工位承揽目标负荷 -->
                 </div>
               </div>
             </div>
@@ -483,7 +501,7 @@
                   <span class="form-label" style="margin-bottom:0;">目标指派方案</span>
                   <span id="report-target-summary-badge" class="badge-target-protocol recon">0 目标</span>
                 </div>
-                <span class="human-badge">人工裁决</span>
+                <span class="human-badge" data-term="action.manualDecision">人工指定</span>
               </div>
 
               <!-- 矩阵列表容器 -->
@@ -492,7 +510,7 @@
               </div>
 
               <div class="human-hint-text">
-                可逐项更改指派阵位，人工确认后发送。
+                可逐项更改指派工位，人工确认后发送。
               </div>
             </div>
             </div>
@@ -505,7 +523,7 @@
           <footer class="modal-footer">
             <button type="button" id="btn-cancel-report-modal" class="btn btn-secondary">取消</button>
             <button type="submit" id="btn-confirm-report-modal" class="btn btn-primary-red">
-              <span id="btn-confirm-report-text">🚀 确认按方案分发上报</span>
+              <span id="btn-confirm-report-text" data-term="action.confirmDispatch">🚀 确认按方案分发下派</span>
             </button>
           </footer>
         </form>
@@ -517,10 +535,10 @@
       <header class="view-header video-matrix-header">
         <div class="header-title-group">
           <div class="view-title" style="display:flex; align-items:center; gap:8px;">
-            <strong id="video-matrix-title" tabindex="-1">侦察席列表</strong>
+            <strong id="video-matrix-title" tabindex="-1" data-term="ui.reconSeatList">监测席列表</strong>
           </div>
           <div class="matrix-header-meta">
-            <span id="matrix-header-count" class="meta-tag">共 0 个侦察席</span>
+            <span id="matrix-header-count" class="meta-tag">共 0 个监测席</span>
           </div>
         </div>
 
@@ -542,8 +560,8 @@
       </header>
 
       <div class="view-body video-seat-directory" id="video-seat-directory">
-        <p id="video-seat-empty" class="workspace-empty" role="status">暂无侦察席</p>
-        <ul id="video-seat-list" class="video-seat-list" aria-label="侦察席列表" hidden></ul>
+        <p id="video-seat-empty" class="workspace-empty" role="status" data-term="ui.emptyReconList">暂无监测席</p>
+        <ul id="video-seat-list" class="video-seat-list" aria-label="监测席列表" hidden></ul>
       </div>
 
       <div class="view-body video-matrix-body" id="video-matrix-playback" hidden>
@@ -565,23 +583,23 @@
       </footer>
     </section>
 
-    <!-- 页面 3: 火力整备 (平级页面 3，全屏独立展示，完整树状拓扑图 + 组播动态挂载) -->
-    <section id="page-firepower-affiliation" class="page-view fullpage-view fullpage-firepower-affiliation" hidden style="display: none;" aria-label="火力整备">
+    <!-- 页面 3: 组织架构整备 (平级页面 3，全屏独立展示，完整树状拓扑图 + 组播动态挂载) -->
+    <section id="page-firepower-affiliation" class="page-view fullpage-view fullpage-firepower-affiliation" hidden style="display: none;" aria-label="组织架构整备">
       <header class="view-header affiliation-header">
         <div class="header-title-group">
           <div class="view-title" style="display:flex; align-items:center; gap:8px;">
             <span class="status-dot-point online" aria-hidden="true"></span>
-            <strong id="affiliation-modal-title">战术火力整备 · 编制隶属拓扑</strong>
+            <strong id="affiliation-modal-title" data-term="org.affiliationModalTitle">协同作业整备 · 组织架构拓扑</strong>
           </div>
           <div class="affiliation-header-meta">
-            <span class="meta-tag">指挥中枢 ➔ 营 ➔ 连 ➔ 火力点</span>
+            <span class="meta-tag" data-term="org.metaPath">调度中心 ➔ 片区 ➔ 组 ➔ 作业单元</span>
             <span class="meta-tag highlight-cyan">组播设备动态挂载</span>
           </div>
         </div>
 
         <div class="affiliation-header-stats">
           <div class="tree-stat-badge">
-            <span class="stat-lbl">阵位总数:</span>
+            <span class="stat-lbl">点位总数:</span>
             <strong id="tree-stat-total" class="stat-val mono">3</strong>
           </div>
           <div class="tree-stat-badge">
@@ -599,17 +617,17 @@
         </div>
 
         <div class="affiliation-header-controls">
-          <button type="button" id="btn-tree-org-scale" class="btn btn-xs btn-tactical-tool" title="设置编制中有几个营、每个营有几个连">
-            <span>营连建制设置</span>
+          <button type="button" id="btn-tree-org-scale" class="btn btn-xs btn-tactical-tool" title="设置架构中有几个片区、每个片区有几个组">
+            <span data-term="org.scaleSettings">片区分组架构设置</span>
           </button>
-          <button type="button" id="btn-tree-add-point" class="btn btn-xs btn-tactical-tool highlight-tool" title="新增火力至编制中">
-            <span>+ 新增火力</span>
+          <button type="button" id="btn-tree-add-point" class="btn btn-xs btn-tactical-tool highlight-tool" data-term-title="roles.addFirepowerTitle" title="新增作业单元至架构中">
+            <span data-term="roles.addFirepower">+ 新增单元</span>
           </button>
-          <button type="button" id="btn-tree-auto-mount" class="btn btn-xs btn-tactical-tool" title="自动将在线侦察设备按序挂载至未就绪火力点">
+          <button type="button" id="btn-tree-auto-mount" class="btn btn-xs btn-tactical-tool" data-term-title="ui.autoMountTitle" title="自动将在线监测设备按序挂载至未就绪作业单元">
             <span>一键智能挂载</span>
           </button>
-          <button type="button" id="btn-tree-reset-default" class="btn btn-xs btn-tactical-tool" title="重置为标准三阵位建制">
-            <span>重置编制</span>
+          <button type="button" id="btn-tree-reset-default" class="btn btn-xs btn-tactical-tool" title="重置为标准三工位架构">
+            <span data-term="org.resetOrg">重置架构</span>
           </button>
           <button type="button" class="btn btn-xs btn-secondary" id="btn-close-affiliation-modal" title="返回综合态势">
             <span>返回大厅</span>
@@ -621,11 +639,11 @@
         <!-- 主树状拓扑图展示画板 (全屏铺开) -->
         <div class="affiliation-tree-scroll-container">
           <div id="affiliation-tree-canvas" class="affiliation-tree-canvas">
-            <!-- 动态渲染树状结构: 指挥所 -> 营 -> 连 -> 火力点 -->
+            <!-- 动态渲染树状结构: 调度中心 -> 片区 -> 组 -> 作业单元 -->
           </div>
         </div>
 
-        <!-- 右侧边栏：在线侦察席设备池 (组播实时就绪设备) -->
+        <!-- 右侧边栏：在线监测设备池 (组播实时就绪设备) -->
         <aside class="affiliation-recon-sidebar">
           <div class="recon-sidebar-header">
             <div class="sidebar-title-row">
@@ -633,46 +651,46 @@
                 <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/>
                 <circle cx="12" cy="12" r="3"/>
               </svg>
-              <strong>组播侦察席设备池</strong>
+              <strong data-term="roles.reconPool">组播监测设备池</strong>
             </div>
             <span class="recon-pool-hint">239.255.0.1:5678</span>
           </div>
-          <p class="recon-pool-desc">组播在线设备可作为火力点通信信道，挂载后阵位立即转为在线就绪。</p>
+          <p class="recon-pool-desc" data-term="roles.reconPoolDesc">组播在线设备可作为作业单元通信信道，挂载后点位立即转为在线就绪。</p>
           <div id="affiliation-recon-pool-list" class="affiliation-recon-pool-list">
             <!-- 动态渲染各在线设备卡片及快捷挂载按钮 -->
           </div>
         </aside>
 
-        <!-- 抽屉：编辑或新增阵位隶属关系 -->
+        <!-- 抽屉：编辑或新增工位隶属关系 -->
         <div id="affiliation-edit-drawer" class="affiliation-edit-drawer" hidden style="display: none;">
           <div class="drawer-header">
-            <strong id="tree-drawer-title">编辑阵位编制</strong>
+            <strong id="tree-drawer-title">编辑工位架构</strong>
             <button type="button" id="btn-cancel-tree-drawer" class="btn-close-drawer" aria-label="关闭抽屉">✕</button>
           </div>
           <form id="form-tree-drawer-edit" class="tactical-form drawer-form">
             <input type="hidden" id="tree-edit-point-id">
             <div class="form-row-grid-2">
               <div class="form-field">
-                <label class="form-label" for="tree-edit-battalion">所属营</label>
+                <label class="form-label" for="tree-edit-battalion">所属片区</label>
                 <select id="tree-edit-battalion" class="text-input select-input" required></select>
               </div>
               <div class="form-field">
-                <label class="form-label" for="tree-edit-company">所属连</label>
+                <label class="form-label" for="tree-edit-company">所属组</label>
                 <select id="tree-edit-company" class="text-input select-input" required></select>
               </div>
             </div>
 
             <div class="form-row">
-              <label class="form-label" for="tree-edit-name">火力点名称</label>
-              <input type="text" id="tree-edit-name" class="text-input" placeholder="例如: 1号火力点" required>
+              <label class="form-label" for="tree-edit-name" data-term="roles.firepowerNameLabel">作业单元名称</label>
+              <input type="text" id="tree-edit-name" class="text-input" placeholder="例如: 1号作业单元" required>
             </div>
 
             <div class="form-row">
               <label class="form-label" for="tree-edit-mounted-device">挂载在线设备ID (组播通信信道)</label>
               <select id="tree-edit-mounted-device" class="text-input select-input">
-                <option value="">(未挂载 / 阵位离线)</option>
+                <option value="">(未挂载 / 工位离线)</option>
               </select>
-              <small class="form-field-hint">选择已在组播网络中的设备ID，挂载后阵位将变为在线。</small>
+              <small class="form-field-hint">选择已在组播网络中的设备ID，挂载后工位将变为在线。</small>
             </div>
 
             <div class="form-row-grid-3">
@@ -702,7 +720,7 @@
 
             <div class="form-row-grid-2">
               <div class="form-field">
-                <label class="form-label" for="tree-edit-range">打击范围 (km)</label>
+                <label class="form-label" for="tree-edit-range" data-term="action.strikeRangeKm">覆盖范围 (km)</label>
                 <input type="text" id="tree-edit-range" class="text-input mono" placeholder="如: 12 km" required>
               </div>
               <div class="form-field">
@@ -735,63 +753,63 @@
           </form>
         </div>
 
-        <!-- 抽屉/模态：营连建制规模设置 -->
+        <!-- 抽屉/模态：片区分组架构规模设置 -->
         <div id="affiliation-org-modal" class="affiliation-edit-drawer affiliation-org-drawer" hidden style="display: none;">
           <div class="drawer-header">
-            <strong id="org-modal-title">战术建制规模 · 营连架构设置</strong>
-            <button type="button" id="btn-close-org-modal" class="btn-close-drawer" aria-label="关闭营连设置">✕</button>
+            <strong id="org-modal-title" data-term="org.scaleModalTitle">组织架构规模 · 片区分组架构设置</strong>
+            <button type="button" id="btn-close-org-modal" class="btn-close-drawer" aria-label="关闭片区设置">✕</button>
           </div>
           <div class="drawer-form org-settings-form">
-            <!-- 快速建制规模设置 -->
+            <!-- 快速架构规模设置 -->
             <div class="org-quick-scale-panel">
               <div class="panel-section-title">
                 <span class="status-dot-point online" aria-hidden="true"></span>
-                <strong>快捷建制规模生成</strong>
+                <strong>快捷架构规模生成</strong>
               </div>
-              <p class="org-helper-desc">设定当前指挥中枢下辖的营数量以及各营标配连数量：</p>
+              <p class="org-helper-desc" data-term="org.scaleDesc">设定当前调度中心下辖的片区数量以及各片区标配组数量：</p>
               <div class="form-row-grid-2">
                 <div class="form-field">
-                  <label class="form-label" for="input-scale-battalions">设置营数量</label>
+                  <label class="form-label" for="input-scale-battalions">设置片区数量</label>
                   <div class="stepper-input-row">
                     <input type="number" id="input-scale-battalions" class="text-input mono" min="1" max="10" step="1" value="2" required>
-                    <span class="input-unit">个营</span>
+                    <span class="input-unit">个片区</span>
                   </div>
                 </div>
                 <div class="form-field">
-                  <label class="form-label" for="input-scale-companies">每营下辖连数</label>
+                  <label class="form-label" for="input-scale-companies">每片区下辖组数</label>
                   <div class="stepper-input-row">
                     <input type="number" id="input-scale-companies" class="text-input mono" min="1" max="10" step="1" value="2" required>
-                    <span class="input-unit">个连</span>
+                    <span class="input-unit">个组</span>
                   </div>
                 </div>
               </div>
               <div class="scale-actions-row">
                 <button type="button" id="btn-apply-org-scale" class="btn btn-sm btn-tactical-tool highlight-tool">
-                  <span>快速应用建制规模</span>
+                  <span>快速应用架构规模</span>
                 </button>
               </div>
             </div>
 
-            <!-- 详细营连编制树形管理列表 -->
+            <!-- 详细片区分组架构树形管理列表 -->
             <div class="org-detail-manage-panel">
               <div class="panel-section-title">
                 <span class="status-dot-point standby" aria-hidden="true"></span>
-                <strong>当前营连编制清单</strong>
+                <strong>当前片区分组清单</strong>
               </div>
               <div id="org-manage-tree-list" class="org-manage-tree-list">
-                <!-- 动态渲染各营及连管理项 -->
+                <!-- 动态渲染各片区及组管理项 -->
               </div>
               <div class="org-add-battalion-row">
-                <input type="text" id="input-new-battalion-name" class="text-input" placeholder="输入新营名称 (例如: 3营)">
+                <input type="text" id="input-new-battalion-name" class="text-input" placeholder="输入新片区名称 (例如: 3区)">
                 <button type="button" id="btn-add-new-battalion" class="btn btn-sm btn-secondary">
-                  <span>+ 添加新营</span>
+                  <span>+ 添加新片区</span>
                 </button>
               </div>
             </div>
 
             <div class="drawer-actions-row">
               <button type="button" id="btn-reset-org-default" class="btn btn-sm btn-secondary">
-                <span>重置默认建制</span>
+                <span>重置默认架构</span>
               </button>
               <button type="button" id="btn-finish-org-modal" class="btn btn-sm btn-primary-red">
                 <span>完成设置</span>
@@ -805,7 +823,7 @@
         <div class="affiliation-footer-meta">
           <span class="footer-legend-item"><span class="legend-dot live"></span> 设备挂载在线</span>
           <span class="footer-legend-item"><span class="legend-dot standby"></span> 未挂载或设备离线</span>
-          <span class="footer-legend-item"><span class="legend-dot note"></span> 可在侦察席或设备池中直接选取设备挂载至阵位</span>
+          <span class="footer-legend-item"><span class="legend-dot note"></span> 可在监测席或设备池中直接选取设备挂载至工位</span>
         </div>
         <div class="affiliation-footer-actions">
           <button type="button" id="btn-affiliation-close-foot" class="btn btn-secondary">返回综合态势</button>
@@ -814,8 +832,195 @@
     </section>
 
     <section id="page-settings" class="page-view fullpage-view" aria-label="设置" hidden>
-      <div class="view-body management-page">
-        <button class="btn" id="btn-open-data-management" type="button">数据管理</button>
+      <header class="view-header management-header">
+        <div class="header-title-group">
+          <div class="view-title">
+            <strong id="settings-title">系统与态势设置</strong>
+          </div>
+          <div class="affiliation-header-meta">
+            <span class="meta-tag">平台配置</span>
+            <span class="meta-tag highlight-cyan">三维视口与数据管理</span>
+          </div>
+        </div>
+        <button type="button" id="btn-settings-back-tactical" class="btn btn-secondary">返回综合态势</button>
+      </header>
+
+      <div class="view-body management-page settings-page-body">
+        <!-- 初始三维地图显示位置与视口配置卡片 -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="settings-card-title-group">
+              <span class="settings-card-icon" aria-hidden="true">🌐</span>
+              <strong class="settings-card-title">初始地图显示位置</strong>
+              <span class="badge badge-meta-id">三维视口基准</span>
+            </div>
+            <p class="settings-card-desc">
+              设置系统启动、刷新页面或点击「态势视角 / 俯视视角」时，三维地图默认定位的中心经纬度坐标与相机视点高度。
+            </p>
+          </div>
+
+          <form id="form-map-center-settings" class="settings-card-body" onsubmit="return false;">
+            <div class="settings-coords-grid">
+              <div class="form-group">
+                <label for="setting-center-lon" class="form-label">
+                  <span>中心经度 (Longitude)</span>
+                  <span class="input-unit">° (-180.0 ~ 180.0)</span>
+                </label>
+                <div class="input-with-action">
+                  <input type="number" id="setting-center-lon" name="longitude" class="text-input mono"
+                         step="0.000001" min="-180" max="180" required placeholder="118.520000">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="setting-center-lat" class="form-label">
+                  <span>中心纬度 (Latitude)</span>
+                  <span class="input-unit">° (-90.0 ~ 90.0)</span>
+                </label>
+                <div class="input-with-action">
+                  <input type="number" id="setting-center-lat" name="latitude" class="text-input mono"
+                         step="0.000001" min="-90" max="90" required placeholder="24.520000">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="setting-center-alt" class="form-label">
+                  <span>视点高度 (Altitude)</span>
+                  <span class="input-unit">米 (m, 相机高度)</span>
+                </label>
+                <div class="input-with-action">
+                  <input type="number" id="setting-center-alt" name="altitude" class="text-input mono"
+                         step="100" min="100" max="10000000" required placeholder="26000">
+                </div>
+              </div>
+            </div>
+
+            <!-- 地图点选拾取与辅助快捷操作行 -->
+            <div class="settings-action-toolbar">
+              <div class="toolbar-left-actions">
+                <button type="button" id="btn-map-pick-coord" class="btn btn-primary" title="在三维地图上直接点击任意位置拾取经纬度">
+                  <span class="btn-icon">🎯</span>
+                  <span>从地图点选拾取</span>
+                </button>
+                <button type="button" id="btn-map-capture-current" class="btn btn-secondary" title="提取当前三维地球视窗正中与相机的高度">
+                  <span class="btn-icon">📷</span>
+                  <span>获取当前视窗中心</span>
+                </button>
+                <button type="button" id="btn-map-preview-fly" class="btn btn-secondary" title="视口立即飞向当前输入的坐标与高度进行效果预览">
+                  <span class="btn-icon">🚀</span>
+                  <span>飞向预览</span>
+                </button>
+              </div>
+
+              <div class="toolbar-preset-group">
+                <span class="preset-label">快捷预设:</span>
+                <button type="button" class="btn btn-xs btn-preset" data-lon="113.000000" data-lat="42.400000" data-alt="85000">朱日和·赤峰</button>
+                <button type="button" class="btn btn-xs btn-preset" data-lon="118.520000" data-lat="24.520000" data-alt="26000">东南沿海</button>
+                <button type="button" class="btn btn-xs btn-preset" data-lon="108.000000" data-lat="35.000000" data-alt="5000000">全国概览</button>
+              </div>
+            </div>
+
+            <!-- 状态提示行 -->
+            <div id="setting-map-status" class="settings-status-bar" role="status" aria-live="polite" hidden></div>
+
+            <div class="settings-card-footer">
+              <div class="footer-left">
+                <button type="button" id="btn-map-reset-default" class="btn btn-secondary">恢复默认位置</button>
+              </div>
+              <div class="footer-right">
+                <button type="button" id="btn-map-save-center" class="btn btn-primary-red">
+                  <span>保存初始位置</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- 业务数据管理入口卡片 -->
+        <div class="settings-card settings-data-card">
+          <div class="settings-card-header">
+            <div class="settings-card-title-group">
+              <span class="settings-card-icon" aria-hidden="true">📊</span>
+              <strong class="settings-card-title">业务数据管理</strong>
+              <span class="badge badge-meta-id">台账与场景数据</span>
+            </div>
+            <p class="settings-card-desc">
+              维护平台监测席点位、作业单元台账及实时目标记录，支持分类快速检索、增删改查与场景数据导出。
+            </p>
+          </div>
+
+          <div class="settings-card-body">
+            <!-- 3组数据台账分类卡片列表 -->
+            <div class="settings-data-grid">
+              <div class="data-hub-item" id="data-hub-recon">
+                <div class="data-hub-item-icon">📡</div>
+                <div class="data-hub-item-info">
+                  <div class="data-hub-item-title-row">
+                    <strong class="data-hub-item-title">监测席台账</strong>
+                    <span class="badge-count" id="setting-stat-recon">0 台</span>
+                  </div>
+                  <p class="data-hub-item-desc">在线发现与场景配置的巡检监测节点，管理 IP 与视频通道。</p>
+                </div>
+                <button type="button" class="btn btn-xs btn-primary btn-data-hub-action" data-record-type="recon" title="查看并管理监测席台账">
+                  <span>查看列表 ➔</span>
+                </button>
+              </div>
+
+              <div class="data-hub-item" id="data-hub-firepower">
+                <div class="data-hub-item-icon">🎯</div>
+                <div class="data-hub-item-info">
+                  <div class="data-hub-item-title-row">
+                    <strong class="data-hub-item-title">作业单元台账</strong>
+                    <span class="badge-count" id="setting-stat-firepower">0 处</span>
+                  </div>
+                  <p class="data-hub-item-desc">地面作业点位坐标、服务半径、设备绑定及组织架构层级。</p>
+                </div>
+                <button type="button" class="btn btn-xs btn-primary btn-data-hub-action" data-record-type="firepower" title="查看并管理作业单元台账">
+                  <span>查看列表 ➔</span>
+                </button>
+              </div>
+
+              <div class="data-hub-item" id="data-hub-targets">
+                <div class="data-hub-item-icon">📍</div>
+                <div class="data-hub-item-info">
+                  <div class="data-hub-item-title-row">
+                    <strong class="data-hub-item-title">目标与事件记录</strong>
+                    <span class="badge-count" id="setting-stat-targets">0 项</span>
+                  </div>
+                  <p class="data-hub-item-desc">实时上报的目标批次、大地坐标、类型属性与行动轨迹数据。</p>
+                </div>
+                <button type="button" class="btn btn-xs btn-primary btn-data-hub-action" data-record-type="targets" title="检索并查看目标记录">
+                  <span>查看列表 ➔</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 数据管理控制台操作栏与状态 -->
+            <div class="settings-action-toolbar">
+              <div class="toolbar-left-actions">
+                <button class="btn btn-primary" id="btn-open-data-management" type="button">
+                  <span class="btn-icon">📋</span>
+                  <span>进入全量数据管理控制台</span>
+                </button>
+              </div>
+              <div class="toolbar-preset-group">
+                <span class="preset-label">场景存储:</span>
+                <span class="badge badge-meta-id highlight-cyan">scenario-default.json</span>
+              </div>
+            </div>
+
+            <div class="settings-card-footer">
+              <div class="footer-left">
+                <span class="text-muted" style="font-size:0.8rem;">支持批量导入导出与设备状态同步</span>
+              </div>
+              <div class="footer-right">
+                <button type="button" id="btn-refresh-data-counts" class="btn btn-secondary" title="刷新监测席、作业单元与目标数量">
+                  <span>🔄 刷新台账数据</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -828,14 +1033,14 @@
       </header>
       <div class="view-body management-page">
         <nav class="management-tabs" aria-label="数据类别">
-          <button type="button" class="btn" data-record-type="recon" aria-pressed="true">侦察席</button>
-          <button type="button" class="btn" data-record-type="firepower" aria-pressed="false">火力点</button>
+          <button type="button" class="btn" data-record-type="recon" aria-pressed="true" data-term="roles.recon">监测席</button>
+          <button type="button" class="btn" data-record-type="firepower" aria-pressed="false" data-term="roles.firepower">作业单元</button>
           <button type="button" class="btn" data-record-type="targets" aria-pressed="false">目标</button>
         </nav>
         <form id="management-search" class="management-toolbar" role="search">
           <input class="text-input" name="q" type="search" maxlength="100" placeholder="搜索名称或编号" aria-label="搜索名称或编号">
           <button class="btn" type="submit">查询</button>
-          <button class="btn btn-primary" id="management-add" type="button">新增侦察席</button>
+          <button class="btn btn-primary" id="management-add" type="button" data-term="ui.addRecon">新增监测席</button>
         </form>
         <p id="management-status" class="management-status" role="status"></p>
         <div class="management-table-wrap">

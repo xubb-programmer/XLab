@@ -1,9 +1,10 @@
 import { readJpegFrames } from "../core/mjpeg.js";
 import { eventBus } from "../core/event-bus.js";
 import { getPlatformDeviceId, getPlatformName } from "../core/platform-labels.js";
+import { t } from "../core/terms.js";
 
 /**
- * 战术视频流播放器单元
+ * 态势视频流播放器单元
  * 独立管理单个载荷视频通道的 MJPEG 接收、OSD 叠加、帧率统计与中止注销
  */
 class CellStreamPlayer {
@@ -169,9 +170,9 @@ class CellStreamPlayer {
 }
 
 /**
- * 侦察载荷全视频链路总览矩阵管理中心
+ * 监测载荷全视频链路总览矩阵管理中心
  */
-export class ReconVideoMatrixModal {
+export class VideoMatrixModal {
   constructor(viewerManager, getUavsCallback, getScenarioUavs) {
     this.viewerManager = viewerManager;
     this.getUavsCallback = getUavsCallback;
@@ -315,7 +316,7 @@ export class ReconVideoMatrixModal {
     this.backButton.hidden = !playing;
     const count = seat ? videoSourceCount(seat.uav) : seats.length;
     this.headerCount.hidden = playing && count === 0;
-    this.headerCount.textContent = playing ? `${count} 路视频源` : `共 ${count} 个侦察席`;
+    this.headerCount.textContent = playing ? `${count} 路视频源` : t("ui.reconSeatCount", `共 ${count} 个监测席`, { count });
 
     if (seat) {
       this.title.textContent = `${getPlatformName(seat.uav, "recon")} · 视频`;
@@ -325,7 +326,7 @@ export class ReconVideoMatrixModal {
       this.selectedSeatId = null;
       this.stopPlayers();
       this.sourceSelect.parentElement.hidden = true;
-      this.title.textContent = "侦察席列表";
+      this.title.textContent = t("ui.reconSeatList", "监测席列表");
       this.renderSeatList(seats);
       if (seatRemoved) this.title.focus();
     }
@@ -458,7 +459,7 @@ export class ReconVideoMatrixModal {
     if (uav && typeof uav.longitude === "number" && typeof uav.latitude === "number") {
       eventBus.emit("page:switch", "tactical");
       this.viewerManager.flyToEntity(uav.longitude, uav.latitude, uav.altitude || 100);
-      this.showToast(`已在三维地球中聚焦侦察无人机：${stream.uavName}`);
+      this.showToast(t("ui.focusReconUav", `已在三维地球中聚焦巡检无人机：${stream.uavName}`, { name: stream.uavName }));
     } else {
       this.showToast(`「${stream.uavName}」尚未标定经纬高，请先在左侧卡片点击【配置】`, "warning");
     }
@@ -563,7 +564,7 @@ export class ReconVideoMatrixModal {
       <div class="cell-viewport">
         <img class="cell-video-img" alt="${escapeHtml(stream.label)}" hidden>
 
-        <!-- 战术 HUD OSD 瞄准刻度层 -->
+        <!-- HUD OSD 引导刻度层 -->
         <div class="cell-hud-osd" hidden>
           <div class="hud-osd-top">
             <span class="hud-live-tag"><span class="hud-dot"></span> RTSP LIVE</span>
@@ -634,3 +635,5 @@ function escapeHtml(str) {
   if (typeof str !== "string") return "";
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
+
+export { VideoMatrixModal as ReconVideoMatrixModal };

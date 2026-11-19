@@ -1,0 +1,11 @@
+{
+  "id": "scenario-default",
+  "mapMode": "offline",
+  "center": {
+    "longitude": 118.52,
+    "latitude": 24.52,
+    "altitude": 26000
+  },
+  "uavs": [],
+  "firepowerPoints": []
+}

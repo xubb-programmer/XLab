@@ -105,7 +105,7 @@ export function openReportBatches(path, sendEdgeAction) {
         firepowerId: group[0].firepowerId, firepowerName: group[0].firepowerName,
         ok, timeout: group.some(item => item.timeout),
         message: received ? "已收到接收端回执" : ok ? "上报已确认"
-          : unknown ? "上报结果未知" : group.find(item => item.error)?.error || "本阵位有未确认目标",
+          : unknown ? "上报结果未知" : group.find(item => item.error)?.error || "本工位有未确认目标",
         totalCount: group.length, successCount: group.filter(item => item.ok).length, results: group
       };
     });

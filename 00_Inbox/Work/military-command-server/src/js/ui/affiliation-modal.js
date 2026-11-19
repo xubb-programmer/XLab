@@ -1,8 +1,9 @@
 /**
- * 战术火力整备与编制隶属管理弹窗 (完整树状拓扑图 + 营连建制规模设置 + EdgeAgent在线设备挂载)
+ * 协同作业整备与组织架构管理弹窗 (完整树状拓扑图 + 片区分组架构设置 + 在线设备挂载)
  */
 import { escapeHtml } from "../core/html.js";
 import { eventBus } from "../core/event-bus.js";
+import { t } from "../core/terms.js";
 
 function parseRangeMeters(rangeVal) {
   if (typeof rangeVal === "number") return rangeVal > 500 ? rangeVal : rangeVal * 1000;
@@ -17,7 +18,7 @@ function parseRangeMeters(rangeVal) {
   return 40000;
 }
 
-export class FirepowerAffiliationModal {
+export class AffiliationModal {
   constructor(viewerManager, getDeviceManager) {
     this.viewerManager = viewerManager;
     this.getDeviceManager = getDeviceManager;
@@ -60,7 +61,7 @@ export class FirepowerAffiliationModal {
     this.hud = document.getElementById("map-picking-hud");
     this.btnCancelPicking = document.getElementById("btn-cancel-picking");
 
-    // 营连编制规模设置抽屉
+    // 组织架构规模设置抽屉
     this.orgModal = document.getElementById("affiliation-org-modal");
     this.btnCloseOrgModal = document.getElementById("btn-close-org-modal");
     this.btnFinishOrgModal = document.getElementById("btn-finish-org-modal");
@@ -125,7 +126,7 @@ export class FirepowerAffiliationModal {
     });
 
     this.btnResetDefault?.addEventListener("click", async () => {
-      if (confirm("确定重置为默认标准战术建制（2个营，各2个连）吗？")) {
+      if (confirm(t("org.scaleResetConfirm", "确定重置为默认标准组织架构（2个片区，各2个组）吗？"))) {
         const dm = this.getDeviceManager();
         if (dm?.resetToDefaultAffiliation) {
           await dm.resetToDefaultAffiliation();
@@ -161,14 +162,14 @@ export class FirepowerAffiliationModal {
       await this.handleSaveDrawer();
     });
 
-    // 营连规模设置相关事件
+    // 架构规模设置相关事件
     this.btnCloseOrgModal?.addEventListener("click", () => this.closeOrgSettings());
     this.btnFinishOrgModal?.addEventListener("click", () => this.closeOrgSettings());
     this.btnApplyOrgScale?.addEventListener("click", () => this.handleApplyOrgScale());
     this.btnResetOrgDefault?.addEventListener("click", () => this.handleResetOrgDefault());
     this.btnAddBat?.addEventListener("click", () => this.handleAddBattalion());
 
-    // 编辑抽屉营连下拉联动
+    // 编辑抽屉片区分组下拉联动
     this.inputBattalion?.addEventListener("change", () => {
       const dm = this.getDeviceManager();
       const orgRaw = dm?.getOrgStructure ? dm.getOrgStructure() : [];
@@ -215,7 +216,7 @@ export class FirepowerAffiliationModal {
     this.closeOrgSettings();
   }
 
-  // ===== 营连编制规模设置抽屉 =====
+  // ===== 组织架构规模设置抽屉 =====
   openOrgSettings() {
     if (!this.orgModal) return;
     this.closeDrawer();
@@ -285,7 +286,7 @@ export class FirepowerAffiliationModal {
     const tree = dm?.getAffiliationTree ? dm.getAffiliationTree() : null;
 
     if (!battalions.length) {
-      this.orgManageList.innerHTML = `<div class="tactical-empty-box compact"><span class="empty-text">当前暂未配置营级建制</span></div>`;
+      this.orgManageList.innerHTML = `<div class="tactical-empty-box compact"><span class="empty-text">当前暂未配置片区架构</span></div>`;
       return;
     }
 
@@ -300,12 +301,12 @@ export class FirepowerAffiliationModal {
             <div class="bat-manage-title">
               <span class="status-dot-point online"></span>
               <strong>${escapeHtml(bat.name)}</strong>
-              <span class="bat-points-count">(${pointsInBat}个火力点)</span>
+              <span class="bat-points-count">(${pointsInBat}${t("roles.firepower", "个作业单元")})</span>
             </div>
             <div class="bat-manage-actions">
-              <button type="button" class="btn btn-xs btn-secondary btn-org-add-comp" data-battalion="${escapeHtml(bat.name)}">+ 连</button>
+              <button type="button" class="btn btn-xs btn-secondary btn-org-add-comp" data-battalion="${escapeHtml(bat.name)}">+ ${t("org.company", "组")}</button>
               ${pointsInBat === 0 ? `
-                <button type="button" class="btn btn-xs btn-secondary-danger btn-org-del-bat" data-battalion="${escapeHtml(bat.name)}" title="删除空营">✕</button>
+                <button type="button" class="btn btn-xs btn-secondary-danger btn-org-del-bat" data-battalion="${escapeHtml(bat.name)}" title="删除空片区">✕</button>
               ` : ''}
             </div>
           </div>
@@ -318,22 +319,22 @@ export class FirepowerAffiliationModal {
                   <span class="comp-chip-name">${escapeHtml(comp)}</span>
                   <span class="comp-chip-count">${pointsInComp}点</span>
                   ${pointsInComp === 0 ? `
-                    <button type="button" class="comp-chip-del btn-org-del-comp" data-battalion="${escapeHtml(bat.name)}" data-company="${escapeHtml(comp)}" title="删除空连">✕</button>
+                    <button type="button" class="comp-chip-del btn-org-del-comp" data-battalion="${escapeHtml(bat.name)}" data-company="${escapeHtml(comp)}" title="删除空组">✕</button>
                   ` : ''}
                 </span>
               `;
             }).join('')}
-            <button type="button" class="comp-chip-add btn-org-add-comp-inline" data-battalion="${escapeHtml(bat.name)}" title="新增连">+</button>
+            <button type="button" class="comp-chip-add btn-org-add-comp-inline" data-battalion="${escapeHtml(bat.name)}" title="新增组">+</button>
           </div>
         </div>
       `;
     }).join('');
 
-    // 绑定营连管理事件
+    // 绑定片区分组管理事件
     this.orgManageList.querySelectorAll(".btn-org-add-comp, .comp-chip-add").forEach(btn => {
       btn.addEventListener("click", () => {
         const batName = btn.getAttribute("data-battalion");
-        const compName = prompt(`请输入要在 [${batName}] 下新增的连名称 (如: 3连):`);
+        const compName = prompt(`请输入要在 [${batName}] 下新增的组名称 (如: 3组):`);
         if (compName?.trim() && dm?.addCompany) {
           dm.addCompany(batName, compName.trim());
           this.renderOrgManageList();
@@ -357,7 +358,7 @@ export class FirepowerAffiliationModal {
     this.orgManageList.querySelectorAll(".btn-org-del-bat").forEach(btn => {
       btn.addEventListener("click", () => {
         const batName = btn.getAttribute("data-battalion");
-        if (confirm(`确定删除空营 [${batName}] 吗？`)) {
+        if (confirm(`确定删除空片区 [${batName}] 吗？`)) {
           dm?.removeBattalion?.(batName);
           this.renderOrgManageList();
           this.render();
@@ -366,12 +367,12 @@ export class FirepowerAffiliationModal {
     });
   }
 
-  // ===== 编辑抽屉营连下拉填充与联动 =====
-  populateOrgSelects(selectedBat = "1营", selectedComp = "1连") {
+  // ===== 编辑抽屉片区分组下拉填充与联动 =====
+  populateOrgSelects(selectedBat = t("org.battalionDefault", "1区"), selectedComp = t("org.companyDefault", "1组")) {
     const dm = this.getDeviceManager();
     const orgRaw = dm?.getOrgStructure ? dm.getOrgStructure() : null;
     const battalions = Array.isArray(orgRaw) ? orgRaw : (orgRaw?.battalions || [
-      { name: "1营", companies: ["1连", "2连"] },
+      { name: "1区", companies: ["1组", "2组"] },
       { name: "2营", companies: ["1连", "2连"] }
     ]);
 
@@ -575,24 +576,24 @@ export class FirepowerAffiliationModal {
     const rootHtml = `
       <div class="tree-root-wrapper">
         <div class="tree-node tree-node-root">
-          <div class="node-root-badge">指挥中枢</div>
+          <div class="node-root-badge">${t("org.rootBadge", "调度中心")}</div>
           <div class="node-root-title">
             <span class="status-dot-point online" aria-hidden="true"></span>
             <strong>${tree.root}</strong>
           </div>
           <div class="node-root-meta">
-            <span>下辖 <strong>${tree.battalions.length}</strong> 个营</span>
+            <span>下辖 <strong>${tree.battalions.length}</strong> ${t("org.battalionUnit", "个片区")}</span>
             <span class="meta-sep">/</span>
-            <span>共 <strong>${tree.totalPoints}</strong> 个火力点</span>
+            <span>共 <strong>${tree.totalPoints}</strong> ${t("roles.firepower", "个作业单元")}</span>
             <span class="meta-sep">/</span>
             <span class="highlight-green"><strong>${tree.onlinePoints}</strong> 在线就绪</span>
           </div>
           <div class="node-branch-actions root-branch-actions">
-            <button type="button" class="btn btn-xs btn-tactical-tool highlight-tool" id="btn-tree-open-org-cfg" title="配置营连编制架构">
-              <span>营连建制设置</span>
+            <button type="button" class="btn btn-xs btn-tactical-tool highlight-tool" id="btn-tree-open-org-cfg" title="配置组织架构">
+              <span>${t("org.scaleSettings", "片区分组架构设置")}</span>
             </button>
-            <button type="button" class="btn btn-xs btn-secondary" id="btn-tree-add-bat-quick" title="快速新增营建制">
-              <span>+ 添加营</span>
+            <button type="button" class="btn btn-xs btn-secondary" id="btn-tree-add-bat-quick" title="快速新增片区">
+              <span>+ 添加${t("org.battalion", "片区")}</span>
             </button>
           </div>
         </div>
@@ -606,19 +607,19 @@ export class FirepowerAffiliationModal {
           <div class="tree-branch-battalion">
             <div class="tree-connector-to-battalion"></div>
             <div class="tree-node tree-node-battalion">
-              <div class="node-badge-level">营级建制</div>
+              <div class="node-badge-level">${t("org.battalion", "片区")}级架构</div>
               <div class="node-title-row">
                 <span class="status-dot-point ${bat.onlinePoints > 0 ? 'online' : 'standby'}"></span>
                 <strong>${escapeHtml(bat.name)}</strong>
               </div>
               <div class="node-meta-row">
-                <span>下辖 ${bat.companies.length} 个连</span>
-                <span>${bat.totalPoints} 个火力点 (${bat.onlinePoints} 在线)</span>
+                <span>下辖 ${bat.companies.length} ${t("org.companyUnit", "个组")}</span>
+                <span>${bat.totalPoints} ${t("roles.firepower", "个作业单元")} (${bat.onlinePoints} 在线)</span>
               </div>
               <div class="node-branch-actions">
-                <button type="button" class="btn btn-xs btn-secondary btn-tree-add-comp-quick" data-battalion="${escapeHtml(bat.name)}" title="在此营下新增连">+ 添加连</button>
+                <button type="button" class="btn btn-xs btn-secondary btn-tree-add-comp-quick" data-battalion="${escapeHtml(bat.name)}" title="在此片区下新增组">+ 添加${t("org.company", "组")}</button>
                 ${bat.totalPoints === 0 ? `
-                  <button type="button" class="btn btn-xs btn-tactical-tool btn-tree-del-bat-quick" data-battalion="${escapeHtml(bat.name)}" title="删除空营建制">✕ 删除营</button>
+                  <button type="button" class="btn btn-xs btn-tactical-tool btn-tree-del-bat-quick" data-battalion="${escapeHtml(bat.name)}" title="删除空片区">✕ 删除${t("org.battalion", "片区")}</button>
                 ` : ''}
               </div>
             </div>
@@ -629,18 +630,18 @@ export class FirepowerAffiliationModal {
                 <div class="tree-branch-company">
                   <div class="tree-connector-to-company"></div>
                   <div class="tree-node tree-node-company">
-                    <div class="node-badge-level company-badge">连级阵地</div>
+                    <div class="node-badge-level company-badge">${t("org.companyPosition", "组级工位")}</div>
                     <div class="node-title-row">
                       <span class="status-dot-point ${comp.onlinePoints > 0 ? 'online' : 'standby'}"></span>
                       <strong>${escapeHtml(comp.name)}</strong>
                     </div>
                     <div class="node-meta-row">
-                      <span>${comp.points.length} 个火力点</span>
+                      <span>${comp.points.length} ${t("roles.firepower", "个作业单元")}</span>
                     </div>
                     <div class="node-branch-actions">
-                      <button type="button" class="btn btn-xs btn-tactical-tool highlight-tool btn-tree-add-point-to-comp" data-battalion="${escapeHtml(bat.name)}" data-company="${escapeHtml(comp.name)}" title="在该连新增火力点">+ 新增火力</button>
+                      <button type="button" class="btn btn-xs btn-tactical-tool highlight-tool btn-tree-add-point-to-comp" data-battalion="${escapeHtml(bat.name)}" data-company="${escapeHtml(comp.name)}" title="${t("roles.addFirepowerToComp", "在该组新增作业单元")}">${t("roles.addFirepower", "+ 新增单元")}</button>
                       ${comp.points.length === 0 ? `
-                        <button type="button" class="btn btn-xs btn-tactical-tool btn-tree-del-comp-quick" data-battalion="${escapeHtml(bat.name)}" data-company="${escapeHtml(comp.name)}" title="删除此连编制">✕ 删除连</button>
+                        <button type="button" class="btn btn-xs btn-tactical-tool btn-tree-del-comp-quick" data-battalion="${escapeHtml(bat.name)}" data-company="${escapeHtml(comp.name)}" title="删除此组架构">✕ 删除${t("org.company", "组")}</button>
                       ` : ''}
                     </div>
                   </div>
@@ -649,9 +650,9 @@ export class FirepowerAffiliationModal {
                   <div class="tree-points-container">
                     ${comp.points.length === 0 ? `
                       <div class="tree-node-empty-company">
-                        <span class="empty-comp-text">该连暂无火力点</span>
+                        <span class="empty-comp-text">${t("org.emptyCompany", "该组暂无作业单元")}</span>
                         <button type="button" class="btn btn-xs btn-tactical-tool highlight-tool btn-tree-add-point-to-comp" data-battalion="${escapeHtml(bat.name)}" data-company="${escapeHtml(comp.name)}">
-                          <span>+ 新增火力</span>
+                          <span>${t("roles.addFirepower", "+ 新增单元")}</span>
                         </button>
                       </div>
                     ` : comp.points.map(pt => {
@@ -685,15 +686,15 @@ export class FirepowerAffiliationModal {
                                 </span>
                               </div>
                               <div class="mount-device-row">
-                                <strong class="mount-dev-id mono ${mountedDevId ? 'highlight-cyan' : ''}">${escapeHtml(mountedDevId || '无挂载设备 (火力点离线)')}</strong>
+                                <strong class="mount-dev-id mono ${mountedDevId ? 'highlight-cyan' : ''}">${escapeHtml(mountedDevId || t("ui.noMountOffline", "无挂载设备 (作业单元离线)"))}</strong>
                                 ${pt.mountedDeviceName ? `<span class="mount-dev-name">${escapeHtml(pt.mountedDeviceName)}</span>` : ''}
                               </div>
                             </div>
 
-                            <!-- 火力点战术规格 -->
+                            <!-- 作业单元规格 -->
                             <div class="point-specs-grid">
                               <div class="spec-cell">
-                                <span class="spec-lbl">打击范围</span>
+                                <span class="spec-lbl">${t("action.strikeRange", "覆盖范围")}</span>
                                 <strong class="spec-val mono">${escapeHtml(pt.strikeRange || '40 km')}</strong>
                               </div>
                               <div class="spec-cell">
@@ -708,7 +709,7 @@ export class FirepowerAffiliationModal {
                           </div>
 
                           <div class="point-node-actions">
-                            <button type="button" class="btn btn-xs btn-tree-edit" data-id="${escapeHtml(pt.id)}" title="编辑所属营连及火力点参数">
+                            <button type="button" class="btn btn-xs btn-tree-edit" data-id="${escapeHtml(pt.id)}" title="${t("ui.editPointTitle", "编辑所属片区及作业单元参数")}">
                               <span>编辑隶属</span>
                             </button>
                             <div class="quick-mount-inline">
@@ -722,10 +723,10 @@ export class FirepowerAffiliationModal {
                                 `).join('')}
                               </select>
                             </div>
-                            <button type="button" class="btn btn-xs btn-tree-fly" data-id="${escapeHtml(pt.id)}" title="地图视口飞向该火力点">
+                            <button type="button" class="btn btn-xs btn-tree-fly" data-id="${escapeHtml(pt.id)}" title="${t("ui.flyToPointTitle", "地图视口飞向该作业单元")}">
                               <span>定位</span>
                             </button>
-                            <button type="button" class="btn btn-xs btn-tree-manage" title="在数据管理中删除火力点">
+                            <button type="button" class="btn btn-xs btn-tree-manage" title="${t("ui.managePointTitle", "在数据管理中删除作业单元")}">
                               <span>数据管理</span>
                             </button>
                           </div>
@@ -884,7 +885,7 @@ export class FirepowerAffiliationModal {
             ` : `
               <div class="pool-unmounted-box">
                 <select class="pool-mount-select text-input text-input-xs" data-device-id="${escapeHtml(u.deviceId)}">
-                  <option value="">挂载到火力点…</option>
+                  <option value="">${t("ui.mountToFirepower", "挂载到作业单元…")}</option>
                   ${allPoints.map(p => `
                     <option value="${escapeHtml(p.id)}">${escapeHtml(p.battalion)}-${escapeHtml(p.company)}-${escapeHtml(p.name)}</option>
                   `).join('')}
@@ -923,7 +924,7 @@ export class FirepowerAffiliationModal {
   populateMountedSelect(currentVal = "", onlineRecons = []) {
     if (!this.selectMountDevice) return;
     this.selectMountDevice.innerHTML = `
-      <option value="">(未挂载 / 火力点离线)</option>
+      <option value="">${t("ui.unmountedOffline", "(未挂载 / 作业单元离线)")}</option>
       ${onlineRecons.map(u => `
         <option value="${escapeHtml(u.deviceId)}" ${u.deviceId === currentVal ? 'selected' : ''}>
           ${escapeHtml(u.deviceId)} - ${escapeHtml(u.name)} (${u.online ? '设备在线' : '离线'})
@@ -950,10 +951,10 @@ export class FirepowerAffiliationModal {
   openDrawerForEdit(point, onlineRecons) {
     this.closeOrgSettings();
     this.editingPointId = point.id;
-    if (this.drawerTitle) this.drawerTitle.textContent = `编辑火力: ${point.name}`;
+    if (this.drawerTitle) this.drawerTitle.textContent = `编辑单元: ${point.name}`;
     if (this.drawerPointId) this.drawerPointId.value = point.id;
 
-    this.populateOrgSelects(point.battalion || "1营", point.company || "1连");
+    this.populateOrgSelects(point.battalion || t("org.battalionDefault", "1区"), point.company || t("org.companyDefault", "1组"));
 
     if (this.inputName) this.inputName.value = point.name || "";
     if (this.inputLon) this.inputLon.value = point.longitude ? point.longitude.toFixed(6) : "118.570452";
@@ -983,7 +984,7 @@ export class FirepowerAffiliationModal {
     }
   }
 
-  openDrawerForNew(defaultBat = "1营", defaultComp = "1连") {
+  openDrawerForNew(defaultBat = t("org.battalionDefault", "1区"), defaultComp = t("org.companyDefault", "1组")) {
     this.closeOrgSettings();
     this.editingPointId = null;
     const dm = this.getDeviceManager();
@@ -991,12 +992,12 @@ export class FirepowerAffiliationModal {
     const all = dm?.getFixedPoints ? dm.getFixedPoints() : [];
     const nextIdx = all.length + 1;
 
-    if (this.drawerTitle) this.drawerTitle.textContent = `新增火力`;
+    if (this.drawerTitle) this.drawerTitle.textContent = `新增单元`;
     if (this.drawerPointId) this.drawerPointId.value = "";
 
     this.populateOrgSelects(defaultBat, defaultComp);
 
-    if (this.inputName) this.inputName.value = `${nextIdx}号火力点`;
+    if (this.inputName) this.inputName.value = t("roles.firepowerDefaultName", `${nextIdx}号作业单元`, { n: nextIdx });
     if (this.inputLon) this.inputLon.value = "118.500000";
     if (this.inputLat) this.inputLat.value = "24.500000";
     if (this.inputAlt) this.inputAlt.value = "0";
@@ -1040,9 +1041,9 @@ export class FirepowerAffiliationModal {
     const dm = this.getDeviceManager();
     if (!dm) return;
 
-    const battalion = this.inputBattalion?.value?.trim() || "1营";
-    const company = this.inputCompany?.value?.trim() || "1连";
-    const name = this.inputName?.value?.trim() || "地面火力点";
+    const battalion = this.inputBattalion?.value?.trim() || t("org.battalionDefault", "1区");
+    const company = this.inputCompany?.value?.trim() || t("org.companyDefault", "1组");
+    const name = this.inputName?.value?.trim() || t("roles.firepowerBase", "地面作业点");
     const mountedDeviceId = this.selectMountDevice?.value?.trim() || "";
     const longitude = parseFloat(this.inputLon?.value);
     const latitude = parseFloat(this.inputLat?.value);
@@ -1075,3 +1076,5 @@ export class FirepowerAffiliationModal {
     this.render();
   }
 }
+
+export { AffiliationModal as FirepowerAffiliationModal };

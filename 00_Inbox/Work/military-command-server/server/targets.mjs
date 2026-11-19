@@ -9,9 +9,11 @@ const DEFAULT_DEVICE_STATUS_TOPIC = "edge/v1/devices/device-status-device/data";
 const HEADER_LENGTH = 26;
 const MAX_RECORDS = 300;
 
-export async function loadTargetsConfig(file) {
+export async function loadTargetsConfig(source) {
   try {
-    const config = JSON.parse((await readFile(file, "utf8")).replace(/^\uFEFF/, ""));
+    const config = typeof source === "object" && source !== null
+      ? source
+      : JSON.parse((await readFile(source, "utf8")).replace(/^\uFEFF/, ""));
     const {
       brokerUrl = "", topic = DEFAULT_TOPIC, deviceStatusTopic = DEFAULT_DEVICE_STATUS_TOPIC,
       deviceStatusRelayIp = "",
@@ -64,7 +66,7 @@ export function decode1501Envelope(message) {
   return {
     id: `${isBurst ? "burst" : "recon"}-${targetNumber}`,
     type: isBurst ? "BURST_POINT" : "TARGET_RECON",
-    name: isBurst ? "炸点目标" : "侦察目标",
+    name: isBurst ? "告警事件" : "监测目标",
     targetNumber, longitude, latitude, altitude
   };
 }

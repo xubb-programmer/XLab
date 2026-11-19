@@ -1,23 +1,25 @@
 // 无人机视频、位置与地图目标展示入口。
+import { initTerms, t, applyTermsToDom } from "./core/terms.js";
 import { eventBus } from "./core/event-bus.js";
 import { hasGeographicPosition } from "./core/coordinates.js";
 import { getPlatformDisplayName } from "./core/platform-labels.js";
 import { CesiumViewerManager } from "./core/viewer.js";
 import { targetService } from "./engine/target-service.js";
-import { ArtilleryLayer } from "./layers/artillery-layer.js";
+import { StationLayer } from "./layers/station-layer.js";
 import { AircraftLayer } from "./layers/aircraft-layer.js";
 import { TargetLayer } from "./layers/target-layer.js";
 import { GuidanceLayer } from "./layers/guidance-layer.js";
 import { computeMultiAllocationPlan } from "./engine/allocation-strategy.js";
 import { CameraHud } from "./ui/camera-hud.js";
-import { ArtilleryPanel } from "./ui/artillery-panel.js";
+import { StationPanel } from "./ui/station-panel.js";
 import { TargetPanel } from "./ui/target-panel.js";
 import { StatsPanel } from "./ui/stats-panel.js";
 import { TargetReportModal } from "./ui/target-report-modal.js";
 import { initDeviceManager } from "./ui/device-simulation.js";
-import { ReconVideoMatrixModal } from "./ui/recon-video-matrix-modal.js";
-import { FirepowerAffiliationModal } from "./ui/firepower-affiliation-modal.js";
+import { VideoMatrixModal } from "./ui/video-matrix-modal.js";
+import { AffiliationModal } from "./ui/affiliation-modal.js";
 import { initDataManagement } from "./ui/data-management.js";
+import { initMapSettings } from "./ui/map-settings.js";
 
 const targetFeedLabels = {
   unconfigured: "未配置",
@@ -136,6 +138,8 @@ function readPlatforms(records, defaultName) {
 }
 
 async function bootstrap() {
+  await initTerms();
+  applyTermsToDom();
 
 
   // 1. 加载初始视角与平台配置
@@ -144,6 +148,12 @@ async function bootstrap() {
     throw new Error("无法加载场景基准数据: scenario-default.json");
   }
   const scenarioData = await response.json();
+  try {
+    const cachedCenter = JSON.parse(localStorage.getItem("intelligent_cooperative_initial_center"));
+    if (cachedCenter && Number.isFinite(cachedCenter.longitude) && Number.isFinite(cachedCenter.latitude)) {
+      scenarioData.center = cachedCenter;
+    }
+  } catch {}
 
   // 2. 初始化 Cesium.js 三维地球管理器
   viewerManager = new CesiumViewerManager("cesium-container");
@@ -207,10 +217,10 @@ async function bootstrap() {
   }
 
   const uavs = readPlatforms(scenarioData.uavs ?? [scenarioData.uav], "无人机");
-  const points = readPlatforms(scenarioData.firepowerPoints ?? [scenarioData.firepowerPoint], "地面火力点");
+  const points = readPlatforms(scenarioData.firepowerPoints ?? [scenarioData.firepowerPoint], t("roles.firepowerBase", "地面作业点"));
 
   // 4. 初始化三维场景图层渲染器
-  const artilleryLayer = new ArtilleryLayer(viewerManager);
+  const artilleryLayer = new StationLayer(viewerManager);
   const aircraftLayer = new AircraftLayer(viewerManager.viewer);
   const targetLayer = new TargetLayer(viewerManager);
   const guidanceLayer = new GuidanceLayer(viewerManager);
@@ -255,7 +265,7 @@ async function bootstrap() {
           identity = typeof parts[1] === "string" ? parts[1] : id;
         }
       } catch {
-        // 非设备侦察席使用原始席位 ID 匹配载荷。
+        // 非设备席位使用原始席位 ID 匹配载荷。
       }
     }
     const exactMatch = aircraftTracks.find(track =>
@@ -272,7 +282,7 @@ async function bootstrap() {
     locateAircraft.disabled = aircraftTracks.length === 0;
     const selectedTrack = getSelectedAircraftTrack();
     const title = !selectedReconSeat
-      ? "请先点击左侧侦察席位卡片，选择要定位的载荷"
+      ? t("ui.selectReconFirst", "请先点击左侧监测席位卡片，选择要定位的载荷")
       : selectedTrack
         ? `定位 ${selectedReconSeat.name} 的载荷`
         : `${selectedReconSeat.name} 暂无可定位的载荷位置`;
@@ -292,7 +302,7 @@ async function bootstrap() {
     focusUavButton.disabled = !hasGeographicPosition(uav);
     const name = uav ? getPlatformDisplayName(uav, "recon") : "";
     const title = !uav
-      ? "请先选择左侧侦察席"
+      ? t("ui.selectReconFirstShort", "请先选择左侧监测席")
       : focusUavButton.disabled ? `${name} 尚未配置经纬高` : `定位 ${name}`;
     focusUavButton.title = title;
     focusUavButton.setAttribute("aria-label", title);
@@ -312,8 +322,8 @@ async function bootstrap() {
   });
   locateAircraft.addEventListener("click", () => {
     if (!selectedReconSeat) {
-      locateAircraft.textContent = "先选侦察席";
-      eventBus.emit("log:event", { level: "warning", text: "请先点击左侧侦察席位卡片，再定位该席位的载荷。" });
+      locateAircraft.textContent = t("ui.locateReconBtn", "先选监测席");
+      eventBus.emit("log:event", { level: "warning", text: t("ui.selectReconPrompt", "请先点击左侧监测席位卡片，再定位该席位的载荷。") });
       setTimeout(() => { locateAircraft.textContent = "定位载荷"; }, 1800);
       return;
     }
@@ -336,7 +346,7 @@ async function bootstrap() {
 
   // 5. 初始化无人机视频窗口
   const cameraHud = new CameraHud();
-  const artilleryPanel = new ArtilleryPanel(cameraHud, viewerManager);
+  const artilleryPanel = new StationPanel(cameraHud, viewerManager);
   closeCameraWindow = () => {
     if (!cameraHud.activeUav) return;
     cameraHud.toggle(cameraHud.activeUav);
@@ -345,7 +355,7 @@ async function bootstrap() {
 
   // 6. 初始化 UI 交互控制台
   const statsPanel = new StatsPanel();
-  // 6.0 初始化在线设备发现与角色台账 (EdgeAgent转发状态 + 在线无人机与地面火力阵位分类)
+  // 6.0 初始化在线设备发现与角色台账 (EdgeAgent转发状态 + 在线巡检设备与地面作业点位分类)
   deviceManager = initDeviceManager(viewerManager, artilleryPanel, {
     artilleryLayer,
     statsPanel,
@@ -360,7 +370,7 @@ async function bootstrap() {
     if (point) deviceManager.openConfig(point, "firepower");
   });
 
-  // 6.2 初始化目标上报至火力点交互弹窗
+  // 6.2 初始化目标下派至作业单元交互弹窗
   const targetReportModal = new TargetReportModal(targetService, deviceManager.getScenarioPoints);
 
   // 6.3 初始化地图多选悬浮工具条 (入口 2: 地图选取目标)
@@ -396,22 +406,31 @@ async function bootstrap() {
     targetService.clearSelection();
   });
 
-  // 6.4 初始化侦察载荷全视频链路总览矩阵 (全链路视频控制中心)
-  reconVideoMatrixModal = new ReconVideoMatrixModal(viewerManager, () => {
+  // 6.4 初始化监测载荷全视频链路总览矩阵 (全链路视频控制中心)
+  reconVideoMatrixModal = new VideoMatrixModal(viewerManager, () => {
     return deviceManager ? deviceManager.getUavs() : uavs;
   }, deviceManager.getScenarioUavs);
   if (activeMainPage === "video-matrix") reconVideoMatrixModal.open(activeMainPageOptions?.preferredSource);
 
-  // 6.5 初始化战术火力整备与编制隶属管理弹窗 (树状图与动态挂载控制中心)
-  firepowerAffiliationModal = new FirepowerAffiliationModal(viewerManager, () => deviceManager);
+  // 6.5 初始化组织架构整备与层级隶属管理弹窗 (树状图与动态挂载控制中心)
+  firepowerAffiliationModal = new AffiliationModal(viewerManager, () => deviceManager);
   if (activeMainPage === "firepower") {
     firepowerAffiliationModal.open(activeMainPageOptions?.keepDrawer);
     if (activeMainPageOptions?.openNew) firepowerAffiliationModal.openDrawerForNew();
   }
 
+  // 6.6 初始化系统与态势设置 (含初始地图显示位置点选与经纬高配置)
+  initMapSettings({
+    getViewerManager: () => viewerManager,
+    getScenarioData: () => scenarioData,
+    onCenterUpdated: (newCenter) => {
+      scenarioData.center = newCenter;
+    }
+  });
+
   let source = "正在读取目标配置…";
 
-  // 7. 统一帧更新与战术态势渲染管线
+  // 7. 统一帧更新与协同态势渲染管线
   function refreshGuidance() {
     if (!guidanceLayer.visible) {
       guidanceLayer.clear();
@@ -498,7 +517,7 @@ async function bootstrap() {
         refreshGuidance();
         eventBus.emit("log:event", {
           level: "info",
-          text: `开启态势引导线：已呈现 ${selected.length} 个目标的打击指派路径`
+          text: t("ui.guidanceLineActive", `开启态势引导线：已呈现 ${selected.length} 个目标的指派路径`, { count: selected.length })
         });
       } else {
         guidanceLayer.clear();
@@ -518,7 +537,7 @@ async function bootstrap() {
   });
   document.getElementById("btn-view-tactical")?.addEventListener("click", () => {
     viewerManager.flyToScenario(scenarioData.center);
-    eventBus.emit("log:event", { level: "info", text: "视角切换至: 战术俯仰全景视角 (-45°)" });
+    eventBus.emit("log:event", { level: "info", text: t("app.viewSwitchPitch", "视角切换至: 态势俯仰全景视角 (-45°)") });
   });
 
   document.getElementById("btn-view-top")?.addEventListener("click", () => {
@@ -560,7 +579,7 @@ async function bootstrap() {
     targetPanel.setFilter("BURST");
   });
 
-  // 11. 初始视角定位至演练战区
+  // 11. 初始视角定位至作业区域
   viewerManager.flyToScenario(scenarioData.center);
 
   // 12. 默认执行首次渲染
@@ -604,6 +623,6 @@ window.addEventListener("DOMContentLoaded", () => {
   targetPanel.update(targetService.getAllTargets());
 
   bootstrap().catch(err => {
-    console.error("[Military Command Server]", err);
+    console.error("[Intelligent Cooperative Server]", err);
   });
 });

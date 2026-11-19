@@ -1,11 +1,12 @@
 /**
- * 地面火力点阵位信息与打击范围场景配置交互弹窗
+ * 地面作业单元点位信息与覆盖范围场景配置交互弹窗
  */
 import { getPlatformDeviceId } from "../core/platform-labels.js";
+import { t } from "../core/terms.js";
 
 const activeEditors = new WeakMap();
 
-export class FirepowerConfigModal {
+export class StationConfigModal {
   constructor(viewerManager, saveSimulationCoordinates, changeSimulationRole = null, reconMount = null) {
     this.viewerManager = viewerManager;
     this.saveSimulationCoordinates = saveSimulationCoordinates;
@@ -96,9 +97,9 @@ export class FirepowerConfigModal {
       }
       this.renderReconMount(this.reconMount.getMountedPoint(this.currentPoint));
       const points = this.reconMount.getFirepowerPoints();
-      this.mountSelect.replaceChildren(new Option(points.length ? "选择挂载火力点…" : "暂无可挂载火力点", ""));
+      this.mountSelect.replaceChildren(new Option(points.length ? t("ui.selectMountPoint", "选择挂载作业单元…") : t("ui.noMountablePoint", "暂无可挂载作业单元"), ""));
       for (const point of points) {
-        const label = `${point.battalion || "1营"}·${point.company || "1连"}·${point.name}`;
+        const label = `${point.battalion || t("org.battalionDefault", "1区")}·${point.company || t("org.companyDefault", "1组")}·${point.name}`;
         this.mountSelect.add(new Option(label, point.id));
       }
       this.mountSelect.value = points.some(point => point.id === this.mountedTo?.id) ? this.mountedTo.id : "";
@@ -119,7 +120,7 @@ export class FirepowerConfigModal {
           await this.changeSimulationRole(this.currentPoint, "firepower");
           this.close();
         } catch (err) {
-          this.showSaveError(err.message || "设置为同时作为火力点失败");
+          this.showSaveError(err.message || t("ui.setAsFirepowerFail", "设置为同时作为作业单元失败"));
         } finally {
           this.btnRoleToFirepower.disabled = false;
         }
@@ -134,7 +135,7 @@ export class FirepowerConfigModal {
           await this.changeSimulationRole(this.currentPoint, "uav");
           this.close();
         } catch (err) {
-          this.showSaveError(err.message || "取消独立火力点失败");
+          this.showSaveError(err.message || t("ui.cancelStandaloneFail", "取消独立作业单元失败"));
         } finally {
           this.btnRoleToRecon.disabled = false;
         }
@@ -157,7 +158,7 @@ export class FirepowerConfigModal {
     }
     this.currentPoint = point || {
       id: "FIRE-01",
-      name: "地面火力输出点",
+      name: t("roles.firepowerPlaceholder", "地面任务输出点"),
       callsign: "",
       longitude: null,
       latitude: null,
@@ -195,13 +196,13 @@ export class FirepowerConfigModal {
       }
       const titleEl = document.getElementById("firepower-modal-title");
       const deviceId = getPlatformDeviceId(this.currentPoint) || this.currentPoint.name || "未绑定设备";
-      const defaultName = isRecon ? `侦察席-${deviceId}` : `火力点-${deviceId}`;
-      if (this.inputNameLabel) this.inputNameLabel.textContent = isRecon ? "侦察席名称" : "火力点名称";
+      const defaultName = isRecon ? `${t("roles.recon", "监测席")}-${deviceId}` : `${t("roles.firepower", "作业单元")}-${deviceId}`;
+      if (this.inputNameLabel) this.inputNameLabel.textContent = isRecon ? t("roles.reconNameLabel", "监测席名称") : t("roles.firepowerNameLabel", "作业单元名称");
       if (this.inputName) this.inputName.placeholder = defaultName;
       if (titleEl) {
         titleEl.textContent = isRecon
-          ? `${this.currentPoint.name || defaultName} · 侦察席配置`
-          : `${this.currentPoint.name || defaultName} · 火力点配置`;
+          ? `${this.currentPoint.name || defaultName} · ${t("roles.recon", "监测席")}配置`
+          : `${this.currentPoint.name || defaultName} · ${t("roles.firepower", "作业单元")}配置`;
       }
       for (const field of this.form.querySelectorAll("[data-operational-point-field]")) {
         field.hidden = isRecon;
@@ -230,10 +231,10 @@ export class FirepowerConfigModal {
         this.inputDeviceId.value = getPlatformDeviceId(this.currentPoint);
       }
       if (this.inputBattalion) {
-        this.inputBattalion.value = this.currentPoint.battalion || "1营";
+        this.inputBattalion.value = this.currentPoint.battalion || t("org.battalionDefault", "1区");
       }
       if (this.inputCompany) {
-        this.inputCompany.value = this.currentPoint.company || "1连";
+        this.inputCompany.value = this.currentPoint.company || t("org.companyDefault", "1组");
       }
       if (this.inputMountedDevice) {
         this.inputMountedDevice.value = this.currentPoint.mountedDeviceId || "";
@@ -245,8 +246,8 @@ export class FirepowerConfigModal {
     }
 
     const canSwitchRole = Boolean(this.changeSimulationRole);
-    if (this.btnRoleToFirepower) this.btnRoleToFirepower.textContent = "同时作为火力点";
-    if (this.btnRoleToRecon) this.btnRoleToRecon.textContent = "取消独立火力点";
+    if (this.btnRoleToFirepower) this.btnRoleToFirepower.textContent = t("roles.asFirepower", "同时作为作业单元");
+    if (this.btnRoleToRecon) this.btnRoleToRecon.textContent = t("roles.cancelFirepower", "取消独立作业单元");
     if (this.btnRoleToFirepower) {
       this.btnRoleToFirepower.hidden = !(canSwitchRole && isRecon);
     }
@@ -262,7 +263,7 @@ export class FirepowerConfigModal {
   renderReconMount(point) {
     this.mountedTo = point;
     this.mountStatus.textContent = point ? `${point.battalion}·${point.company}·${point.name}` : "空闲未挂载";
-    this.mountEdit.textContent = point ? "更改阵位" : "挂载阵位";
+    this.mountEdit.textContent = point ? "更改工位" : "挂载工位";
     this.mountRemove.hidden = !point;
     this.mountPicker.hidden = true;
   }
@@ -279,7 +280,7 @@ export class FirepowerConfigModal {
       if (await this.reconMount.mountDevice(pointId, deviceId)) {
         this.renderReconMount(this.reconMount.getMountedPoint(this.currentPoint));
       } else {
-        this.showSaveError(remove ? "解绑失败，请重试" : "保存火力挂载失败，请重试");
+        this.showSaveError(remove ? "解绑失败，请重试" : "保存单元挂载失败，请重试");
       }
     } finally {
       this.isSaving = false;
@@ -391,7 +392,7 @@ export class FirepowerConfigModal {
     const rawLat = parseFloat(this.inputLat.value);
     const rawAlt = parseFloat(this.inputAlt.value);
     const range = this.inputRange.value.trim() || "40 km";
-    const name = this.inputName.value.trim() || "地面火力输出点";
+    const name = this.inputName.value.trim() || t("roles.firepowerPlaceholder", "地面任务输出点");
     const maxTargets = Math.max(1, Math.min(50, parseInt(this.inputMaxTargets?.value, 10) || 1));
     const ip = this.inputIp?.value?.trim() || "127.0.0.1";
     const port = Math.max(1, Math.min(65535, parseInt(this.inputPort?.value, 10) || 5567));
@@ -455,3 +456,5 @@ export class FirepowerConfigModal {
     this.close();
   }
 }
+
+export { StationConfigModal as FirepowerConfigModal };

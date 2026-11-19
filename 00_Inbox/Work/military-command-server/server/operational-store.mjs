@@ -26,7 +26,7 @@ export function readPosition(value, optional = false) {
 
 function readPoint(point) {
   if (!point || typeof point.id !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/.test(point.id)) {
-    throw dataError(400, "火力点编号无效");
+    throw dataError(400, "作业单元编号无效");
   }
   const name = fieldText(point.name ?? "", "名称");
   if (!name) throw dataError(400, "请填写名称");
@@ -40,8 +40,8 @@ function readPoint(point) {
   const unmountedIp = typeof point.unmountedIp === "string" && isIP(point.unmountedIp) ? point.unmountedIp : undefined;
   return {
     id: point.id, name, ...readPosition(point),
-    battalion: fieldText(point.battalion || "1营", "营名称"),
-    company: fieldText(point.company || "1连", "连名称"),
+    battalion: fieldText(point.battalion || "1区", "片区名称"),
+    company: fieldText(point.company || "1组", "组名称"),
     strikeRange: fieldText(String(point.strikeRange ?? (point.maxRangeKm ? `${point.maxRangeKm} km` : "40 km")), "范围"),
     maxTargets, ip, port, mountedDeviceId, unmountedIp
   };
@@ -139,7 +139,7 @@ export function openOperationalStore(path) {
     const mounted = new Set();
     for (const { mountedDeviceId } of records) {
       if (!mountedDeviceId) continue;
-      if (mounted.has(mountedDeviceId)) throw dataError(409, "同一设备只能挂载到一个火力点");
+      if (mounted.has(mountedDeviceId)) throw dataError(409, "同一设备只能挂载到一个作业单元");
       mounted.add(mountedDeviceId);
     }
   }
@@ -148,7 +148,7 @@ export function openOperationalStore(path) {
     return transaction(() => {
       const key = id ?? `FIRE-${randomUUID()}`;
       const current = pointRow.get(key);
-      if (id && !current) throw dataError(404, "火力点不存在");
+      if (id && !current) throw dataError(404, "作业单元不存在");
       const old = current ? JSON.parse(current.data) : {};
       const merged = { ...old, ...value, id: key };
       if (old.mountedDeviceId && value.mountedDeviceId === "") {
@@ -183,7 +183,7 @@ export function openOperationalStore(path) {
     listPoints: points,
     savePoint,
     removePoint(id) {
-      if (!deletePoint.run(id).changes) throw dataError(404, "火力点不存在");
+      if (!deletePoint.run(id).changes) throw dataError(404, "作业单元不存在");
     },
     listTargets(query, limit, offset) {
       const liveTotal = countLiveTargets.get(query).total;
@@ -237,7 +237,7 @@ export function openOperationalStore(path) {
       if (id && target.id !== id) throw dataError(400, "已有目标的类型和编号不能修改");
       const existing = targetRow.get(target.id);
       if (!id && existing && !existing.deleted) throw dataError(409, "该类型和编号的目标已存在");
-      target.name = fieldText(target.name ?? "", "名称") || (target.type === "BURST_POINT" ? "炸点目标" : "侦察目标");
+      target.name = fieldText(target.name ?? "", "名称") || (target.type === "BURST_POINT" ? "告警事件" : "监测目标");
       Object.assign(target, readPosition(target));
       const trajectory = appendTrajectoryPoint(row ? JSON.parse(row.trajectory) : [], target);
       return writeTarget(target, row?.source ?? "manual", trajectory);

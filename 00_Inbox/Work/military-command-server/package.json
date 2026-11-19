@@ -1,7 +1,7 @@
 {
-  "name": "military-command-server",
+  "name": "intelligent-cooperative-server",
   "version": "1.0.0",
-  "description": "单兵作战智能化指挥平台 (Individual Combat Intelligent Command Platform)",
+  "description": "智能协同作业平台 (Intelligent Cooperative Server)",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,7 +11,7 @@
   },
   "keywords": [
     "cesium",
-    "uav-reconnaissance",
+    "uav-monitoring",
     "camera-gimbal-hud",
     "scoutmonitor-protocols",
     "edgeagent"

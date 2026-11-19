@@ -118,12 +118,12 @@ export async function serveDataManagement(req, res, url, pathname, {
         const deviceId = value?.deviceId ?? device?.deviceId;
         const mounts = mountedDeviceIds(current.firepowerPoints);
         if (!remove && typeof deviceId === "string" && devices.isFirepower(deviceId.trim())) {
-          throw dataError(409, "该设备 ID 已设为独立火力点，请先取消独立火力点");
+          throw dataError(409, "该设备 ID 已设为独立作业单元，请先取消独立作业单元");
         }
         if (device && (remove || (value.deviceId !== undefined && value.deviceId !== device.deviceId))) {
           const linked = mountedDeviceIds([...current.firepowerPoints, ...operations.listPoints()]);
           if (linked.has(id) || linked.has(device.deviceId)) {
-            throw dataError(409, "该设备已挂载到火力点，请先解除挂载");
+            throw dataError(409, "该设备已挂载到作业单元，请先解除挂载");
           }
         }
         if (remove) return registry.removeManaged(id);

@@ -1,5 +1,6 @@
-import { FirepowerConfigModal } from "./firepower-config-modal.js";
+import { StationConfigModal } from "./station-config-modal.js";
 import { eventBus } from "../core/event-bus.js";
+import { t } from "../core/terms.js";
 
 const api = "/api/device-simulation";
 
@@ -36,8 +37,8 @@ export function initDeviceManager(viewer, panel, options = {}) {
   let aircraftSignature;
   const modelPoint = p => ({
     ...p,
-    battalion: p.battalion || "1营",
-    company: p.company || "1连",
+    battalion: p.battalion || t("org.battalionDefault", "1区"),
+    company: p.company || t("org.companyDefault", "1组"),
     mountedDeviceId: p.mountedDeviceId || "",
     simulation: true,
     device: true,
@@ -86,10 +87,10 @@ export function initDeviceManager(viewer, panel, options = {}) {
 
     const newStructure = [];
     for (let b = 1; b <= batCount; b++) {
-      const batName = `${b}营`;
+      const batName = `${b}${t("org.battalion", "区")}`;
       const companies = [];
       for (let c = 1; c <= compCount; c++) {
-        companies.push(`${c}连`);
+        companies.push(`${c}${t("org.company", "组")}`);
       }
       newStructure.push({ name: batName, companies });
     }
@@ -117,11 +118,11 @@ export function initDeviceManager(viewer, panel, options = {}) {
     return getAffiliationTree();
   }
 
-  function addBattalion(battalionName, companies = ["1连"]) {
+  function addBattalion(battalionName, companies = [`1${t("org.company", "组")}`]) {
     const name = String(battalionName || "").trim();
     if (!name) return false;
     if (orgStructure.some(b => b.name === name)) return false;
-    const comps = Array.isArray(companies) && companies.length ? companies : ["1连"];
+    const comps = Array.isArray(companies) && companies.length ? companies : [`1${t("org.company", "组")}`];
     orgStructure.push({ name, companies: comps });
     saveOrgStructure();
     eventBus.emit("firepower:affiliationChanged", getAffiliationTree());
@@ -208,7 +209,7 @@ export function initDeviceManager(viewer, panel, options = {}) {
         body: JSON.stringify({ firepowerPoints, scenarioRevision, ...(includeUavs && { scenarioUavs }) })
       });
       const result = await response.json();
-      if (!response.ok || !result.ok) throw new Error(result.error || "保存火力点配置失败");
+      if (!response.ok || !result.ok) throw new Error(result.error || t("ui.saveFirepowerFail", "保存作业单元配置失败"));
       render({ ...lastDeviceResult, ...result });
       return true;
     } catch (error) {
@@ -308,9 +309,9 @@ export function initDeviceManager(viewer, panel, options = {}) {
     const newId = `FIRE-${randomId}`;
     const newPt = {
       id: newId,
-      name: data.name || `${nextIdx}号火力点`,
-      battalion: data.battalion || "1营",
-      company: data.company || "1连",
+      name: data.name || t("roles.firepowerDefaultName", `${nextIdx}号作业单元`, { n: nextIdx }),
+      battalion: data.battalion || t("org.battalionDefault", "1区"),
+      company: data.company || t("org.companyDefault", "1组"),
       mountedDeviceId: "",
       longitude: Number(data.longitude ?? 118.500000),
       latitude: Number(data.latitude ?? 24.500000),
@@ -348,17 +349,17 @@ export function initDeviceManager(viewer, panel, options = {}) {
 
   async function resetToDefaultAffiliation() {
     orgStructure = [
-      { name: "1营", companies: ["1连", "2连"] },
-      { name: "2营", companies: ["1连", "2连"] }
+      { name: "1区", companies: ["1组", "2组"] },
+      { name: "2区", companies: ["1组", "2组"] }
     ];
     saveOrgStructure();
     scenarioFirepower.length = 0;
     scenarioFirepower.push(
       {
         id: "FIRE-01",
-        name: "1号火力点",
-        battalion: "1营",
-        company: "1连",
+        name: t("roles.firepowerDefaultName", "1号作业单元", { n: 1 }),
+        battalion: "1区",
+        company: "1组",
         mountedDeviceId: "",
         longitude: 118.570452,
         latitude: 24.573654,
@@ -373,9 +374,9 @@ export function initDeviceManager(viewer, panel, options = {}) {
       },
       {
         id: "FIRE-02",
-        name: "2号火力点",
-        battalion: "1营",
-        company: "1连",
+        name: t("roles.firepowerDefaultName", "2号作业单元", { n: 2 }),
+        battalion: "1区",
+        company: "1组",
         mountedDeviceId: "",
         longitude: 118.432154,
         latitude: 24.617528,
@@ -390,9 +391,9 @@ export function initDeviceManager(viewer, panel, options = {}) {
       },
       {
         id: "FIRE-03",
-        name: "3号火力点",
-        battalion: "1营",
-        company: "2连",
+        name: t("roles.firepowerDefaultName", "3号作业单元", { n: 3 }),
+        battalion: "1区",
+        company: "2组",
         mountedDeviceId: "",
         longitude: 118.448499,
         latitude: 24.507795,
@@ -417,7 +418,7 @@ export function initDeviceManager(viewer, panel, options = {}) {
     const all = [...scenarioFirepower, ...currentFixedPoints];
     const battalionsMap = new Map();
 
-    // 1. 先用已配置的营连结构初始化
+    // 1. 先用已配置的片区分组结构初始化
     for (const b of orgStructure) {
       const batObj = {
         name: b.name,
@@ -438,10 +439,10 @@ export function initDeviceManager(viewer, panel, options = {}) {
       battalionsMap.set(b.name, batObj);
     }
 
-    // 2. 遍历现有火力点，归入对应营连
+    // 2. 遍历现有作业单元，归入对应片区分组
     for (const pt of all) {
-      const batName = pt.battalion || "1营";
-      const compName = pt.company || "1连";
+      const batName = pt.battalion || t("org.battalionDefault", "1区");
+      const compName = pt.company || t("org.companyDefault", "1组");
 
       if (!battalionsMap.has(batName)) {
         battalionsMap.set(batName, {
@@ -488,7 +489,7 @@ export function initDeviceManager(viewer, panel, options = {}) {
     }));
 
     return {
-      root: "战术指挥所",
+      root: t("org.center", "业务调度中心"),
       totalPoints: all.length,
       onlinePoints: all.filter(p => p.online).length,
       mountedPoints: all.filter(p => Boolean(p.mountedDeviceId)).length,
@@ -525,14 +526,14 @@ export function initDeviceManager(viewer, panel, options = {}) {
           if (idx >= 0) {
             const pt = scenarioFirepower.splice(idx, 1)[0];
             scenarioUavs.push(pt);
-            if (!await saveBatchFirepower({ includeUavs: true })) throw new Error("转换为侦察席失败");
+            if (!await saveBatchFirepower({ includeUavs: true })) throw new Error(t("ui.toReconFail", "转换为监测席失败"));
           }
         } else if (role === "firepower") {
           const idx = scenarioUavs.findIndex(p => p.id === device.id);
           if (idx >= 0) {
             const pt = scenarioUavs.splice(idx, 1)[0];
             scenarioFirepower.push(modelPoint(pt));
-            if (!await saveBatchFirepower({ includeUavs: true })) throw new Error("转换为火力点失败");
+            if (!await saveBatchFirepower({ includeUavs: true })) throw new Error(t("ui.toFirepowerFail", "转换为作业单元失败"));
           }
         }
         return;
@@ -540,7 +541,7 @@ export function initDeviceManager(viewer, panel, options = {}) {
       await save("role", { key: device.id, role });
     }
   };
-  const editor = new FirepowerConfigModal(
+  const editor = new StationConfigModal(
     viewer,
     async (point, coordinates, name) => {
       if (saving) throw new Error("设备配置正在保存，请稍后重试");
@@ -605,8 +606,8 @@ export function initDeviceManager(viewer, panel, options = {}) {
       port: coordinates?.port || 5567,
       simulation: true, device: true
     }));
-    // 后端现在分别返回侦察视图和火力挂载视图；同一设备可以同时存在于两者。
-    // 侦察列表只使用 uavs，避免把 mounted 视图再次拼接造成重复卡片。
+    // 后端现在分别返回监测视图和单元挂载视图；同一设备可以同时存在于两者。
+    // 监测列表只使用 uavs，避免把 mounted 视图再次拼接造成重复卡片。
     const devices = model(uavs);
     const mountedDevices = model(mounted);
     const mountIds = new Set(scenarioFirepower.map(point => point.mountedDeviceId).filter(Boolean));
@@ -616,10 +617,10 @@ export function initDeviceManager(viewer, panel, options = {}) {
     currentFixedPoints = model(firepower).filter(device => !isMounted(device));
     const allFirepowerPoints = [...scenarioFirepower, ...currentFixedPoints];
 
-    // 动态依据EdgeAgent转发的在线侦察设备计算火力点在线状态
+    // 动态依据EdgeAgent转发的在线监测设备计算作业单元在线状态
     for (const pt of allFirepowerPoints) {
-      if (!pt.battalion) pt.battalion = "1营";
-      if (!pt.company) pt.company = "1连";
+      if (!pt.battalion) pt.battalion = t("org.battalionDefault", "1区");
+      if (!pt.company) pt.company = t("org.companyDefault", "1组");
       if (pt.mountedDeviceId) {
         const mountedDevice = findMountedDevice(pt.mountedDeviceId);
         pt.online = Boolean(mountedDevice && mountedDevice.online !== false);
@@ -633,15 +634,15 @@ export function initDeviceManager(viewer, panel, options = {}) {
       }
     }
 
-    // 标记侦察设备挂载的火力点
+    // 标记监测设备挂载的作业单元
     for (const u of currentUavs) {
       const uDevId = extractDeviceId(u);
       const mountedPoint = allFirepowerPoints.find(pt => pt.mountedDeviceId && (pt.mountedDeviceId === uDevId || pt.mountedDeviceId === u.id));
       u.mountedTo = mountedPoint ? {
         id: mountedPoint.id,
         name: mountedPoint.name,
-        battalion: mountedPoint.battalion || "1营",
-        company: mountedPoint.company || "1连"
+        battalion: mountedPoint.battalion || t("org.battalionDefault", "1区"),
+        company: mountedPoint.company || t("org.companyDefault", "1组")
       } : null;
     }
 

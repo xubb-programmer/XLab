@@ -4,7 +4,7 @@ export class StatsPanel {
     this.elFirepower = document.getElementById("stat-firepower-count");
     this.elTargetCount = document.getElementById("stat-target-count");
     this.elSource = document.getElementById("stat-data-source");
-    this.elClock = document.getElementById("military-clock");
+    this.elClock = document.getElementById("system-clock");
     this.initClock();
   }
 

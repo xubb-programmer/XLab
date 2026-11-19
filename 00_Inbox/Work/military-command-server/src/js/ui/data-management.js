@@ -1,9 +1,17 @@
 import { eventBus } from "../core/event-bus.js";
 import { getPlatformName } from "../core/platform-labels.js";
+import { t } from "../core/terms.js";
 
 const pageSize = 30;
-const names = { recon: "侦察席", firepower: "火力点", targets: "目标" };
-const targetTypes = { TARGET_RECON: "侦察目标", BURST_POINT: "炸点目标" };
+const names = {
+  get recon() { return t("roles.recon", "监测席"); },
+  get firepower() { return t("roles.firepower", "作业单元"); },
+  targets: "目标"
+};
+const targetTypes = {
+  get TARGET_RECON() { return t("targets.reconTarget", "监测目标"); },
+  get BURST_POINT() { return t("targets.burstTarget", "告警事件"); }
+};
 const positionFields = [
   ["longitude", "经度", "number", -180, 180],
   ["latitude", "纬度", "number", -90, 90],
@@ -43,7 +51,7 @@ function valuesFor(type, row) {
 
 const columns = {
   recon: ["名称", "设备 ID", "通信 IP", "位置", "状态", "来源"],
-  firepower: ["名称", "编号", "营连", "挂载设备", "通信 IP", "状态", "来源"],
+  get firepower() { return ["名称", "编号", t("org.battalionCompany", "片区分组"), "挂载设备", "通信 IP", "状态", "来源"]; },
   targets: ["名称", "编号", "类型", "位置", "轨迹点数", "来源"]
 };
 
@@ -135,7 +143,7 @@ export function initDataManagement() {
       device: "设备下次有效上报后会重新入库，沿用原有配置。",
       "live-target": "当前轨迹将清除。目标再次上报时将重新入库。",
       scenario: record.mountedDeviceId
-        ? `将解除设备 ${record.mountedDeviceName || record.mountedDeviceId} 的挂载，并删除阵位。`
+        ? `将解除设备 ${record.mountedDeviceName || record.mountedDeviceId} 的挂载，并删除工位。`
         : ""
     };
     const message = [`删除「${record.name || record.id}」？`, effects[record.kind]].filter(Boolean).join("\n");
@@ -148,7 +156,7 @@ export function initDataManagement() {
   }
 
   function unmount(pointId, scenarioRevision) {
-    if (busy || !window.confirm(`解除阵位「${pointId}」的设备挂载？`)) return;
+    if (busy || !window.confirm(`解除工位「${pointId}」的设备挂载？`)) return;
     void changeRecord(async () => {
       const response = await fetch("/api/scenario/firepower/mount", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -251,8 +259,8 @@ export function initDataManagement() {
       addField(["deviceId", "设备 ID"], record?.id ?? "", { readonly });
       addField(["ip", "通信 IP"], "", { readonly, required: false });
     } else {
-      addField(["battalion", "营"], "1营");
-      addField(["company", "连"], "1连");
+      addField(["battalion", t("org.battalion", "片区")], t("org.battalionDefault", "1区"));
+      addField(["company", t("org.company", "组")], t("org.companyDefault", "1组"));
       addField(["mountedDeviceId", "挂载设备 ID"], "", { required: false });
       addField(["ip", "通信 IP"], "127.0.0.1");
       addField(["port", "端口", "number", 1, 65535], 5567);

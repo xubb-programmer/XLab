@@ -506,7 +506,7 @@
   box-shadow: 0 0 16px rgba(0, 240, 255, 0.45);
 }
 /* ==========================================================================
-   无人机光电/红外侦察吊舱 HUD 视盘组件 (UAV Camera Pod HUD)
+   无人机光电/红外监测吊舱 HUD 视盘组件 (UAV Camera Pod HUD)
    ========================================================================== */
 .camera-hud-panel {
   position: absolute;
@@ -635,7 +635,7 @@
 
 
 /* ==========================================================================
-   无人机卡片与火炮阵地卡片样式 (UAV & Artillery Cards)
+   无人机卡片与地面点位卡片样式 (UAV & Station Cards)
    ========================================================================== */
 .uav-recon-card {
   background: rgba(0, 240, 255, 0.05);
@@ -917,15 +917,15 @@ button.artillery-card:hover {
 }
 
 /* ==========================================================================
-   战术军事风格显控台核心样式 (Tactical C2 Military HUD Styling)
+   态势调度风格显控台核心样式 (C2 HUD Styling)
    ========================================================================== */
 
 /* ==========================================================================
-   战术军事风格显控台核心样式 (Tactical C2 Military HUD Styling)
-   色彩规范: 整体青色 / 无人机与火力列表偏红 / 目标与弹着点偏蓝
+   态势调度风格显控台核心样式 (C2 HUD Styling)
+   色彩规范: 整体青色 / 无人机与单元列表偏红 / 目标与响应点偏蓝
    ========================================================================== */
 
-/* 战术卡片基础机壳 */
+/* 态势卡片基础机壳 */
 .tactical-card {
   position: relative;
   background: linear-gradient(135deg, rgba(14, 24, 38, 0.95) 0%, rgba(9, 15, 25, 0.98) 100%);
@@ -941,7 +941,7 @@ button.artillery-card:hover {
   text-align: left;
 }
 
-/* 战术卡片机械四角标靶装饰 */
+/* 态势卡片机械四角边框装饰 */
 .card-corner-tl, .card-corner-br {
   position: absolute;
   width: 6px;
@@ -964,7 +964,7 @@ button.artillery-card:hover {
 }
 
 /* --------------------------------------------------------------------------
-   左侧平台列表样式 (无人机与地面火力点: 偏红 TACTICAL RED)
+   左侧平台列表样式 (无人机与地面作业点: 偏红 ACCENT RED)
    -------------------------------------------------------------------------- */
 .uav-recon-card, .artillery-card {
   background: linear-gradient(135deg, rgba(32, 14, 20, 0.95) 0%, rgba(18, 9, 14, 0.98) 100%);
@@ -1348,7 +1348,7 @@ button.artillery-card:hover {
   font-size: 11px;
 }
 
-/* 战术卡片操作按钮与状态元数据 */
+/* 态势卡片操作按钮与状态元数据 */
 .uav-device-meta {
   display: flex;
   align-items: center;
@@ -1566,10 +1566,10 @@ button.artillery-card:hover {
 }
 
 /* --------------------------------------------------------------------------
-   右侧目标与弹着点列表样式 (目标偏蓝 TACTICAL BLUE)
+   右侧目标与状态列表样式 (目标偏蓝 ACCENT BLUE)
    -------------------------------------------------------------------------- */
 
-/* 战术空状态 / 监听等待状态箱 (偏蓝) */
+/* 态势空状态 / 监听等待状态箱 (偏蓝) */
 .tactical-empty-box {
   display: flex;
   flex-direction: column;
@@ -1661,7 +1661,7 @@ button.artillery-card:hover {
   color: var(--text-secondary);
 }
 
-/* 战术目标威胁卡片 (偏蓝) */
+/* 态势目标状态卡片 (偏蓝) */
 .target-threat-card {
   position: relative;
   width: 100%;
@@ -1821,7 +1821,7 @@ button.artillery-card:hover {
 }
 
 /* ==========================================================================
-   无人机光电/红外摄像机战术 HUD 覆盖层 (Tactical UAV Camera HUD OSD)
+   无人机光电/红外摄像机 HUD 覆盖层 (UAV Camera HUD OSD)
    ========================================================================== */
 .camera-hud-osd-overlay {
   position: absolute;
@@ -1876,7 +1876,7 @@ button.artillery-card:hover {
   border: 1px solid rgba(0, 240, 255, 0.3);
 }
 
-/* 中央战术十字瞄准线 (Tactical Center Reticle) */
+/* 中央十字准星线 (Center Reticle) */
 .hud-osd-center-reticle {
   position: absolute;
   top: 50%;
@@ -1928,7 +1928,7 @@ button.artillery-card:hover {
   box-shadow: 0 0 6px var(--cyan-glow);
 }
 
-/* 视窗四角战术光标框 (Corner Targeting Brackets) */
+/* 视窗四角引导光标框 (Corner Brackets) */
 .hud-osd-bracket-tl,
 .hud-osd-bracket-tr,
 .hud-osd-bracket-bl,
@@ -1974,13 +1974,13 @@ button.artillery-card:hover {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
-/* 顶部全局军事战术时钟与态势栏 */
-.military-clock-time {
+/* 顶部全局态势时钟与状态栏 */
+.system-clock-time {
   text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
 }
 
 /* ==========================================================================
-   地面火力点手动配置弹窗与按钮样式 (Tactical Firepower Config Modal & Buttons)
+   地面作业单元配置窗口与按钮样式 (Station Config Modal & Buttons)
    ========================================================================== */
 .modal-dialog.firepower-modal {
   position: relative;
@@ -2332,7 +2332,7 @@ button.artillery-card:hover {
 }
 
 /* ==========================================================================
-   目标上报至火力点交互样式 (支持多选、卡片入口与地图入口)
+   目标下派至作业单元交互样式 (支持多选、卡片入口与地图入口)
    ========================================================================== */
 
 /* 1. 右侧栏：目标批量上报工具栏 */
@@ -2476,7 +2476,7 @@ button.artillery-card:hover {
   gap: 8px;
 }
 
-/* 4. 目标上报至火力点弹窗 (Target Report Modal) */
+/* 4. 目标下派至作业单元弹窗 (Target Report Modal) */
 .target-report-modal-dialog {
   width: 540px;
   max-width: 92vw;
@@ -2643,7 +2643,7 @@ button.artillery-card:hover {
 }
 
 /* ==========================================================================
-   火力打击目标分配策略建议样式 (人机在环 · 建议预览与人工最终裁决)
+   任务处置目标分配策略建议样式 (人机在环 · 建议预览与人工最终确认)
    ========================================================================== */
 
 .allocation-strategy-box {
@@ -2759,7 +2759,7 @@ button.artillery-card:hover {
 }
 
 /* ==========================================================================
-   多目标对多火力点协同分配策略矩阵样式 (人机在环 · 建议预览与人工逐项裁决)
+   多目标对多作业单元协同分配策略矩阵样式 (人机在环 · 建议预览与人工逐项指定)
    ========================================================================== */
 
 .target-report-modal-dialog {
@@ -2966,7 +2966,7 @@ button.artillery-card:hover {
 }
 
 /* ==========================================================================
-   侦察载荷全视频链路总览矩阵控制中心 (Recon Video Payload Matrix Hub)
+   监测载荷全视频链路总览矩阵控制中心 (Video Payload Matrix Hub)
    ========================================================================== */
 .fullpage-video-matrix,
 .video-matrix-modal-dialog {
@@ -3284,7 +3284,7 @@ button.artillery-card:hover {
   display: block;
 }
 
-/* 战术 HUD OSD 瞄准刻度层 */
+/* HUD OSD 引导刻度层 */
 .cell-hud-osd {
   position: absolute;
   inset: 0;
@@ -3574,7 +3574,7 @@ button.artillery-card:hover {
   background: var(--cyan-glow);
 }
 
-/* 战术浮动提示 Toast */
+/* 态势浮动提示 Toast */
 .matrix-tactical-toast {
   position: absolute;
   top: 60px;
@@ -3606,7 +3606,7 @@ button.artillery-card:hover {
 }
 
 /* ----------------------------------------------------
-   战术火力整备与编制隶属拓扑树状图 (Firepower Affiliation Tree)
+   组织架构整备与层级隶属拓扑树状图 (Affiliation Tree)
 ---------------------------------------------------- */
 .fullpage-firepower-affiliation,
 .firepower-affiliation-dialog {
@@ -3683,7 +3683,7 @@ button.artillery-card:hover {
   min-width: 760px;
 }
 
-/* 根节点: 战术指挥中枢 */
+/* 根节点: 调度中枢 */
 .tree-root-wrapper {
   display: flex;
   flex-direction: column;
@@ -3790,7 +3790,7 @@ button.artillery-card:hover {
   background: rgba(0, 240, 255, 0.4);
 }
 
-/* 营级节点 */
+/* 片区节点 */
 .tree-node-battalion {
   background: rgba(15, 30, 48, 0.9);
   border: 1px solid rgba(0, 240, 255, 0.4);
@@ -3867,7 +3867,7 @@ button.artillery-card:hover {
   background: rgba(56, 239, 125, 0.35);
 }
 
-/* 连级节点 */
+/* 组级节点 */
 .tree-node-company {
   background: rgba(14, 26, 38, 0.88);
   border: 1px solid rgba(56, 239, 125, 0.35);
@@ -3908,7 +3908,7 @@ button.artillery-card:hover {
   background: rgba(255, 71, 87, 0.3);
 }
 
-/* 火力点阵位卡片 (Tree Leaf Node) */
+/* 作业单元工位卡片 (Tree Leaf Node) */
 .tree-node-point {
   width: 270px;
   background: rgba(11, 20, 31, 0.95);
@@ -4082,7 +4082,7 @@ button.artillery-card:hover {
   width: 100%;
 }
 
-/* 右侧边栏：在线侦察席设备池 */
+/* 右侧边栏：在线监测设备池 */
 .affiliation-recon-sidebar {
   width: 320px;
   border-left: 1px solid rgba(0, 240, 255, 0.2);
@@ -4279,7 +4279,7 @@ button.artillery-card:hover {
   cursor: pointer;
 }
 
-/* 营连建制规模设置面板与抽屉 */
+/* 组织架构规模设置面板与抽屉 */
 .affiliation-org-drawer {
   width: 460px;
   right: 0;
@@ -4431,7 +4431,7 @@ button.artillery-card:hover {
   padding: 2px 6px;
 }
 
-/* 连级空状态占位 */
+/* 组级空状态占位 */
 .tree-node-empty-company {
   padding: 14px;
   border: 1px dashed rgba(255, 255, 255, 0.2);
@@ -4600,4 +4600,304 @@ button.artillery-card:hover {
 
 .management-error {
   color: #ff8794;
+}
+
+/* 网页设置与初始地图视口配置 */
+.settings-page-body {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+  gap: 24px;
+  padding: 24px;
+  width: 100%;
+  align-items: stretch;
+}
+
+.settings-card {
+  background: var(--bg-dark-2);
+  border: 1px solid var(--border-medium);
+  border-radius: 6px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.settings-data-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.data-hub-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--bg-dark-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: 5px;
+  transition: all 0.2s;
+}
+
+.data-hub-item:hover {
+  border-color: var(--cyan-glow);
+  background: var(--bg-dark-4);
+}
+
+.data-hub-item-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 240, 255, 0.08);
+  border-radius: 6px;
+  border: 1px solid rgba(0, 240, 255, 0.15);
+}
+
+.data-hub-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.data-hub-item-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.data-hub-item-title {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.badge-count {
+  font-size: 0.78rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--bg-dark-4);
+  color: var(--cyan-glow);
+  border: 1px solid var(--border-medium);
+  font-family: inherit;
+}
+
+.data-hub-item-desc {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-data-hub-action {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.settings-card-header {
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 12px;
+}
+
+.settings-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.settings-card-icon {
+  font-size: 1.25rem;
+}
+
+.settings-card-title {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.settings-card-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.settings-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-coords-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.settings-coords-grid .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-coords-grid .form-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.settings-coords-grid .input-unit {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.settings-coords-grid .text-input {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg-dark-3);
+  border: 1px solid var(--border-medium);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.settings-coords-grid .text-input:focus {
+  outline: none;
+  border-color: var(--cyan-glow);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+}
+
+.settings-coords-grid .text-input.input-highlight {
+  border-color: #22c55e !important;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.4) !important;
+}
+
+.settings-action-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-dark-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+}
+
+.toolbar-left-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.toolbar-preset-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.preset-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.btn-preset {
+  background: var(--bg-dark-4);
+  border: 1px solid var(--border-medium);
+  color: var(--text-primary);
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-preset:hover {
+  border-color: var(--cyan-glow);
+  color: var(--cyan-glow);
+}
+
+.settings-status-bar {
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-status-bar.is-success {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #4ade80;
+}
+
+.settings-status-bar.is-error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.settings-status-bar.is-info {
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: #38bdf8;
+}
+
+.settings-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 14px;
+}
+
+/* 顶部浮动地图点选横幅与预览横幅 */
+.map-picking-banner, .map-preview-banner {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  pointer-events: auto;
+}
+
+.picking-banner-content, .preview-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid var(--cyan-glow);
+  box-shadow: 0 4px 20px rgba(0, 240, 255, 0.35);
+  padding: 8px 16px;
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.picking-banner-icon, .preview-banner-icon {
+  font-size: 1.1rem;
+}
+
+.preview-banner-content {
+  border-color: #22c55e;
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.35);
 }

@@ -47,7 +47,7 @@
   letter-spacing: 1px;
 }
 
-/* 顶部单兵作战平台主入口导航 */
+/* 顶部协同作业调度平台主入口导航 */
 .topbar-nav {
   display: flex;
   align-items: center;
@@ -197,7 +197,7 @@
   display: none !important;
 }
 
-/* 页面 1: 战术协同大厅工作台 */
+/* 页面 1: 态势协同大厅工作台 */
 .workspace {
   display: flex;
   flex: 1;

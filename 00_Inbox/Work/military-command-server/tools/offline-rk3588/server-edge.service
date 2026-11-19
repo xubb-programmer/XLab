@@ -1,16 +1,16 @@
 [Unit]
-Description=Military Command Server EdgeAgent Gateway
+Description=Intelligent Cooperative Server EdgeAgent Gateway
 After=network-online.target mosquitto.service
 Wants=network-online.target
 Requires=mosquitto.service
 
 [Service]
 Type=simple
-User=military-command-server
-Group=military-command-server
-WorkingDirectory=/var/lib/military-command-server/edge
-Environment=EDGEAGENT_LOG_FILE=/var/lib/military-command-server/edge/edgeagent.log
-ExecStart=/opt/jw/military-command-server/current/bin/edgeagent --config /etc/military-command-server/edgeagent.json
+User=intelligent-cooperative-server
+Group=intelligent-cooperative-server
+WorkingDirectory=/var/lib/intelligent-cooperative-server/edge
+Environment=EDGEAGENT_LOG_FILE=/var/lib/intelligent-cooperative-server/edge/edgeagent.log
+ExecStart=/opt/jw/intelligent-cooperative-server/current/bin/edgeagent --config /etc/intelligent-cooperative-server/edgeagent.json
 Restart=on-failure
 RestartSec=2
 

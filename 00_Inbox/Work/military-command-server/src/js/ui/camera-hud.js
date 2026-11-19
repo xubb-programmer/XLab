@@ -31,7 +31,7 @@ export class CameraHud {
         <div class="camera-video-viewport">
           <img id="camera-video" alt="无人机实时画面" hidden>
           
-          <!-- 战术 HUD OSD 瞄准刻度层 -->
+          <!-- HUD OSD 引导刻度层 -->
           <div class="camera-hud-osd-overlay" id="camera-hud-osd" hidden>
             <div class="hud-osd-top">
               <span class="hud-osd-live-badge"><span class="hud-osd-live-dot"></span> 实时画面</span>

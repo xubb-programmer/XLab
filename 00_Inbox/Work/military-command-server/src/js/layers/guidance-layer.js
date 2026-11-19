@@ -1,10 +1,11 @@
 /**
  * 三维地图态势引导连线图层 (Guidance Layer)
- * 在三维地球上动态绘制目标与所指派地面火力阵位之间的战术引导虚线及距离包络标签
+ * 在三维地球上动态绘制目标与所指派地面作业点位之间的态势引导虚线及距离包络标签
  */
 import { eventBus } from "../core/event-bus.js";
 import { calculateDistanceKm, parseStrikeRangeKm } from "../engine/allocation-strategy.js";
 import { getPlatformDisplayName } from "../core/platform-labels.js";
+import { t } from "../core/terms.js";
 
 export class GuidanceLayer {
   constructor(viewerManager) {
@@ -106,7 +107,7 @@ export class GuidanceLayer {
       const colorHex = inRange ? "#00f0ff" : "#fb923c";
       const color = Cesium.Color.fromCssColorString(colorHex);
       const shortPointName = getPlatformDisplayName(point, "firepower").replace(/\s*\(.*\)/, '').trim();
-      const statusSuffix = isAdjudicated ? " 裁决" : "";
+      const statusSuffix = isAdjudicated ? (" " + t("action.adjudicatedSuffix", "指定")) : "";
       const labelText = inRange
         ? `${shortPointName} ➔ #${target.targetNumber ?? ''} (${distKm}km${statusSuffix})`
         : `${shortPointName} ➔ #${target.targetNumber ?? ''} (${distKm}km 超距${statusSuffix})`;

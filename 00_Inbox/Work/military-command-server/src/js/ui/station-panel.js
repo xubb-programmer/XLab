@@ -2,6 +2,7 @@ import { escapeHtml } from "../core/html.js";
 import { eventBus } from "../core/event-bus.js";
 import { hasGeographicPosition } from "../core/coordinates.js";
 import { getPlatformDeviceId, getPlatformDisplayName } from "../core/platform-labels.js";
+import { t } from "../core/terms.js";
 
 function parseRangeMeters(rangeVal) {
   if (typeof rangeVal === "number") return rangeVal > 500 ? rangeVal : rangeVal * 1000;
@@ -16,7 +17,7 @@ function parseRangeMeters(rangeVal) {
   return 40000;
 }
 
-export class ArtilleryPanel {
+export class StationPanel {
   constructor(cameraHud, viewerManager) {
     this.cameraHud = cameraHud;
     this.viewerManager = viewerManager;
@@ -38,9 +39,9 @@ export class ArtilleryPanel {
       this.cameraHud.toggle(this.cameraHud.activeUav);
     }
     this.renderList(this.uavList, uavs.map(uav => this.makeUavCard(uav, simulation)),
-      simulation ? "等待侦察席广播..." : "【无侦察席】");
+      simulation ? t("ui.waitingRecon", "等待监测席广播...") : t("ui.noRecon", "【无监测席】"));
     this.renderList(this.firepowerList, points.map(point => this.makePointCard(point, simulation)),
-      simulation ? "暂无火力点 (可从侦察席转换)" : "【无火力点】");
+      simulation ? t("ui.waitingFirepower", "暂无作业单元 (可从监测席转换)") : t("ui.noFirepower", "【无作业单元】"));
     if (this.selectedReconId && !uavs.some(uav => uav.id === this.selectedReconId)) {
       this.selectedReconId = null;
       eventBus.emit("recon-seat:selected", null);
@@ -95,7 +96,7 @@ export class ArtilleryPanel {
     const canReport = Boolean(uav.deviceIp && simulation?.reportSituation);
     const reportHint = canReport
       ? `向 ${uav.deviceIp}:28081 发送 UDP 态势上报指令`
-      : "等待侦察设备上报 IP";
+      : t("ui.waitingReconIp", "等待监测设备上报 IP");
 
     card.innerHTML = `
       <div class="card-corner-tl"></div>
@@ -107,7 +108,7 @@ export class ArtilleryPanel {
           <strong>${escapeHtml(displayName)}</strong>
         </div>
         <div class="header-tags">
-          <button type="button" class="btn btn-sm btn-firepower-config btn-tactical-edit-point" aria-label="配置侦察席" title="配置侦察席参数">
+          <button type="button" class="btn btn-sm btn-firepower-config btn-tactical-edit-point" aria-label="${t("ui.configReconTitle", "配置监测席参数")}" title="${t("ui.configReconTitle", "配置监测席参数")}">
             <span class="btn-text">配置</span>
           </button>
         </div>
@@ -115,10 +116,10 @@ export class ArtilleryPanel {
 
       <div class="card-essential-info-row">
         <span class="situation-report-control" title="${escapeHtml(reportHint)}">
-          <button type="button" class="btn btn-sm" ${canReport ? "" : "disabled"}>态势上报</button>
+          <button type="button" class="btn btn-sm" ${canReport ? "" : "disabled"}>${t("ui.situationSync", "状态同步")}</button>
         </span>
-        <div class="essential-actions-group" aria-label="侦察席在线状态">
-          <span class="status-essential-tag btn-uav-video ${isOnline ? 'online' : 'standby'}" title="${videoCount} 路视频源，点击卡片选择侦察席并打开视频">
+        <div class="essential-actions-group" aria-label="${t("roles.recon", "监测席")}在线状态">
+          <span class="status-essential-tag btn-uav-video ${isOnline ? 'online' : 'standby'}" title="${videoCount} 路视频源，点击卡片选择${t("roles.recon", "监测席")}并打开视频">
             ${isOnline ? '● 就绪' : '○ 离线'}
           </span>
         </div>
@@ -142,7 +143,7 @@ export class ArtilleryPanel {
       const status = this.situationReportStatus;
       reportBtn.disabled = true;
       status.hidden = false;
-      status.textContent = `${displayName}：正在发送态势上报指令…`;
+      status.textContent = `${displayName}：` + t("ui.sendingSyncCommand", "正在发送状态同步指令…");
       try {
         const { address, port } = await simulation.reportSituation(uav.id);
         status.textContent = `${displayName}：指令已发往 ${address}:${port}（UDP）`;
@@ -177,7 +178,7 @@ export class ArtilleryPanel {
 
     const isOnline = point.online === true;
     const displayName = getPlatformDisplayName(point, "firepower");
-    const affiliation = `${point.battalion || "1营"} / ${point.company || "1连"}`;
+    const affiliation = `${point.battalion || t("org.battalionDefault", "1区")} / ${point.company || t("org.companyDefault", "1组")}`;
 
     card.innerHTML = `
       <div class="card-corner-tl"></div>
@@ -187,10 +188,10 @@ export class ArtilleryPanel {
         <div class="artillery-title">
           <span class="status-dot-point ${isOnline ? 'online' : 'standby'}" aria-hidden="true"></span>
           <strong></strong>
-          <span class="artillery-affiliation" title="战术编制隶属"></span>
+          <span class="artillery-affiliation" title="${t("org.affiliationTitle", "组织架构隶属")}"></span>
         </div>
         <div class="header-tags">
-          <button type="button" class="btn btn-sm btn-firepower-config btn-tactical-edit-point" aria-label="配置火力点参数" title="配置火力点参数">
+          <button type="button" class="btn btn-sm btn-firepower-config btn-tactical-edit-point" aria-label="${t("ui.configFirepowerTitle", "配置作业单元参数")}" title="${t("ui.configFirepowerTitle", "配置作业单元参数")}">
             <span class="btn-text">配置</span>
           </button>
         </div>
@@ -254,7 +255,7 @@ export class ArtilleryPanel {
       tags.push(`<span class="device-tag-video">${device.videoSources} 路视频源</span>`);
     }
     if (role === "firepower") {
-      tags.push(`<span class="device-tag-point-role">已设为阵位</span>`);
+      tags.push(`<span class="device-tag-point-role">已设为工位</span>`);
     }
     if (device.duplicateId) {
       tags.push(`<span class="device-tag-warn" title="检测到重复设备 ID">ID重复</span>`);
@@ -293,3 +294,5 @@ export class ArtilleryPanel {
     }
   }
 }
+
+export { StationPanel as ArtilleryPanel };

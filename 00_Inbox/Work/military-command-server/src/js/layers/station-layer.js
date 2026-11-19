@@ -15,7 +15,7 @@ function parseRangeMeters(rangeVal) {
   return 40000; // 默认 40 km
 }
 
-export class ArtilleryLayer {
+export class StationLayer {
   constructor(viewerManager) {
     this.viewerManager = viewerManager;
     this.entities = viewerManager.viewer.entities;
@@ -76,7 +76,7 @@ export class ArtilleryLayer {
       }
       
       if (!isUav) {
-        // 地面火力点打击范围包络圈 (Strike Range Circle)
+        // 地面作业单元覆盖范围包络圈 (Coverage Circle)
         const rangeM = parseRangeMeters(platform.strikeRange ?? platform.maxRangeKm);
         record.rangeM = rangeM;
         if (rangeM > 0) {
@@ -138,3 +138,5 @@ export class ArtilleryLayer {
     }
   }
 }
+
+export { StationLayer as ArtilleryLayer };

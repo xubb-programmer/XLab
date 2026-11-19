@@ -1,13 +1,14 @@
 import { eventBus } from "../core/event-bus.js";
 import { appendTrajectoryPoint } from "../core/target-trajectory.js";
+import { t } from "../core/terms.js";
 
 export class TargetService {
   constructor() {
     this.targets = [];
     this.selectedIds = new Set();
     this.lastSelectedId = null;
-    this.reportedMap = new Map(); // targetId -> { timestamp, firepowerName, firepowerId }
-    this.adjudicatedMap = new Map(); // targetId -> firepowerId (人工裁决阵位映射)
+    this.reportedMap = new Map(); // targetId -> { timestamp, pointName, pointId }
+    this.adjudicatedMap = new Map(); // targetId -> pointId (人工裁决工位映射)
 
     eventBus.on("target:selected", id => {
       if (id && !this.selectedIds.has(id)) {
@@ -47,8 +48,8 @@ export class TargetService {
     this.feedInstance = instance;
 
     this.targets = targets.map(target => {
-      const name = target.type === "BURST_POINT" && ["弹着点", "炸点"].includes(target.name)
-        ? "炸点目标" : target.name;
+      const name = target.type === "BURST_POINT" && ["响应点", "告警点"].includes(target.name)
+        ? t("targets.burstTarget", "告警事件") : target.name;
       // 旧版服务只提供最新坐标，浏览器用轮询收到的坐标补齐轨迹。
       const trajectory = target.trajectory ?? appendTrajectoryPoint(previousTargets.get(target.id)?.trajectory, target);
       return { ...target, name, trajectory };

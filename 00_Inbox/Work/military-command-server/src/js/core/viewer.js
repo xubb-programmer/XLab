@@ -81,7 +81,7 @@ export class CesiumViewerManager {
       this.viewer.creditDisplay.container.style.display = "none";
     }
 
-    // 初始设置大范围中国与战术区域宏观视角
+    // 初始设置大范围中国与态势区域宏观视角
     this.viewer.camera.setView({
       destination: Cesium.Rectangle.fromDegrees(71.0, 16.0, 138.0, 55.0)
     });

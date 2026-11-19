@@ -11,7 +11,7 @@ import time
 from pathlib import Path, PurePosixPath
 
 
-ROOT = "military-command-server-offline"
+ROOT = "intelligent-cooperative-server-offline"
 
 
 def add_file(archive: tarfile.TarFile, name: str, source: Path, mode: int | None = None) -> None:

@@ -1,4 +1,5 @@
 import { eventBus } from "../core/event-bus.js";
+import { t } from "../core/terms.js";
 
 export class TargetLayer {
   constructor(viewerManager) {
@@ -42,7 +43,7 @@ export class TargetLayer {
       const color = isBurst
         ? Cesium.Color.fromCssColorString("#60a5fa")
         : Cesium.Color.fromCssColorString("#2563eb");
-      const targetName = target.name || (isBurst ? "炸点目标" : "侦察目标");
+      const targetName = target.name || (isBurst ? t("targets.burstTarget", "告警事件") : t("targets.reconTarget", "监测目标"));
       const text = `#${target.targetNumber} ${targetName}`;
       let entity = this.entities.get(target.id);
       if (entity) {

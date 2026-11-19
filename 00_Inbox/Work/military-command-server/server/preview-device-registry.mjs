@@ -35,7 +35,7 @@ export function openPreviewRegistry(path) {
     },
     saveManaged(value, key) {
       const old = key ? byKey.get(key) : null;
-      if (key && (!old || old.deleted)) throw dataError(404, "侦察席不存在");
+      if (key && (!old || old.deleted)) throw dataError(404, "监测席不存在");
       const id = fieldText(value.deviceId ?? old?.device_id ?? "", "设备 ID");
       const name = fieldText(value.name ?? old?.name ?? "", "名称");
       if (!id || !name) throw dataError(400, "请填写设备 ID 和名称");
@@ -49,7 +49,7 @@ export function openPreviewRegistry(path) {
       return recordKey;
     },
     removeManaged(key) {
-      if (!remove.run(key).changes) throw dataError(404, "侦察席不存在");
+      if (!remove.run(key).changes) throw dataError(404, "监测席不存在");
     },
     close: () => db.close()
   };

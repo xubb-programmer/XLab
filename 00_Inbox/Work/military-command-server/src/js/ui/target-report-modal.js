@@ -1,9 +1,10 @@
 /**
- * 目标上报至火力点交互弹窗
- * 全面支持多目标对多火力点协同分配策略矩阵 (人机在环 · 建议预览与人工逐项裁决)
+ * 目标下派至作业单元交互弹窗
+ * 全面支持多目标对多作业单元协同分配策略矩阵 (人机在环 · 建议预览与人工逐项裁决)
  */
 import { escapeHtml } from "../core/html.js";
 import { eventBus } from "../core/event-bus.js";
+import { t } from "../core/terms.js";
 import {
   computeMultiAllocationPlan,
   evaluateTargetToPoint,
@@ -55,7 +56,7 @@ export class TargetReportModal {
     this.targetService = targetService;
     this.getFirepowerPoints = getFirepowerPoints;
     this.targetsToReport = [];
-    this.assignments = new Map(); // targetId -> selectedFirepowerId
+    this.assignments = new Map(); // targetId -> selectedPointId
     this.multiPlan = null;
     this.isSubmitting = false;
     this.markedItems = new Set();
@@ -105,12 +106,12 @@ export class TargetReportModal {
       this.handleSubmit();
     });
 
-    // 一键采用系统最优多阵位协同方案
+    // 一键采用系统最优多作业单元协同方案
     this.btnApplyStrategy?.addEventListener("click", () => {
       this.applyOptimalPlan();
     });
 
-    // 快捷工具：统一将所有目标指定给某个阵位
+    // 快捷工具：统一将所有目标指定给某个作业单元
     this.batchAssignAllSelect?.addEventListener("change", e => {
       const val = e.target.value;
       if (val) {
@@ -141,7 +142,7 @@ export class TargetReportModal {
       : this.targetService.getSelectedTargets();
 
     if (!list || list.length === 0) {
-      alert("请先选择至少一个要上报的目标！");
+      alert(t("action.selectAtLeastOneTarget", "请先选择至少一个要下派的目标！"));
       return;
     }
 
@@ -153,10 +154,10 @@ export class TargetReportModal {
 
     const points = typeof this.getFirepowerPoints === "function" ? this.getFirepowerPoints() : [];
 
-    // 解算多目标对多阵位最优协同分配方案
+    // 解算多目标对多作业单元最优协同分配方案
     this.multiPlan = computeMultiAllocationPlan(this.targetsToReport, points);
 
-    // 初始化人工指派表：优先使用已有人工裁决，次选传入偏好，否则默认填充系统建议的最优阵位
+    // 初始化人工指派表：优先使用已有人工裁决，次选传入偏好，否则默认填充系统建议的最优作业单元
     for (const planItem of (this.multiPlan?.targetPlans || [])) {
       const targetId = planItem.target.id;
       const adjudicatedFp = this.targetService.getAdjudication(targetId);
@@ -213,7 +214,7 @@ export class TargetReportModal {
     this.showModal();
     this.isSubmitting = true;
     this.updateConfirmButtonText();
-    this.showBanner("info", "正在读取上报记录…");
+    this.showBanner("info", t("action.loadingHistory", "正在读取任务下派记录…"));
     try {
       const batches = await readReportHistory();
       for (const batch of batches) {
@@ -224,9 +225,9 @@ export class TargetReportModal {
         this.historySelect.append(option);
       }
       if (batches.length) await this.loadBatch(this.historySelect.value);
-      else this.showBanner("info", "暂无上报记录");
+      else this.showBanner("info", t("action.noHistory", "暂无任务下派记录"));
     } catch (error) {
-      this.showBanner("error", error.versionMismatch ? "上报服务版本不匹配" : "读取上报记录失败", error.message);
+      this.showBanner("error", error.versionMismatch ? "服务版本不匹配" : "读取任务记录失败", error.message);
     } finally {
       this.isSubmitting = false;
       this.updateConfirmButtonText();
@@ -305,7 +306,7 @@ export class TargetReportModal {
 
     const defaultOpt = document.createElement("option");
     defaultOpt.value = "";
-    defaultOpt.textContent = "统一指定火力点…";
+    defaultOpt.textContent = t("action.specifyFirepower", "统一指定作业单元…");
     this.batchAssignAllSelect.append(defaultOpt);
 
     const points = typeof this.getFirepowerPoints === "function" ? this.getFirepowerPoints() : [];
@@ -337,7 +338,7 @@ export class TargetReportModal {
       const assignedFpId = this.assignments.get(target.id) || points[0]?.id || "FIRE-01";
       const assignedPoint = points.find(p => p.id === assignedFpId) || points[0] || null;
 
-      // 计算当前指派阵位的距离与包络状态
+      // 计算当前指派作业单元的距离与包络状态
       const currentEval = assignedPoint ? evaluateTargetToPoint(target, assignedPoint) : null;
       const inRange = currentEval ? currentEval.inRange : false;
 
@@ -371,7 +372,7 @@ export class TargetReportModal {
 
           <div class="matrix-range-badge-box">
             <span class="matrix-range-badge ${inRange ? 'range-in' : 'range-out'}">
-              ${inRange ? '● 射程内' : '▲ 超程'}
+              ${inRange ? t("action.inRange", "● 覆盖范围内") : t("action.outOfRange", "▲ 超出服务半径")}
             </span>
           </div>
 
@@ -379,7 +380,7 @@ export class TargetReportModal {
         </div>
       `;
 
-      // 阵位下拉选择变更 (人工裁决)
+      // 工位下拉选择变更 (人工裁决)
       const selectEl = card.querySelector(".matrix-firepower-select");
       selectEl?.addEventListener("change", e => {
         const newFpId = e.target.value;
@@ -430,12 +431,12 @@ export class TargetReportModal {
     this.plan.inert = Boolean(this.draft);
     if (this.needsReview) {
       this.btnConfirm.disabled = true;
-      this.btnConfirmText.textContent = "请核对本次上报";
+      this.btnConfirmText.textContent = t("action.reviewDispatch", "请核对本次任务下派");
       return;
     }
     if (this.batch) {
       this.btnConfirm.disabled = this.isSubmitting || this.batch.running || (!this.batch.retryableCount && !this.retryAttemptId);
-      this.btnConfirmText.textContent = this.batch.running ? "正在上报…"
+      this.btnConfirmText.textContent = this.batch.running ? t("action.dispatching", "正在下派…")
         : this.retryAttemptId ? "继续确认重试" : `重试可发送目标 (${this.batch.retryableCount})`;
     } else {
       this.btnConfirm.disabled = this.isSubmitting || this.plan.hidden || !this.targetsToReport.length;
@@ -491,7 +492,7 @@ export class TargetReportModal {
       const row = document.createElement("div");
       row.className = "report-result-item";
       const label = document.createElement("strong");
-      label.textContent = `${item.firepowerName || item.firepowerId || "阵位"} · ${item.targetNumber ?? item.targetId ?? "目标"} · ${resultLabels[item.state]}`;
+      label.textContent = `${item.firepowerName || item.firepowerId || t("roles.firepower", "作业单元")} · ${item.targetNumber ?? item.targetId ?? "目标"} · ${resultLabels[item.state]}`;
       row.append(label);
       if (item.error) {
         const reason = document.createElement("span");
@@ -567,7 +568,7 @@ export class TargetReportModal {
     };
     this.isSubmitting = true;
     this.updateConfirmButtonText();
-    this.showBanner("info", "正在提交上报批次…");
+    this.showBanner("info", t("action.submittingBatch", "正在提交下派批次…"));
     let submitting = false;
     try {
       await readReportHistory();
@@ -580,18 +581,18 @@ export class TargetReportModal {
       this.retryAttemptId = null;
     } catch (error) {
       if (error.versionMismatch) {
-        this.showBanner("error", "上报服务版本不匹配", `本次操作未发送。${error.message}`);
+        this.showBanner("error", "服务版本不匹配", `本次操作未发送。${error.message}`);
       } else if (submitting && error.invalidReply) {
         this.needsReview = true;
-        this.showBanner("timeout", "上报结果待核实", "服务未返回有效批次，请在上报记录中查询或与接收端核对。");
+        this.showBanner("timeout", "下派结果待核实", "服务未返回有效批次，请在任务记录中查询或与接收端核对。");
       } else if (!submitting) {
-        this.showBanner("error", "无法确认上报服务状态", `本次操作未发送。${error.message}`);
+        this.showBanner("error", "无法确认服务状态", `本次操作未发送。${error.message}`);
       } else if (error.status >= 400 && error.status < 500) {
         this.draft = null;
         this.retryAttemptId = null;
-        this.showBanner("error", "上报请求未受理", error.message);
+        this.showBanner("error", "下派请求未受理", error.message);
       } else {
-        this.showBanner("timeout", "提交结果待确认", "可以继续提交本次请求，或在上报记录中查看状态。");
+        this.showBanner("timeout", "提交结果待确认", "可以继续提交本次请求，或在任务记录中查看状态。");
       }
     } finally {
       this.isSubmitting = false;

@@ -273,7 +273,7 @@ try {
     storage: "sqlite",
     database: "tiles.db",
     id: "combined-theaters",
-    name: "多战区高精度离线图集",
+    name: "多区域高精度离线图集",
     createdAt: new Date().toISOString(),
     totalTiles: Number(counts.tiles),
     minimumLevel: Number(counts.minimumLevel),

@@ -6,3 +6,4 @@ Thumbs.db
 /config/video.json
 /config/targets.json
 /public/offline-satellite/
+deployment-terms*.json

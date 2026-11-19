@@ -13,18 +13,19 @@ const deviceIds = new Set(devices.map(device => device.device_id));
 const channelIds = new Set(edge.channels.map(channel => channel.channel_id));
 const points = scenario.firepowerPoints ?? [scenario.firepowerPoint].filter(Boolean);
 let added = 0;
-const renameNode = edge.node_id === "target_guidance_edge" && template?.node_id === "military_command_server_edge";
+const renameNode = (edge.node_id === "target_guidance_edge" || edge.node_id.includes("command") || edge.node_id.includes("dispatch") || edge.node_id.includes("cooperative")) && template?.node_id === "intelligent_cooperative_server_edge";
 if (renameNode) edge.node_id = template.node_id;
 
 for (const point of points) {
   // 显式设备 ID 也可能指向已接入同一 Broker 的另一台 EdgeAgent。
   if (point.deviceId || typeof point.id !== "string" ||
       !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$/.test(point.id) || deviceIds.has(point.id)) continue;
-  const endpoint = reporting?.endpoints?.[point.id] ?? reporting?.defaultEndpoint;
+  const reportingConf = reporting?.reporting || reporting;
+  const endpoint = reportingConf?.endpoints?.[point.id] ?? reportingConf?.defaultEndpoint;
   const host = point.ip || point.host || endpoint?.host || "127.0.0.1";
   const port = Number(point.port || endpoint?.port || 5567);
   if (typeof host !== "string" || !host.trim() || !Number.isInteger(port) || port < 1 || port > 65535) {
-    console.warn(`阵位 ${point.id} 的旧地址无效，请在 EdgeAgent 中配置通道`);
+    console.warn(`作业点 ${point.id} 的旧地址无效，请在 EdgeAgent 中配置通道`);
     continue;
   }
   const channelId = "firepower_" + createHash("sha256").update(point.id).digest("hex").slice(0, 16);

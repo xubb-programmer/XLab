@@ -1,10 +1,11 @@
 /**
- * 火力打击多目标对多火力点协同分配策略计算引擎 (人机在环 · 建议预览)
+ * 任务处置多目标对多作业单元协同分配策略计算引擎 (人机在环 · 建议预览)
  * 核心准则：
- * 1. 射程包络硬约束 (D <= R)
- * 2. 距离最近原则 (min Distance / 弹道耗时短 / 散布小)
- * 3. 多阵位协同负载均衡 (避免单阵位通道阻塞，促成并发齐射)
+ * 1. 服务覆盖包络硬约束 (D <= R)
+ * 2. 距离最近原则 (min Distance / 响应耗时短)
+ * 3. 多工位协同负载均衡 (避免单工位通道阻塞，促成并发调度)
  */
+import { t } from "../core/terms.js";
 
 /**
  * 计算地球表面两经纬度点之间的大圆距离 (单位: km)
@@ -25,7 +26,7 @@ export function calculateDistanceKm(lat1, lon1, lat2, lon2) {
 }
 
 /**
- * 解析打击范围为标准千米数 (km)
+ * 解析覆盖范围为标准千米数 (km)
  */
 export function parseStrikeRangeKm(rangeVal) {
   if (typeof rangeVal === "number") {
@@ -43,7 +44,7 @@ export function parseStrikeRangeKm(rangeVal) {
 }
 
 /**
- * 计算单个目标相对于某个火力点的空间与包络关系
+ * 计算单个目标相对于某个作业单元的空间与包络关系
  */
 export function evaluateTargetToPoint(target, point) {
   const strikeRangeKm = parseStrikeRangeKm(point.strikeRange ?? point.maxRangeKm);
@@ -57,7 +58,7 @@ export function evaluateTargetToPoint(target, point) {
       strikeRangeKm,
       inRange: false,
       marginKm: 0,
-      statusLabel: "阵位坐标未配置"
+      statusLabel: t("allocation.noCoords", "点位坐标未配置")
     };
   }
 
@@ -67,8 +68,8 @@ export function evaluateTargetToPoint(target, point) {
   const inRange = distanceKm <= strikeRangeKm;
   const marginKm = Number((strikeRangeKm - distanceKm).toFixed(1));
   const statusLabel = inRange
-    ? `射程内 (${distanceKm}km / 最大${strikeRangeKm}km)`
-    : `超射程 ${Math.abs(marginKm)}km`;
+    ? t("allocation.inRangeFormat", `覆盖范围内 (${distanceKm}km / 最大${strikeRangeKm}km)`, { distance: distanceKm, maxRange: strikeRangeKm })
+    : t("allocation.outOfRangeFormat", `超出服务半径 ${Math.abs(marginKm)}km`, { margin: Math.abs(marginKm) });
 
   return {
     point,
@@ -82,10 +83,10 @@ export function evaluateTargetToPoint(target, point) {
 }
 
 /**
- * 多目标对多火力点协同分配策略解算 (Multi-Target to Multi-Battery Allocation)
+ * 多目标对多作业单元协同分配策略解算 (Multi-Target to Multi-Unit Allocation)
  * @param {Array} targets 选中的目标列表
- * @param {Array} firepowerPoints 在席火力点列表
- * @returns {Object} 包含按目标分配建议、阵位负载汇总与战术说明的方案对象
+ * @param {Array} points 在席作业单元列表
+ * @returns {Object} 包含按目标分配建议、工位负载汇总与协同说明的方案对象
  */
 export function computeMultiAllocationPlan(targets, firepowerPoints) {
   if (!targets || targets.length === 0 || !firepowerPoints || firepowerPoints.length === 0) {
@@ -93,7 +94,7 @@ export function computeMultiAllocationPlan(targets, firepowerPoints) {
       hasPlan: false,
       targetPlans: [],
       batteryLoads: {},
-      overallRationale: "无待分配目标或无可用火力点"
+      overallRationale: t("allocation.noAvailableUnits", "无待分配目标或无可用作业单元")
     };
   }
 
@@ -105,7 +106,7 @@ export function computeMultiAllocationPlan(targets, firepowerPoints) {
     batteryCapacities.set(p.id, Math.max(1, Number(p.maxTargets) || 1));
   }
 
-  // 1. 为每个目标解算所有可用阵位的距离与包络
+  // 1. 为每个目标解算所有可用工位的距离与包络
   const targetCandidateList = targets.map(target => {
     const candidates = validPoints.map(point => {
       const evalData = evaluateTargetToPoint(target, point);
@@ -115,7 +116,7 @@ export function computeMultiAllocationPlan(targets, firepowerPoints) {
       };
     });
 
-    // 候选阵位排序规则：优先在射程内；在射程内按距离升序；超出射程按超距升序
+    // 候选工位排序规则：优先在覆盖范围内；在覆盖范围内按距离升序；超出服务半径按超距升序
     candidates.sort((a, b) => {
       if (a.inRange !== b.inRange) {
         return a.inRange ? -1 : 1;
@@ -129,7 +130,7 @@ export function computeMultiAllocationPlan(targets, firepowerPoints) {
     };
   });
 
-  // 2. 考虑阵位最大目标容量上限 (maxTargets) 与多阵位协同均衡，进行目标到阵位的匹配指派
+  // 2. 考虑工位最大目标容量上限 (maxTargets) 与多工位协同均衡，进行目标到工位的匹配指派
   const targetPlans = [];
 
   for (const item of targetCandidateList) {
@@ -143,14 +144,14 @@ export function computeMultiAllocationPlan(targets, firepowerPoints) {
         recommendedPoint: firepowerPoints[0] || null,
         recommendedDistanceKm: 0,
         recommendedInRange: false,
-        recommendedReason: "未配置有效阵位坐标",
+        recommendedReason: t("allocation.noCoords", "未配置有效工位坐标"),
         evaluations: []
       });
       continue;
     }
 
-    // 候选阵位智能遴选：
-    // 优先层：射程内 且 承揽数未达上限 (batteryLoads < maxTargets) 的阵位
+    // 候选工位智能遴选：
+    // 优先层：覆盖范围内 且 承揽数未达上限 (batteryLoads < maxTargets) 的工位
     const inRangeUnderCap = candidates.filter(
       c => c.inRange && (batteryLoads.get(c.point.id) || 0) < (batteryCapacities.get(c.point.id) || 1)
     );
@@ -158,7 +159,7 @@ export function computeMultiAllocationPlan(targets, firepowerPoints) {
     let chosen;
     if (inRangeUnderCap.length > 0) {
       chosen = inRangeUnderCap[0];
-      // 如果有多处未满载候选阵位，且最优候选负载已接近其上限，次优候选在射程内且距离相近(<=35%)但剩余容量更充裕，则分流促成齐射
+      // 如果有多处未满载候选工位，且最优候选负载已接近其上限，次优候选在覆盖范围内且距离相近(<=35%)但剩余容量更充裕，则分流促成并发调度
       if (inRangeUnderCap.length > 1) {
         const bestLoad = batteryLoads.get(chosen.point.id) || 0;
         const bestCap = batteryCapacities.get(chosen.point.id) || 1;
@@ -170,7 +171,7 @@ export function computeMultiAllocationPlan(targets, firepowerPoints) {
         if (alt) chosen = alt;
       }
     } else {
-      // 若射程内阵位均已满载：优先选射程内的阵位中超额最少且相对最近的；若全超射程则选最近阵位
+      // 若覆盖范围内工位均已满载：优先选覆盖范围内的工位中超额最少且相对最近的；若全超服务半径则选最近工位
       const inRangeOverCap = candidates.filter(c => c.inRange);
       if (inRangeOverCap.length > 0) {
         inRangeOverCap.sort((a, b) => {
@@ -189,23 +190,35 @@ export function computeMultiAllocationPlan(targets, firepowerPoints) {
       }
     }
 
-    // 更新阵位负载计数
+    // 更新工位负载计数
     const chosenId = chosen.point.id;
     const currentLoadBefore = batteryLoads.get(chosenId) || 0;
     const capacity = batteryCapacities.get(chosenId) || 1;
     batteryLoads.set(chosenId, currentLoadBefore + 1);
     const isOverCapacity = (currentLoadBefore + 1) > capacity;
 
-    // 生成战术理由
+    // 生成协同理由
     let reason = "";
     if (chosen.inRange) {
       if (isOverCapacity) {
-        reason = `在打击射程包络内（距目标 ${chosen.distanceKm} km ≤ ${chosen.strikeRangeKm} km），但该阵位已达单次最大目标容量上限（已分配 ${currentLoadBefore + 1}/${capacity} 个），建议核审分流或分批打击。`;
+        reason = t("allocation.reasonOverCapacity", `在覆盖范围内（距目标 ${chosen.distanceKm} km ≤ ${chosen.strikeRangeKm} km），但该工位已达单次最大目标容量上限（已分配 ${currentLoadBefore + 1}/${capacity} 个），建议核审分流或分批处置。`, {
+          distance: chosen.distanceKm,
+          range: chosen.strikeRangeKm,
+          current: currentLoadBefore + 1,
+          capacity
+        });
       } else {
-        reason = `在打击射程包络内（距目标 ${chosen.distanceKm} km ≤ ${chosen.strikeRangeKm} km），通道容量充裕（已分配 ${currentLoadBefore + 1}/${capacity} 个），飞行耗时短、散布精度高。`;
+        reason = t("allocation.reasonOptimal", `在覆盖范围内（距目标 ${chosen.distanceKm} km ≤ ${chosen.strikeRangeKm} km），通道容量充裕（已分配 ${currentLoadBefore + 1}/${capacity} 个），响应耗时短、精度高。`, {
+          distance: chosen.distanceKm,
+          range: chosen.strikeRangeKm,
+          current: currentLoadBefore + 1,
+          capacity
+        });
       }
     } else {
-      reason = `超出所有可用阵位射程，该阵位相对最近（超距 ${Math.abs(chosen.marginKm)} km）。`;
+      reason = t("allocation.reasonClosestOutOfRange", `超出所有可用工位服务半径，该工位相对最近（超距 ${Math.abs(chosen.marginKm)} km）。`, {
+        margin: Math.abs(chosen.marginKm)
+      });
     }
 
     // 生成供该目标专用的下拉选项列表
@@ -238,7 +251,7 @@ export function computeMultiAllocationPlan(targets, firepowerPoints) {
     });
   }
 
-  // 3. 生成整体协同态势战术说明
+  // 3. 生成整体协同态势说明
   const loadSummaryParts = [];
   let inRangeCount = 0;
   for (const plan of targetPlans) {
@@ -256,12 +269,12 @@ export function computeMultiAllocationPlan(targets, firepowerPoints) {
   }
 
   const baseRatioText = inRangeCount === targets.length
-    ? `推荐就近分流（${targets.length} 目标均在射程内）`
-    : `就近分流（${inRangeCount}/${targets.length} 目标在射程内）`;
+    ? t("allocation.recommendAllInRange", `推荐就近分流（${targets.length} 目标均在服务半径内）`, { count: targets.length })
+    : t("allocation.recommendPartialInRange", `就近分流（${inRangeCount}/${targets.length} 目标在服务半径内）`, { inRange: inRangeCount, total: targets.length });
 
   const overallRationale = hasAnyOverload
-    ? `${baseRatioText} · 存在阵位超出通道容量上限`
-    : `${baseRatioText} · 各阵位容量受控`;
+    ? `${baseRatioText} · 存在工位超出通道容量上限`
+    : `${baseRatioText} · 各工位容量受控`;
 
   const loadsObj = {};
   for (const [id, count] of batteryLoads) {
@@ -277,24 +290,7 @@ export function computeMultiAllocationPlan(targets, firepowerPoints) {
     targetPlans,
     batteryLoads: loadsObj,
     batteryCapacities: capsObj,
-    overallRationale
-  };
-}
-
-/**
- * 兼容原有单一推荐接口
- */
-export function evaluateAllocationStrategy(targets, firepowerPoints) {
-  const multiPlan = computeMultiAllocationPlan(targets, firepowerPoints);
-  const bestPointId = multiPlan.targetPlans[0]?.recommendedPointId || firepowerPoints[0]?.id;
-  const bestPoint = firepowerPoints.find(p => p.id === bestPointId) || firepowerPoints[0];
-
-  return {
-    hasRecommendation: multiPlan.hasPlan,
-    recommendedPointId: bestPointId,
-    recommendedPoint: bestPoint,
-    recommendationReason: multiPlan.overallRationale,
-    pointEvaluations: multiPlan.targetPlans[0]?.evaluations || [],
-    multiPlan
+    overallRationale,
+    loadSummary: loadSummaryParts.join(" ")
   };
 }

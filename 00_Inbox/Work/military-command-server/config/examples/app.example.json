@@ -1,0 +1,37 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 4177,
+    "deviceSimSourceIps": "172.29.48.1"
+  },
+  "targets": {
+    "brokerUrl": "mqtt://127.0.0.1:1883",
+    "topic": "edge/v1/devices/target-input-device/data",
+    "deviceStatusTopic": "edge/v1/devices/device-status-device/data",
+    "deviceStatusRelayIp": "172.29.48.1",
+    "username": "",
+    "password": ""
+  },
+  "video": {
+    "rtspTimeoutOption": "stimeout",
+    "ffmpegPath": "ffmpeg",
+    "streams": [
+      {
+        "id": "uav-video-01",
+        "label": "1号机载航拍",
+        "uavId": "UAV-01",
+        "rtspUrl": "rtsp://127.0.0.1:8554/live/stream1"
+      }
+    ]
+  },
+  "reporting": {
+    "defaultEndpoint": {
+      "timeoutMs": 6000
+    },
+    "endpoints": {
+      "FIRE-01": {
+        "timeoutMs": 6000
+      }
+    }
+  }
+}

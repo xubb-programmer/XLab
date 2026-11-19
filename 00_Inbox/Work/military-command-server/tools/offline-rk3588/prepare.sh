@@ -24,7 +24,7 @@ output=$(cd -- "$output" && pwd)
 work=$(mktemp -d)
 trap 'rm -rf -- "$work"' EXIT
 chmod 0755 "$work"
-bundle="$work/military-command-server-offline"
+bundle="$work/intelligent-cooperative-server-offline"
 mkdir -p "$bundle"/{bin,config,debs,services,node,web} "$work"/{apt/partial,edge/build}
 if compgen -G '/var/cache/apt/archives/*.deb' >/dev/null; then
   while IFS= read -r archive; do
@@ -66,7 +66,7 @@ if grep -q 'not found' "$work/edge-ldd"; then cat "$work/edge-ldd" >&2; die 'Edg
 
 node_tar="node-$node_version-linux-arm64.tar.xz"
 release_url="https://nodejs.org/dist/$node_version"
-node_cache=${NODE_CACHE_DIR:-/var/cache/military-command-server}
+node_cache=${NODE_CACHE_DIR:-/var/cache/intelligent-cooperative-server}
 if [[ -f "$node_cache/SHASUMS256.txt" && -f "$node_cache/$node_tar" ]]; then
   cp -a "$node_cache/SHASUMS256.txt" "$work/node-checksums"
   cp -a "$node_cache/$node_tar" "$work/$node_tar"
@@ -82,7 +82,7 @@ tar -xJf "$work/$node_tar" -C "$bundle/node" --strip-components=1
 export PATH="$bundle/node/bin:$PATH"
 [[ $(node -p 'process.arch') == arm64 ]] || die 'Node.js 架构检查失败。'
 
-cp -a "$web"/{package.json,package-lock.json,server,src,public} "$bundle/web/"
+cp -a "$web"/{package.json,package-lock.json,server,src,public,config} "$bundle/web/"
 map_snapshot_args=()
 if [[ "${ALLOW_INCOMPLETE_OFFLINE_MAP:-0}" == "1" ]]; then
   map_snapshot_args+=(--allow-active-snapshot)
@@ -90,22 +90,33 @@ fi
 node "$here/merge-maps.mjs" "$bundle/web/dist/offline-maps/combined-theaters" \
   "$web/dist/offline-maps/highres-satellite" "$web/dist/offline-maps/zhurihe-chifeng" "${map_snapshot_args[@]}"
 mv "$bundle/web/public/scenarios" "$bundle/config/scenarios"
-cp "$web/config/video.example.json" "$bundle/config/video.json"
-cp "$web/config/reporting.example.json" "$bundle/config/reporting.json"
+cp "$web/config/app.json" "$bundle/config/app.json"
+if [[ -f "$web/deployment-terms.json" ]]; then
+  cp "$web/deployment-terms.json" "$bundle/config/terms.json"
+else
+  cp "$web/config/terms.json" "$bundle/config/terms.json"
+fi
 node "$here/expand-lan-peers.mjs" "$here/edgeagent.json" > "$bundle/config/edgeagent.json"
+cp -a "$web/config/mosquitto" "$bundle/config/" 2>/dev/null || true
 node --input-type=module - "$bundle/config" <<'JS'
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 const dir = process.argv[2];
 const read = file => JSON.parse(readFileSync(join(dir, file), "utf8"));
 const write = (file, data) => writeFileSync(join(dir, file), JSON.stringify(data, null, 2) + "\n");
-write("targets.json", {
-  brokerUrl: "mqtt://127.0.0.1:1883",
-  topic: "edge/v1/devices/target-input-device/data",
-  deviceStatusTopic: "edge/v1/devices/device-status-device/data",
-  deviceStatusRelayIp: ""
+const app = read("app.json");
+write("app.json", {
+  ...app,
+  server: {
+    ...app.server,
+    host: "192.168.0.201",
+    port: 4177
+  },
+  video: {
+    ...app.video,
+    rtspTimeoutOption: "stimeout"
+  }
 });
-write("video.json", { ...read("video.json"), rtspTimeoutOption: "stimeout" });
 const file = "scenarios/scenario-default.json";
 const source = read(file);
 write(file, { ...source, mapMode: "offline" });
@@ -121,7 +132,7 @@ JS
   npm run check
 )
 
-cp "$here"/{README.md,install.sh,migrate-installation.sh,launch-military-command.sh,open-desktop-tool.sh,military-command-tools.desktop,runtime-packages.txt,migrate-edge-reporting.mjs} "$bundle/"
+cp "$here"/{README.md,install.sh,migrate-installation.sh,launch-intelligent-cooperative.sh,open-desktop-tool.sh,intelligent-cooperative-tools.desktop,runtime-packages.txt,migrate-edge-reporting.mjs} "$bundle/"
 cp "$web/README.md" "$bundle/PROJECT-README.md"
 cp "$here"/*.service "$bundle/services/"
 printf 'os_id=%s\nos_version_id=%s\nos_version_codename=%s\narchitecture=%s\npackage_format=deb\nnode=%s\n' \
@@ -130,8 +141,8 @@ printf 'os_id=%s\nos_version_id=%s\nos_version_codename=%s\narchitecture=%s\npac
   cd "$bundle"
   find . -type f ! -path ./SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
 )
-archive="$output/military-command-server-${ID}${VERSION_ID}-${architecture}.tar.gz"
-tar -C "$work" -czf "$work/bundle.tar.gz" military-command-server-offline
+archive="$output/intelligent-cooperative-server-${ID}${VERSION_ID}-${architecture}.tar.gz"
+tar -C "$work" -czf "$work/bundle.tar.gz" intelligent-cooperative-server-offline
 mv "$work/bundle.tar.gz" "$archive"
 (cd "$output" && sha256sum "$(basename "$archive")" > "$(basename "$archive").sha256")
 printf '离线包已生成：%s\n' "$archive"
