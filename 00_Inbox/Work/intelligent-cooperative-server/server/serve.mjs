@@ -19,42 +19,26 @@ import { hasGeographicPosition } from "../src/js/core/coordinates.js";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 
+// 统一基于工程根目录的相对路径解析，严格使用相对路径，彻底移除 /etc/ 绝对路径与历史兼容回退
 function resolveConfig(envVar, defaultRelativePath) {
-  const relPath = resolve(root, defaultRelativePath);
-  const coopVar = envVar;
-  const cmdVar = envVar.replace("INTELLIGENT_COOPERATIVE_", "INTELLIGENT_COMMAND_");
-  const dispatchVar = envVar.replace("INTELLIGENT_COOPERATIVE_", "DISPATCH_");
-  const ancientVar = envVar.replace("INTELLIGENT_COOPERATIVE_", "COMMAND_");
-  const envVal = process.env[coopVar] || process.env[cmdVar] || process.env[dispatchVar] || process.env[ancientVar];
-  if (envVal && envVal.trim()) {
-    // 优先使用工程相对路径 config/，避免环境变量中的 /etc/ 绝对路径干扰
-    if (envVal.startsWith("/etc/") && existsSync(relPath)) {
-      return relPath;
-    }
+  const envVal = process.env[envVar];
+  if (envVal && envVal.trim() && !envVal.startsWith("/etc/")) {
     return resolve(root, envVal.trim());
   }
-  return relPath;
+  return resolve(root, defaultRelativePath);
 }
 
-// 加载统一业务配置 config/app.json
+// 加载统一业务主配置 config/app.json
 const appConfigPath = resolveConfig("INTELLIGENT_COOPERATIVE_SERVER_CONFIG", "config/app.json");
 const appConfig = JSON.parse(await readFile(appConfigPath, "utf8"));
 
+// 场景与建制基准数据路径，唯一指向 config/scenario-default.json
 function resolveScenarioPath() {
-  const inConfig = resolve(root, "config/scenario-default.json");
-  if (existsSync(inConfig)) return inConfig;
-  const inConfigSub = resolve(root, "config/scenarios/scenario-default.json");
-  if (existsSync(inConfigSub)) return inConfigSub;
-  const custom = process.env.INTELLIGENT_COOPERATIVE_SERVER_SCENARIO ||
-    process.env.INTELLIGENT_COMMAND_SERVER_SCENARIO ||
-    process.env.DISPATCH_SERVER_SCENARIO ||
-    process.env.COMMAND_SERVER_SCENARIO;
-  if (custom && custom.trim()) {
+  const custom = process.env.INTELLIGENT_COOPERATIVE_SERVER_SCENARIO;
+  if (custom && custom.trim() && !custom.startsWith("/etc/")) {
     return resolve(root, custom.trim());
   }
-  const inPublic = resolve(root, "public/scenarios/scenario-default.json");
-  if (existsSync(inPublic)) return inPublic;
-  return inConfig;
+  return resolve(root, "config/scenario-default.json");
 }
 
 const scenarioPath = resolveScenarioPath();
@@ -64,34 +48,27 @@ if (appServer.deviceSimSourceIps && process.env.DEVICE_SIM_SOURCE_IPS === undefi
 }
 
 const port = Number(process.env.PORT ?? appServer.port ?? 4177);
-const host = process.env.INTELLIGENT_COOPERATIVE_SERVER_BIND_HOST ||
-  process.env.INTELLIGENT_COMMAND_SERVER_BIND_HOST ||
-  process.env.DISPATCH_SERVER_BIND_HOST ||
-  process.env.COMMAND_SERVER_BIND_HOST ||
-  appServer.host || "127.0.0.1";
+const host = process.env.INTELLIGENT_COOPERATIVE_SERVER_BIND_HOST || appServer.host || "127.0.0.1";
 const videoConfig = await loadVideoConfig(appConfig.video || {});
 let deviceSimulation;
 const managementDb = resolveConfig("INTELLIGENT_COOPERATIVE_SERVER_MANAGEMENT_DB", "dist/data-preview/records.sqlite");
 const operations = openOperationalStore(managementDb);
 const managementRegistry = openPreviewRegistry(managementDb);
 const offlineMapDir = resolve(root, "dist/offline-maps/combined-theaters");
+
+// 术语与界面词条字典路径，唯一指向 config/terms.json
 function resolveTermsConfig() {
-  const inConfig = resolve(root, "config/terms.json");
-  if (existsSync(inConfig)) return inConfig;
-  const custom = process.env.INTELLIGENT_COOPERATIVE_SERVER_TERMS_CONFIG ||
-    process.env.INTELLIGENT_COMMAND_SERVER_TERMS_CONFIG ||
-    process.env.DISPATCH_SERVER_TERMS_CONFIG ||
-    process.env.COMMAND_SERVER_TERMS_CONFIG;
-  if (custom && custom.trim()) {
+  const custom = process.env.INTELLIGENT_COOPERATIVE_SERVER_TERMS_CONFIG;
+  if (custom && custom.trim() && !custom.startsWith("/etc/")) {
     return resolve(root, custom.trim());
   }
-  return inConfig;
+  return resolve(root, "config/terms.json");
 }
 
 const termsConfigPath = resolveTermsConfig();
 let offlineMapDb;
 let offlineMapTileQuery;
-const targetsConfig = await loadTargetsConfig(appConfig.targets || appConfig.mqtt || {});
+const targetsConfig = await loadTargetsConfig(appConfig.targets || {});
 const targetFeed = await openTargetFeed(targetsConfig, operations);
 const reportBatches = openReportBatches(
   resolveConfig("INTELLIGENT_COOPERATIVE_SERVER_REPORTING_DB", "dist/reporting/reporting.sqlite"),
@@ -580,7 +557,7 @@ const server = createServer(async (req, res) => {
       serveVideo(req, res, config, pathname, parsedUrl.searchParams.get("id"), uavId);
       return;
     }
-    if (pathname === "/public/scenarios/scenario-default.json" || pathname === "/config/scenario-default.json" || pathname === "/api/scenario") {
+    if (pathname === "/config/scenario-default.json" || pathname === "/api/scenario") {
       const { scenario } = await readScenario();
       res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
       res.end(req.method === "HEAD" ? undefined : JSON.stringify(scenario));

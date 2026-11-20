@@ -1,8 +1,0 @@
-{
-  "brokerUrl": "",
-  "topic": "edge/v1/devices/target-input-device/data",
-  "deviceStatusTopic": "edge/v1/devices/device-status-device/data",
-  "deviceStatusRelayIp": "172.29.48.1",
-  "username": "",
-  "password": ""
-}
