@@ -127,7 +127,7 @@ bool parseCanIdText(const QString &text, quint32 *value, QString *error, const Q
     return true;
 }
 
-/** @brief 解析 allowed_peers 中的 IP:端口文本。 */
+/** @brief 解析 allowed_peers 中的 IP:端口文本（支持通配符、CIDR 子网掩码与主机 IP）。 */
 bool parsePeer(const QString &text, PeerConfig *peer, QString *error)
 {
     const int separator = text.lastIndexOf(QLatin1Char(':')); // 使用最后一个冒号分隔 IP 和端口。
@@ -135,17 +135,51 @@ bool parsePeer(const QString &text, PeerConfig *peer, QString *error)
         return fail(error, QStringLiteral("对端地址必须是 IP:端口：%1").arg(text));
     }
 
-    QHostAddress address; // 解析出的对端地址。
-    if (!parseAddress(text.left(separator), &address, error, QStringLiteral("allowed_peers"))) {
+    const QString hostPart = text.left(separator).trimmed();
+    const QString portPart = text.mid(separator + 1).trimmed();
+    quint16 port = 0;
+    if (portPart == QStringLiteral("*")) {
+        port = 0;
+    } else {
+        bool ok = false;
+        const int p = portPart.toInt(&ok);
+        if (!ok || p < 0 || p > 65535) {
+            return fail(error, QStringLiteral("对端端口无效：%1").arg(text));
+        }
+        port = static_cast<quint16>(p);
+    }
+    peer->port = port;
+
+    // 通配符匹配
+    if (hostPart == QStringLiteral("*") || hostPart == QStringLiteral("0.0.0.0") || hostPart == QStringLiteral("0.0.0.0/0")) {
+        peer->address = QHostAddress::AnyIPv4;
+        peer->prefixLength = 0;
+        peer->isWildcard = true;
+        return true;
+    }
+
+    // CIDR 子网格式，例如 192.168.0.0/24
+    const int slashIdx = hostPart.indexOf(QLatin1Char('/'));
+    if (slashIdx > 0) {
+        const QString ipStr = hostPart.left(slashIdx);
+        bool ok = false;
+        const int prefix = hostPart.mid(slashIdx + 1).toInt(&ok);
+        if (!ok || prefix < 0 || prefix > 32) {
+            return fail(error, QStringLiteral("CIDR 前缀无效：%1").arg(text));
+        }
+        if (!parseAddress(ipStr, &peer->address, error, QStringLiteral("allowed_peers"))) {
+            return false;
+        }
+        peer->prefixLength = prefix;
+        peer->isWildcard = (prefix == 0);
+        return true;
+    }
+
+    if (!parseAddress(hostPart, &peer->address, error, QStringLiteral("allowed_peers"))) {
         return false;
     }
-    bool ok = false; // 记录端口文本是否成功转换为整数。
-    const int port = text.mid(separator + 1).toInt(&ok); // 对端端口。
-    if (!ok || port < 0 || port > 65535) {
-        return fail(error, QStringLiteral("对端端口无效：%1").arg(text));
-    }
-    peer->address = address;
-    peer->port = static_cast<quint16>(port);
+    peer->prefixLength = -1;
+    peer->isWildcard = false;
     return true;
 }
 
@@ -242,18 +276,20 @@ bool parseChannel(const Json &object, ChannelConfig *channel, QString *error)
         if (channel->udp.maxDatagramBytes < 1 || channel->udp.maxDatagramBytes > 65507) {
             return fail(error, QStringLiteral("max_datagram_bytes 必须在 1 到 65507 之间"));
         }
-        if (!object.contains("allowed_peers") || !object.at("allowed_peers").is_array()) {
-            return fail(error, QStringLiteral("UDP 必须配置 allowed_peers，端口 0 表示通配任意源端口"));
-        }
-        for (const Json &value : object.at("allowed_peers")) { // 逐项解析来源白名单。
-            if (!value.is_string()) {
-                return fail(error, QStringLiteral("allowed_peers 中的每一项必须是字符串"));
+        if (object.contains("allowed_peers")) {
+            if (!object.at("allowed_peers").is_array()) {
+                return fail(error, QStringLiteral("allowed_peers 必须为数组格式"));
             }
-            PeerConfig peer; // 当前正在解析的 UDP 对端白名单项。
-            if (!parsePeer(QString::fromStdString(value.get<std::string>()), &peer, error)) {
-                return false;
+            for (const Json &value : object.at("allowed_peers")) { // 逐项解析来源白名单。
+                if (!value.is_string()) {
+                    return fail(error, QStringLiteral("allowed_peers 中的每一项必须是字符串"));
+                }
+                PeerConfig peer; // 当前正在解析的 UDP 对端白名单项。
+                if (!parsePeer(QString::fromStdString(value.get<std::string>()), &peer, error)) {
+                    return false;
+                }
+                channel->udp.allowedPeers.append(peer);
             }
-            channel->udp.allowedPeers.append(peer);
         }
 
         channel->udp.broadcast = object.value("broadcast", false);
@@ -302,9 +338,14 @@ bool parseChannel(const Json &object, ChannelConfig *channel, QString *error)
                 return fail(error, QStringLiteral("max_clients 必须在 1 到 1024 之间"));
             }
         } else {
-            if (!readRequiredString(object, "remote_host", &channel->tcp.remoteHost, error)
-                || !readPort(object, "remote_port", &channel->tcp.remotePort, error)) {
-                return false;
+            const QString remoteHost = QString::fromStdString(object.value("remote_host", std::string("dynamic")));
+            channel->tcp.remoteHost = remoteHost;
+            if (remoteHost != QStringLiteral("dynamic") && !remoteHost.isEmpty()) {
+                if (!readPort(object, "remote_port", &channel->tcp.remotePort, error)) {
+                    return false;
+                }
+            } else {
+                channel->tcp.remotePort = static_cast<quint16>(object.value("remote_port", 5567));
             }
         }
         return true;

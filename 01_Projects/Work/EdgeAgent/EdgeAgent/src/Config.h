@@ -41,6 +41,8 @@ enum class ByteOrder {
 struct PeerConfig {
     QHostAddress address; ///< 对端 IP 地址。
     quint16 port = 0; ///< 对端端口，0 表示允许此地址的任意源端口。
+    int prefixLength = -1; ///< CIDR 前缀掩码长度，-1 表示精确主机地址，0 表示通配所有地址。
+    bool isWildcard = false; ///< 是否通配任意 IP。
 };
 
 /** @brief TCP 或串口分帧参数。 */

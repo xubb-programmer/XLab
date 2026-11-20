@@ -7,8 +7,10 @@
 #include "MqttClient.h"
 
 #include <mosquitto.h>
+#include <nlohmann/json.hpp>
 
 #include <QMutexLocker>
+#include <QNetworkInterface>
 
 namespace EdgeAgent {
 
@@ -180,6 +182,30 @@ void MqttClient::handleConnect(int reasonCode)
         if (rc != MOSQ_ERR_SUCCESS) {
             emit fault(QStringLiteral("mqtt_status_publish_failed"), QStringLiteral("发布网关状态失败，错误码：%1").arg(rc));
         }
+
+        const QString ifaceTopic = QStringLiteral("edge/v1/gateways/%1/interfaces").arg(m_nodeId);
+        nlohmann::json ifaces = nlohmann::json::array();
+        for (const auto &iface : QNetworkInterface::allInterfaces()) {
+            if (iface.flags().testFlag(QNetworkInterface::IsUp) &&
+                iface.flags().testFlag(QNetworkInterface::IsRunning) &&
+                !iface.flags().testFlag(QNetworkInterface::IsLoopBack)) {
+                for (const auto &entry : iface.addressEntries()) {
+                    if (entry.ip().protocol() == QAbstractSocket::IPv4Protocol) {
+                        ifaces.push_back({
+                            {"name", iface.name().toStdString()},
+                            {"address", entry.ip().toString().toStdString()},
+                            {"netmask", entry.netmask().toString().toStdString()}
+                        });
+                    }
+                }
+            }
+        }
+        const std::string ifacePayload = nlohmann::json({
+            {"gateway", m_nodeId.toStdString()},
+            {"interfaces", ifaces}
+        }).dump();
+        mosquitto_publish(m_client, nullptr, ifaceTopic.toUtf8().constData(),
+                          static_cast<int>(ifacePayload.size()), ifacePayload.data(), 1, true);
     }
     emit connected();
 }

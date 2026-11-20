@@ -8,7 +8,10 @@
 
 #include "Channel.h"
 
+#include <QNetworkInterface>
+#include <QTimer>
 #include <QUdpSocket>
+#include <QVector>
 
 namespace EdgeAgent {
 
@@ -57,6 +60,9 @@ private slots:
     /** @brief 读取并处理套接字中的所有待接收数据报。 */
     void readPendingDatagrams();
 
+    /** @brief 周期性检查并自动重连/刷新组播网卡（应对网线断开重插等网络变更）。 */
+    void refreshMulticastGroups();
+
 private:
     /**
      * @brief 将 UDP 数据报转换为统一帧事件。
@@ -67,6 +73,8 @@ private:
     void emitDatagram(const QByteArray &payload, const QHostAddress &address, quint16 port);
 
     QUdpSocket m_socket; ///< UDP 套接字。
+    QVector<int> m_joinedInterfaceIndices; ///< 已加入组播的物理网卡索引列表。
+    QTimer m_multicastRefreshTimer; ///< 组播自动维护定时器。
     bool m_running = false; ///< 通道是否已经启动。
 };
 

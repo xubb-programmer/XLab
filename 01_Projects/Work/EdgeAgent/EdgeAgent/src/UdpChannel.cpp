@@ -35,29 +35,53 @@ void UdpChannel::start()
     }
 
     if (m_config.udp.multicastEnabled) {
-        bool joined = false; // 记录是否成功加入组播组。
-        if (m_config.udp.multicastInterfaceName.isEmpty()) {
-            joined = m_socket.joinMulticastGroup(m_config.udp.multicastGroup);
-        } else {
-            const QNetworkInterface interface = QNetworkInterface::interfaceFromName(m_config.udp.multicastInterfaceName); // 查找指定网卡。
-            if (!interface.isValid()) {
-                reportFault(QStringLiteral("udp_multicast_interface_invalid"), QStringLiteral("组播网卡无效：%1").arg(m_config.udp.multicastInterfaceName));
-                m_socket.close();
-                setState(QStringLiteral("error"));
-                return;
-            }
-            joined = m_socket.joinMulticastGroup(m_config.udp.multicastGroup, interface);
+        m_joinedInterfaceIndices.clear();
+        refreshMulticastGroups();
+        // 即使启动瞬间物理网线未插，也尝试默认加入，不判死为 error，由定时器持续探活自愈
+        if (m_joinedInterfaceIndices.isEmpty()) {
+            m_socket.joinMulticastGroup(m_config.udp.multicastGroup);
         }
-        if (!joined) {
-            reportFault(QStringLiteral("udp_multicast_join_failed"), QStringLiteral("加入 UDP 组播失败"));
-            m_socket.close();
-            setState(QStringLiteral("error"));
-            return;
-        }
+        m_multicastRefreshTimer.setInterval(5000); // 每 5 秒周期性检查物理网卡状态与网线插拔自愈
+        connect(&m_multicastRefreshTimer, &QTimer::timeout, this, &UdpChannel::refreshMulticastGroups);
+        m_multicastRefreshTimer.start();
     }
 
     m_running = true;
     setState(QStringLiteral("ready"));
+}
+
+void UdpChannel::refreshMulticastGroups()
+{
+    if (!m_socket.isOpen() || !m_config.udp.multicastEnabled) {
+        return;
+    }
+    if (m_config.udp.multicastInterfaceName.isEmpty() || m_config.udp.multicastInterfaceName == QStringLiteral("auto")) {
+        const auto interfaces = QNetworkInterface::allInterfaces();
+        for (const QNetworkInterface &iface : interfaces) {
+            if (iface.flags().testFlag(QNetworkInterface::IsUp) &&
+                iface.flags().testFlag(QNetworkInterface::IsRunning) &&
+                iface.flags().testFlag(QNetworkInterface::CanMulticast) &&
+                !iface.flags().testFlag(QNetworkInterface::IsLoopBack)) {
+                if (m_socket.joinMulticastGroup(m_config.udp.multicastGroup, iface)) {
+                    if (!m_joinedInterfaceIndices.contains(iface.index())) {
+                        m_joinedInterfaceIndices.append(iface.index());
+                    }
+                }
+            }
+        }
+        if (m_joinedInterfaceIndices.isEmpty()) {
+            m_socket.joinMulticastGroup(m_config.udp.multicastGroup);
+        }
+    } else {
+        const QNetworkInterface interface = QNetworkInterface::interfaceFromName(m_config.udp.multicastInterfaceName);
+        if (interface.isValid() && interface.flags().testFlag(QNetworkInterface::IsUp) && interface.flags().testFlag(QNetworkInterface::IsRunning)) {
+            if (m_socket.joinMulticastGroup(m_config.udp.multicastGroup, interface)) {
+                if (!m_joinedInterfaceIndices.contains(interface.index())) {
+                    m_joinedInterfaceIndices.append(interface.index());
+                }
+            }
+        }
+    }
 }
 
 void UdpChannel::stop()
@@ -66,7 +90,19 @@ void UdpChannel::stop()
         return;
     }
     if (m_config.udp.multicastEnabled) {
-        m_socket.leaveMulticastGroup(m_config.udp.multicastGroup);
+        m_multicastRefreshTimer.stop();
+        m_multicastRefreshTimer.disconnect(this);
+        if (m_joinedInterfaceIndices.isEmpty()) {
+            m_socket.leaveMulticastGroup(m_config.udp.multicastGroup);
+        } else {
+            for (const int idx : m_joinedInterfaceIndices) {
+                const QNetworkInterface iface = QNetworkInterface::interfaceFromIndex(idx);
+                if (iface.isValid()) {
+                    m_socket.leaveMulticastGroup(m_config.udp.multicastGroup, iface);
+                }
+            }
+            m_joinedInterfaceIndices.clear();
+        }
     }
     m_socket.close();
     m_running = false;
@@ -97,11 +133,43 @@ bool UdpChannel::sendDatagram(const QByteArray &payload, const QHostAddress &add
 
 bool UdpChannel::isAllowedPeer(const QHostAddress &address, quint16 port) const
 {
-    for (const PeerConfig &peer : m_config.udp.allowedPeers) { // 逐项匹配地址和端口白名单。
-        if (peer.address == address && (peer.port == 0 || peer.port == port)) {
+    // 1. 若配置中未指定白名单，默认放行
+    if (m_config.udp.allowedPeers.isEmpty()) {
+        return true;
+    }
+
+    // 2. 比对显式白名单（支持主机 IP、通配符与 CIDR 子网掩码）
+    for (const PeerConfig &peer : m_config.udp.allowedPeers) {
+        if (peer.port != 0 && peer.port != port) {
+            continue;
+        }
+        if (peer.isWildcard) {
+            return true;
+        }
+        if (peer.prefixLength >= 0) {
+            if (address.isInSubnet(peer.address, peer.prefixLength)) {
+                return true;
+            }
+        } else if (peer.address == address) {
             return true;
         }
     }
+
+    // 3. 局域网自适应：自动信任本机所有活动物理网卡的直连子网网段
+    const auto interfaces = QNetworkInterface::allInterfaces();
+    for (const QNetworkInterface &iface : interfaces) {
+        if (iface.flags().testFlag(QNetworkInterface::IsUp) &&
+            iface.flags().testFlag(QNetworkInterface::IsRunning) &&
+            !iface.flags().testFlag(QNetworkInterface::IsLoopBack)) {
+            for (const QNetworkAddressEntry &entry : iface.addressEntries()) {
+                if (entry.ip().protocol() == QAbstractSocket::IPv4Protocol &&
+                    address.isInSubnet(entry.ip(), entry.prefixLength())) {
+                    return true;
+                }
+            }
+        }
+    }
+
     return false;
 }
 

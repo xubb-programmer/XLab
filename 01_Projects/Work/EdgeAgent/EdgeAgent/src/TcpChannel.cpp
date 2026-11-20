@@ -41,8 +41,12 @@ void TcpChannel::start()
         return;
     }
 
-    setState(QStringLiteral("reconnecting"));
-    startClientConnection();
+    if (m_config.tcp.remoteHost != QStringLiteral("dynamic") && !m_config.tcp.remoteHost.isEmpty()) {
+        setState(QStringLiteral("reconnecting"));
+        startClientConnection();
+    } else {
+        setState(QStringLiteral("ready"));
+    }
 }
 
 void TcpChannel::stop()
@@ -73,6 +77,42 @@ void TcpChannel::stop()
 
 bool TcpChannel::send(const TransportCommand &command)
 {
+    // 如果角色为 client 且 command 指定了具体目标 endpoint (address 和 port)
+    if (m_config.tcp.role == QStringLiteral("client") && !command.endpoint.isEmpty() && command.address.protocol() == QAbstractSocket::IPv4Protocol && command.port > 0) {
+        QTcpSocket *targetSocket = nullptr;
+        QString connection;
+        for (auto it = m_peers.cbegin(); it != m_peers.cend(); ++it) {
+            if (it.key()->state() == QAbstractSocket::ConnectedState &&
+                it.key()->peerAddress() == command.address &&
+                it.key()->peerPort() == command.port) {
+                targetSocket = it.key();
+                connection = it.value()->connectionId;
+                break;
+            }
+        }
+
+        if (targetSocket == nullptr) {
+            targetSocket = new QTcpSocket(this);
+            connection = QStringLiteral("client-%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
+            attachSocket(targetSocket, connection);
+            targetSocket->connectToHost(command.address, command.port);
+            if (!targetSocket->waitForConnected(m_config.tcp.connectTimeoutMs)) {
+                reportFault(QStringLiteral("tcp_connect_failed"), QStringLiteral("连接到目标终端 %1:%2 失败").arg(command.address.toString()).arg(command.port));
+                targetSocket->abort();
+                handleDisconnected(targetSocket);
+                return false;
+            }
+        }
+
+        if (targetSocket->write(command.payload) != command.payload.size()) {
+            reportFault(QStringLiteral("tcp_send_failed"), QStringLiteral("TCP 发送失败"));
+            targetSocket->abort();
+            handleDisconnected(targetSocket);
+            return false;
+        }
+        return true;
+    }
+
     if (!command.requireUniqueTarget && command.endpoint.isEmpty())
         return sendFrame(command.payload, command.connectionId);
     QString connection;
@@ -98,7 +138,17 @@ bool TcpChannel::sendFrame(const QByteArray &payload, const QString &connectionI
 {
     QTcpSocket *target = nullptr; // 最终选中的发送目标。
     if (m_config.tcp.role == QStringLiteral("client")) {
-        target = m_clientSocket;
+        if (!connectionId.isEmpty()) {
+            for (auto it = m_peers.cbegin(); it != m_peers.cend(); ++it) {
+                if (it.value()->connectionId == connectionId) {
+                    target = it.key();
+                    break;
+                }
+            }
+        }
+        if (target == nullptr) {
+            target = m_clientSocket;
+        }
     } else {
         for (auto it = m_peers.cbegin(); it != m_peers.cend(); ++it) { // 查找指定连接或第一个可用连接。
             if (connectionId.isEmpty() || it.value()->connectionId == connectionId) {
@@ -114,6 +164,8 @@ bool TcpChannel::sendFrame(const QByteArray &payload, const QString &connectionI
     }
     if (target->write(payload) != payload.size()) {
         reportFault(QStringLiteral("tcp_send_failed"), QStringLiteral("TCP 发送失败"));
+        target->abort();
+        handleDisconnected(target);
         return false;
     }
     return true;
@@ -163,6 +215,7 @@ void TcpChannel::reconnectTimeout()
 
 void TcpChannel::attachSocket(QTcpSocket *socket, const QString &connectionId)
 {
+    socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
     auto context = QSharedPointer<TcpPeerContext>::create(); // 为该连接创建独立运行时上下文。
     context->decoder = FrameDecoder(m_config.frame);
     context->connectionId = connectionId;

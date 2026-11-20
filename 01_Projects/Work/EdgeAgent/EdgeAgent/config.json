@@ -21,7 +21,7 @@
     },
     {
       "channel_id": "udp_multicast_dev",
-      "enabled": true,
+      "enabled": false,
       "type": "udp",
       "bind_address": "0.0.0.0",
       "bind_port": 18082,
