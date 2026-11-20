@@ -5,7 +5,10 @@ function text(value) {
 }
 
 function cleanReportedName(value) {
-  return text(value).replace(/^智图影链[\s_-]*/u, "").trim();
+  return text(value)
+    .replace(/^智图影链[\s_-]*/u, "")
+    .replace(/^(?:侦察席|监测席|火力点|作业单元)\s*[·•]\s*/u, "")
+    .trim();
 }
 
 export function getPlatformDeviceId(platform) {
@@ -41,11 +44,6 @@ export function getPlatformName(platform, role) {
 }
 
 export function getPlatformDisplayName(platform, role) {
-  if (role === "firepower") {
-    return getPlatformName(platform, role);
-  }
-  const roleName = t("roles.recon", "侦察席");
   const pName = getPlatformName(platform, role);
-  if (pName.startsWith(roleName)) return pName;
-  return `${roleName} · ${pName}`;
+  return pName.replace(/^(?:侦察席|监测席|火力点|作业单元)\s*[·•]\s*/u, "");
 }
