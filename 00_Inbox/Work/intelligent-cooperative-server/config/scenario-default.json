@@ -2,10 +2,26 @@
   "id": "scenario-default",
   "mapMode": "offline",
   "center": {
-    "longitude": 118.52,
-    "latitude": 24.52,
+    "longitude": 112.90127,
+    "latitude": 42.405686,
     "altitude": 26000
   },
   "uavs": [],
-  "firepowerPoints": []
+  "firepowerPoints": [
+    {
+      "id": "FIRE-570f521fc46f4df9f157ef27",
+      "name": "1号火力点",
+      "battalion": "1营",
+      "company": "1连",
+      "mountedDeviceId": "",
+      "longitude": 118.5,
+      "latitude": 24.5,
+      "altitude": 0,
+      "strikeRange": "20 km",
+      "maxTargets": 1,
+      "ip": "127.0.0.1",
+      "port": 5567
+    }
+  ],
+  "revision": "bcc21fad-c6f5-47df-9e02-3b9abedb469e"
 }

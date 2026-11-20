@@ -179,9 +179,9 @@ async function bootstrap() {
 
 
   // 1. 加载初始视角与平台配置
-  const response = await fetch("/public/scenarios/scenario-default.json");
+  const response = await fetch("/config/scenario-default.json");
   if (!response.ok) {
-    throw new Error("无法加载场景基准数据: scenario-default.json");
+    throw new Error("无法加载场景基准数据: config/scenario-default.json");
   }
   const scenarioData = await response.json();
   try {

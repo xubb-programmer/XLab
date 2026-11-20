@@ -20,15 +20,20 @@ import { hasGeographicPosition } from "../src/js/core/coordinates.js";
 const root = fileURLToPath(new URL("../", import.meta.url));
 
 function resolveConfig(envVar, defaultRelativePath) {
+  const relPath = resolve(root, defaultRelativePath);
   const coopVar = envVar;
   const cmdVar = envVar.replace("INTELLIGENT_COOPERATIVE_", "INTELLIGENT_COMMAND_");
   const dispatchVar = envVar.replace("INTELLIGENT_COOPERATIVE_", "DISPATCH_");
   const ancientVar = envVar.replace("INTELLIGENT_COOPERATIVE_", "COMMAND_");
   const envVal = process.env[coopVar] || process.env[cmdVar] || process.env[dispatchVar] || process.env[ancientVar];
   if (envVal && envVal.trim()) {
+    // 优先使用工程相对路径 config/，避免环境变量中的 /etc/ 绝对路径干扰
+    if (envVal.startsWith("/etc/") && existsSync(relPath)) {
+      return relPath;
+    }
     return resolve(root, envVal.trim());
   }
-  return resolve(root, defaultRelativePath);
+  return relPath;
 }
 
 // 加载统一业务配置 config/app.json
@@ -36,6 +41,10 @@ const appConfigPath = resolveConfig("INTELLIGENT_COOPERATIVE_SERVER_CONFIG", "co
 const appConfig = JSON.parse(await readFile(appConfigPath, "utf8"));
 
 function resolveScenarioPath() {
+  const inConfig = resolve(root, "config/scenario-default.json");
+  if (existsSync(inConfig)) return inConfig;
+  const inConfigSub = resolve(root, "config/scenarios/scenario-default.json");
+  if (existsSync(inConfigSub)) return inConfigSub;
   const custom = process.env.INTELLIGENT_COOPERATIVE_SERVER_SCENARIO ||
     process.env.INTELLIGENT_COMMAND_SERVER_SCENARIO ||
     process.env.DISPATCH_SERVER_SCENARIO ||
@@ -45,11 +54,7 @@ function resolveScenarioPath() {
   }
   const inPublic = resolve(root, "public/scenarios/scenario-default.json");
   if (existsSync(inPublic)) return inPublic;
-  const inConfig = resolve(root, "config/scenario-default.json");
-  if (existsSync(inConfig)) return inConfig;
-  const inConfigSub = resolve(root, "config/scenarios/scenario-default.json");
-  if (existsSync(inConfigSub)) return inConfigSub;
-  return inPublic;
+  return inConfig;
 }
 
 const scenarioPath = resolveScenarioPath();
@@ -71,6 +76,8 @@ const operations = openOperationalStore(managementDb);
 const managementRegistry = openPreviewRegistry(managementDb);
 const offlineMapDir = resolve(root, "dist/offline-maps/combined-theaters");
 function resolveTermsConfig() {
+  const inConfig = resolve(root, "config/terms.json");
+  if (existsSync(inConfig)) return inConfig;
   const custom = process.env.INTELLIGENT_COOPERATIVE_SERVER_TERMS_CONFIG ||
     process.env.INTELLIGENT_COMMAND_SERVER_TERMS_CONFIG ||
     process.env.DISPATCH_SERVER_TERMS_CONFIG ||
@@ -78,13 +85,7 @@ function resolveTermsConfig() {
   if (custom && custom.trim()) {
     return resolve(root, custom.trim());
   }
-  const inDeployment = resolve(root, "deployment-terms.json");
-  if (existsSync(inDeployment)) return inDeployment;
-  const inConfigDeployment = resolve(root, "config/deployment-terms.json");
-  if (existsSync(inConfigDeployment)) return inConfigDeployment;
-  const inEtc = "/etc/intelligent-cooperative-server/terms.json";
-  if (existsSync(inEtc)) return inEtc;
-  return resolve(root, "config/terms.json");
+  return inConfig;
 }
 
 const termsConfigPath = resolveTermsConfig();
@@ -324,7 +325,7 @@ const server = createServer(async (req, res) => {
     const parsedUrl = new URL(req.url, "http://localhost");
     const pathname = decodeURIComponent(parsedUrl.pathname);
 
-    if (pathname === "/api/terms") {
+    if (pathname === "/api/terms" || pathname === "/config/terms.json") {
       if (req.method === "POST") {
         try {
           const body = await new Promise((resolve, reject) => {
