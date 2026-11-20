@@ -27,11 +27,11 @@
     "cancelFirepower": "取消独立火力点"
   },
   "org": {
-    "center": "炮兵1群",
+    "center": "协同作战集群",
     "rootBadge": "指挥所",
     "affiliationTitle": "战术编制隶属",
     "affiliationModalTitle": "单元挂载",
-    "metaPath": "炮兵群 ➔ 营 ➔ 连 ➔ 火力点",
+    "metaPath": "协同作战集群 ➔ 营 ➔ 连 ➔ 火力点",
     "battalion": "营",
     "company": "连",
     "battalionCompany": "营连",

@@ -524,7 +524,7 @@ export function initDeviceManager(viewer, panel, options = {}) {
     }));
 
     return {
-      root: t("org.center", "炮兵1群"),
+      root: t("org.center", "协同作战集群"),
       totalPoints: all.length,
       onlinePoints: all.filter(p => p.online).length,
       mountedPoints: all.filter(p => Boolean(p.mountedDeviceId)).length,

@@ -80,7 +80,7 @@ export class AffiliationModal {
     this.collapsedKeys = new Set();
     this.checkedPointIds = new Set();
     this.customRootName = localStorage.getItem("org_custom_root_name") || "";
-    if (this.customRootName === "业务调度中心") {
+    if (this.customRootName === "业务调度中心" || this.customRootName === "炮兵1群") {
       this.customRootName = "";
       localStorage.removeItem("org_custom_root_name");
     }
@@ -636,7 +636,7 @@ export class AffiliationModal {
       }
     }
 
-    const rootName = this.customRootName || tree.root || t("org.center", "炮兵1群");
+    const rootName = this.customRootName || tree.root || t("org.center", "协同作战集群");
     const isRootCollapsed = this.collapsedKeys.has("__root__");
     const totalPointsCount = allPoints.length;
     const checkedPointsCount = allPoints.filter(p => this.checkedPointIds.has(p.id)).length;
@@ -795,8 +795,8 @@ export class AffiliationModal {
 
     this.treeContainer.querySelectorAll(".btn-dir-rename-root").forEach(btn => {
       btn.addEventListener("click", () => {
-        const currentName = this.customRootName || tree.root || t("org.center", "炮兵1群");
-        const val = prompt(`请输入名录根节点名称 (如: ${t("org.center", "炮兵1群")}):`, currentName);
+        const currentName = this.customRootName || tree.root || t("org.center", "协同作战集群");
+        const val = prompt(`请输入根节点名称 (如: ${t("org.center", "协同作战集群")}):`, currentName);
         if (val && val.trim()) {
           this.customRootName = val.trim();
           localStorage.setItem("org_custom_root_name", this.customRootName);
