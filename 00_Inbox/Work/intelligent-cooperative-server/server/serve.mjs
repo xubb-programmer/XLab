@@ -325,6 +325,32 @@ const server = createServer(async (req, res) => {
     const pathname = decodeURIComponent(parsedUrl.pathname);
 
     if (pathname === "/api/terms") {
+      if (req.method === "POST") {
+        try {
+          const body = await new Promise((resolve, reject) => {
+            let data = "";
+            req.on("data", chunk => { data += chunk; });
+            req.on("end", () => {
+              try { resolve(JSON.parse(data)); } catch (e) { reject(e); }
+            });
+            req.on("error", reject);
+          });
+          const raw = await readFile(termsConfigPath, "utf8");
+          const terms = JSON.parse(raw);
+          if (!terms.roles) terms.roles = {};
+          if (body.recon) terms.roles.recon = String(body.recon).trim();
+          if (body.firepower) terms.roles.firepower = String(body.firepower).trim();
+          if (body.roles && typeof body.roles === "object") {
+            Object.assign(terms.roles, body.roles);
+          }
+          await writeFile(termsConfigPath, JSON.stringify(terms, null, 2), "utf8");
+          res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+          return res.end(JSON.stringify({ ok: true, terms }));
+        } catch (err) {
+          res.writeHead(500, { "Content-Type": "application/json; charset=utf-8" });
+          return res.end(JSON.stringify({ error: err.message || "Failed to update terms configuration" }));
+        }
+      }
       try {
         const raw = await readFile(termsConfigPath, "utf8");
         res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });

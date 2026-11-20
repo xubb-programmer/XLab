@@ -45,13 +45,14 @@ export async function initTerms() {
   return termsData;
 }
 
-export function setCustomTerm(key, val) {
+export async function setCustomTerm(key, val) {
   if (!key || !val || !val.trim()) return;
   const trimmed = val.trim();
   flatTerms.set(key, trimmed);
   const shortKey = key.split(".").pop();
   if (shortKey) flatTerms.set(shortKey, trimmed);
 
+  // 1. 客户端本地持久化存储
   try {
     const stored = JSON.parse(localStorage.getItem("tactical_custom_terms") || "{}");
     stored[key] = trimmed;
@@ -59,6 +60,22 @@ export function setCustomTerm(key, val) {
   } catch (_) {}
 
   applyTermsToDom();
+
+  // 2. 服务端全局持久化存储 (写入板端 terms.json)
+  try {
+    const payload = {};
+    if (key === "roles.recon") payload.recon = trimmed;
+    if (key === "roles.firepower") payload.firepower = trimmed;
+    if (Object.keys(payload).length > 0) {
+      await fetch("/api/terms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+    }
+  } catch (err) {
+    console.warn("Failed to persist terms to server:", err);
+  }
 }
 
 export function t(key, fallback = "", params = null) {
