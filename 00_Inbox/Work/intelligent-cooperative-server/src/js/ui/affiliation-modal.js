@@ -88,6 +88,8 @@ export class AffiliationModal {
   initEvents() {
     const returnToTactical = () => {
       this.close();
+      document.getElementById("nav-btn-battery-config")?.classList.remove("active");
+      document.getElementById("nav-btn-tactical")?.classList.add("active");
       eventBus.emit("page:switch", "tactical");
     };
     this.btnClose?.addEventListener("click", returnToTactical);
@@ -634,71 +636,30 @@ export class AffiliationModal {
 
     this.treeContainer.innerHTML = `
       <div class="dir-tree-window">
-        <!-- 窗口标题栏: 通信名录列表 (参考图 1) -->
+        <!-- 窗口标题栏: 通信名录列表 (100% 还原图 1: 渐变蓝背景、白字、红叉) -->
         <div class="dir-window-titlebar">
           <div class="dir-title-left">
-            <svg class="dir-window-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-              <polyline points="22,6 12,13 2,6"/>
-            </svg>
-            <strong class="dir-title-text" id="dir-window-main-title">通信名录列表</strong>
-            <span class="dir-title-badge">${tree.totalPoints} 单元 (${tree.onlinePoints} 在线就绪)</span>
+            <span class="dir-title-text">通信名录列表</span>
           </div>
           <div class="dir-title-actions">
-            <button type="button" class="btn-dir-win-close" id="btn-dir-win-close" title="关闭并返回综合态势">✕</button>
+            <button type="button" class="btn-dir-win-close" id="btn-dir-win-close" title="关闭窗口">✕</button>
           </div>
         </div>
 
-        <!-- 工具栏 -->
-        <div class="dir-window-toolbar">
-          <div class="toolbar-left-group">
-            <button type="button" class="btn btn-xs btn-tactical-tool" id="btn-dir-expand-all" title="展开全部名录">
-              <span>⊞ 全部展开</span>
-            </button>
-            <button type="button" class="btn btn-xs btn-tactical-tool" id="btn-dir-collapse-all" title="折叠全部名录">
-              <span>⊟ 全部折叠</span>
-            </button>
-            <span class="toolbar-divider">|</span>
-            <button type="button" class="btn btn-xs btn-tactical-tool" id="btn-dir-select-all" title="勾选所有作业单元">
-              <span>☑ 全选</span>
-            </button>
-            <button type="button" class="btn btn-xs btn-tactical-tool" id="btn-dir-deselect-all" title="取消所有勾选">
-              <span>☐ 全不选</span>
-            </button>
-          </div>
-          <div class="toolbar-right-group">
-            <button type="button" class="btn btn-xs btn-tactical-tool highlight-tool" id="btn-dir-add-point" title="新增作业单元">
-              <span>+ 新增单元</span>
-            </button>
-            <button type="button" class="btn btn-xs btn-tactical-tool" id="btn-dir-add-bat" title="新增片区">
-              <span>+ 添加片区</span>
-            </button>
-            <button type="button" class="btn btn-xs btn-secondary" id="btn-dir-org-scale" title="片区分组规模配置">
-              <span>⚙ 架构设置</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 树形名录滚动容器 -->
+        <!-- 经典树形名录展示区 (纯白底、黑字、虚线、正方形 +/-、复选框，对标图 1) -->
         <div class="dir-tree-container">
           <div class="dir-tree-root-branch ${isRootCollapsed ? 'is-collapsed' : ''}">
             <!-- 根节点 (中枢/集群) -->
             <div class="dir-node-row dir-root-row" data-level="root">
-              <button type="button" class="dir-expander" data-toggle="__root__" title="展开/收起根节点">
+              <button type="button" class="dir-expander" data-toggle="__root__" title="折叠/展开">
                 ${isRootCollapsed ? '+' : '-'}
               </button>
-              <input type="checkbox" class="dir-checkbox dir-check-root" data-role="root">
-              <div class="dir-node-label">
-                <span class="dir-node-icon">🌐</span>
-                <strong class="dir-root-name" title="点击重命名">${escapeHtml(rootName)}</strong>
-                <span class="dir-node-badge root-badge">中枢</span>
-              </div>
-              <div class="dir-node-meta">
-                <span>下辖 ${tree.battalions.length} 个片区 / 共 ${tree.totalPoints} 个作业单元 (${tree.onlinePoints} 在线就绪)</span>
-              </div>
+              <input type="checkbox" class="dir-checkbox dir-check-root" data-role="root" title="全选/全不选">
+              <span class="dir-node-label dir-root-label">${escapeHtml(rootName)}</span>
               <div class="dir-node-actions">
-                <button type="button" class="btn btn-xs btn-tactical-tool btn-dir-rename-root" title="自定义集群中枢名称">✎ 重命名</button>
-                <button type="button" class="btn btn-xs btn-secondary btn-dir-add-bat-inline" title="快速新增片区">+ 片区</button>
+                <button type="button" class="btn-dir-inline btn-dir-rename-root" title="自定义名录根节点名称">✎</button>
+                <button type="button" class="btn-dir-inline btn-dir-add-bat-inline" title="新增片区">+片区</button>
+                <button type="button" class="btn-dir-inline" id="btn-dir-open-scale-inline" title="片区分组规模配置">⚙</button>
               </div>
             </div>
 
@@ -715,17 +676,11 @@ export class AffiliationModal {
                         ${isBatCollapsed ? '+' : '-'}
                       </button>
                       <input type="checkbox" class="dir-checkbox dir-check-bat" data-role="bat" data-bat="${escapeHtml(bat.name)}">
-                      <div class="dir-node-label">
-                        <span class="dir-node-icon">📁</span>
-                        <strong>${escapeHtml(bat.name)}</strong>
-                      </div>
-                      <div class="dir-node-meta">
-                        <span>${bat.companies.length} 组 / ${bat.totalPoints} 单元 (${bat.onlinePoints} 在线)</span>
-                      </div>
+                      <span class="dir-node-label">${escapeHtml(bat.name)}</span>
                       <div class="dir-node-actions">
-                        <button type="button" class="btn btn-xs btn-secondary btn-dir-add-comp" data-bat="${escapeHtml(bat.name)}" title="在此片区下新增组">+ 组</button>
+                        <button type="button" class="btn-dir-inline btn-dir-add-comp" data-bat="${escapeHtml(bat.name)}" title="在此片区下新增组">+组</button>
                         ${bat.totalPoints === 0 ? `
-                          <button type="button" class="btn btn-xs btn-tactical-tool btn-dir-del-bat" data-bat="${escapeHtml(bat.name)}" title="删除空片区">✕ 删除</button>
+                          <button type="button" class="btn-dir-inline btn-dir-del-bat" data-bat="${escapeHtml(bat.name)}" title="删除空片区">✕</button>
                         ` : ''}
                       </div>
                     </div>
@@ -744,27 +699,21 @@ export class AffiliationModal {
                                 ${isCompCollapsed ? '+' : '-'}
                               </button>
                               <input type="checkbox" class="dir-checkbox dir-check-comp" data-role="comp" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}">
-                              <div class="dir-node-label">
-                                <span class="dir-node-icon">📂</span>
-                                <strong>${escapeHtml(comp.name)}</strong>
-                              </div>
-                              <div class="dir-node-meta">
-                                <span>${compTotal} 单元</span>
-                              </div>
+                              <span class="dir-node-label">${escapeHtml(comp.name)}</span>
                               <div class="dir-node-actions">
-                                <button type="button" class="btn btn-xs btn-tactical-tool highlight-tool btn-dir-add-point-to-comp" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}" title="在此组新增作业单元">+ 单元</button>
+                                <button type="button" class="btn-dir-inline btn-dir-add-point-to-comp" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}" title="在此组新增作业单元">+单元</button>
                                 ${compTotal === 0 ? `
-                                  <button type="button" class="btn btn-xs btn-tactical-tool btn-dir-del-comp" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}" title="删除空组">✕</button>
+                                  <button type="button" class="btn-dir-inline btn-dir-del-comp" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}" title="删除空组">✕</button>
                                 ` : ''}
                               </div>
                             </div>
 
-                            <!-- 作业单元列表 -->
+                            <!-- 作业单元列表 (叶子节点) -->
                             <ul class="dir-tree-list dir-points-list" ${isCompCollapsed ? 'style="display:none;"' : ''}>
                               ${compTotal === 0 ? `
                                 <li class="dir-tree-node dir-empty-comp-node">
                                   <span class="dir-empty-text">该组暂无作业单元</span>
-                                  <button type="button" class="btn btn-xs btn-tactical-tool highlight-tool btn-dir-add-point-to-comp" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}">+ 新增单元</button>
+                                  <button type="button" class="btn-dir-inline btn-dir-add-point-to-comp" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}">+新增单元</button>
                                 </li>
                               ` : comp.points.map(pt => {
                                 const isOnline = Boolean(pt.online);
@@ -772,50 +721,25 @@ export class AffiliationModal {
                                 const isChecked = this.checkedPointIds.has(pt.id);
 
                                 return `
-                                  <li class="dir-tree-node dir-point-node ${isOnline ? 'is-online' : 'is-offline'}" data-point-id="${escapeHtml(pt.id)}">
+                                  <li class="dir-tree-node dir-point-node" data-point-id="${escapeHtml(pt.id)}">
                                     <div class="dir-node-row dir-point-row ${isChecked ? 'is-row-checked' : ''}" data-level="point">
                                       <span class="dir-tree-elbow"></span>
                                       <input type="checkbox" class="dir-checkbox dir-check-point" data-role="point" data-id="${escapeHtml(pt.id)}" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}" ${isChecked ? 'checked' : ''}>
-                                      <div class="dir-node-label">
-                                        <span class="status-dot-point ${isOnline ? 'online' : 'standby'}"></span>
-                                        <strong class="point-name-text">${escapeHtml(pt.name)}</strong>
-                                      </div>
-
-                                      <!-- 挂载状态徽标 -->
-                                      <div class="dir-mount-indicator">
-                                        ${mountedDevId ? `
-                                          <span class="dir-mount-tag active" title="已挂载组播在线设备: ${escapeHtml(mountedDevId)}">
-                                            ● 挂载: <strong class="mono">${escapeHtml(mountedDevId)}</strong>
-                                          </span>
-                                        ` : `
-                                          <span class="dir-mount-tag inactive" title="未挂载设备，作业单元离线">○ 未挂载设备</span>
-                                        `}
-                                      </div>
-
-                                      <!-- 快速挂载设备下拉 -->
-                                      <div class="dir-quick-mount">
-                                        <select class="quick-mount-select text-input text-input-xs" data-id="${escapeHtml(pt.id)}" title="快速变更挂载设备">
-                                          <option value="">${mountedDevId ? '更改挂载…' : '挂载设备…'}</option>
-                                          <option value="__UNMOUNT__">✕ 解除挂载</option>
+                                      <span class="dir-node-label">${escapeHtml(pt.name)}</span>
+                                      <span class="dir-mount-tag ${isOnline ? 'active' : 'inactive'}">${isOnline ? `● ${escapeHtml(mountedDevId || '在线')}` : '○ 未挂载'}</span>
+                                      <div class="dir-node-actions">
+                                        <select class="quick-mount-select" data-id="${escapeHtml(pt.id)}" title="挂载在线监测设备">
+                                          <option value="">${mountedDevId ? `换绑 (${escapeHtml(mountedDevId)})` : '挂载设备'}</option>
+                                          <option value="__UNMOUNT__">✕ 解绑</option>
                                           ${onlineRecons.map(u => `
                                             <option value="${escapeHtml(u.deviceId)}" ${u.deviceId === mountedDevId ? 'selected' : ''}>
-                                              ${u.online ? '●' : '○'} ${escapeHtml(u.deviceId)} (${escapeHtml(u.name)})
+                                              ${u.online ? '●' : '○'} ${escapeHtml(u.deviceId)}
                                             </option>
                                           `).join('')}
                                         </select>
-                                      </div>
-
-                                      <!-- 规格指标 -->
-                                      <div class="dir-point-specs">
-                                        <span class="dir-spec-chip" title="覆盖范围">${escapeHtml(pt.strikeRange || '20 km')}</span>
-                                        <span class="dir-spec-chip mono" title="通信端点">${escapeHtml(pt.ip || '127.0.0.1')}:${pt.port || 5567}</span>
-                                      </div>
-
-                                      <!-- 操作按钮组 -->
-                                      <div class="dir-node-actions point-actions">
-                                        <button type="button" class="btn btn-xs btn-tactical-tool btn-dir-edit-point" data-id="${escapeHtml(pt.id)}" title="编辑作业单元参数">编辑</button>
-                                        <button type="button" class="btn btn-xs btn-tactical-tool btn-dir-fly-point" data-id="${escapeHtml(pt.id)}" title="在地图上定位此单元">定位</button>
-                                        <button type="button" class="btn btn-xs btn-secondary-danger btn-dir-del-point" data-id="${escapeHtml(pt.id)}" title="删除此作业单元">✕</button>
+                                        <button type="button" class="btn-dir-inline btn-dir-edit-point" data-id="${escapeHtml(pt.id)}" title="参数配置">✎</button>
+                                        <button type="button" class="btn-dir-inline btn-dir-fly-point" data-id="${escapeHtml(pt.id)}" title="地图定位">⌖</button>
+                                        <button type="button" class="btn-dir-inline btn-dir-del-point" data-id="${escapeHtml(pt.id)}" title="删除">✕</button>
                                       </div>
                                     </div>
                                   </li>
@@ -833,19 +757,14 @@ export class AffiliationModal {
           </div>
         </div>
 
-        <!-- 底部操作栏 (参考图 1 界面按钮) -->
+        <!-- 底部经典操作栏 (100% 还原图 1: 灰底、两个经典按钮 [发送] [取消]) -->
         <div class="dir-window-footer">
           <div class="dir-footer-left">
-            <span class="dir-footer-stat">已勾选名录: <strong id="dir-checked-summary" class="highlight-cyan">${checkedPointsCount}</strong> / ${totalPointsCount} 个作业单元</span>
-            <span class="dir-footer-tip">(支持层级全选与多选协同管理)</span>
+            <span class="dir-footer-stat">已勾选: <strong id="dir-checked-summary">${checkedPointsCount}</strong> / ${totalPointsCount} 个作业单元</span>
           </div>
           <div class="dir-footer-right">
-            <button type="button" class="btn btn-sm btn-primary-red btn-dir-send" id="btn-dir-action-send" title="向勾选的通信节点发送协同指令或下派任务">
-              <span>发 送</span>
-            </button>
-            <button type="button" class="btn btn-sm btn-secondary btn-dir-cancel" id="btn-dir-action-cancel" title="关闭名录并返回综合态势">
-              <span>取 消</span>
-            </button>
+            <button type="button" class="btn-classic-dialog btn-classic-primary" id="btn-dir-action-send">发 送</button>
+            <button type="button" class="btn-classic-dialog" id="btn-dir-action-cancel">取 消</button>
           </div>
         </div>
       </div>
@@ -857,98 +776,38 @@ export class AffiliationModal {
     // 绑定窗口关闭与底部取消事件
     const returnToTactical = () => {
       this.close();
+      document.getElementById("nav-btn-battery-config")?.classList.remove("active");
+      document.getElementById("nav-btn-tactical")?.classList.add("active");
       eventBus.emit("page:switch", "tactical");
     };
     document.getElementById("btn-dir-win-close")?.addEventListener("click", returnToTactical);
     document.getElementById("btn-dir-action-cancel")?.addEventListener("click", returnToTactical);
-
-    // 工具栏操作
-    document.getElementById("btn-dir-expand-all")?.addEventListener("click", () => {
-      this.collapsedKeys.clear();
-      this.treeContainer.querySelectorAll(".dir-tree-node, .dir-tree-root-branch").forEach(el => {
-        el.classList.remove("is-collapsed");
-      });
-      this.treeContainer.querySelectorAll(".dir-tree-list").forEach(el => {
-        el.style.display = "";
-      });
-      this.treeContainer.querySelectorAll(".dir-expander:not(.empty-placeholder)").forEach(btn => {
-        btn.textContent = "-";
-      });
-    });
-
-    document.getElementById("btn-dir-collapse-all")?.addEventListener("click", () => {
-      this.collapsedKeys.add("__root__");
-      for (const bat of tree.battalions) {
-        this.collapsedKeys.add(`bat:${bat.name}`);
-        for (const comp of bat.companies) {
-          this.collapsedKeys.add(`comp:${bat.name}:${comp.name}`);
-        }
-      }
-      this.treeContainer.querySelectorAll(".dir-bat-node, .dir-comp-node, .dir-tree-root-branch").forEach(el => {
-        el.classList.add("is-collapsed");
-      });
-      this.treeContainer.querySelectorAll(".dir-tree-list").forEach(el => {
-        el.style.display = "none";
-      });
-      this.treeContainer.querySelectorAll(".dir-expander:not(.empty-placeholder)").forEach(btn => {
-        btn.textContent = "+";
-      });
-    });
-
-    document.getElementById("btn-dir-select-all")?.addEventListener("click", () => {
-      for (const pt of allPoints) {
-        this.checkedPointIds.add(pt.id);
-      }
-      this.treeContainer.querySelectorAll(".dir-check-point").forEach(cb => {
-        cb.checked = true;
-        cb.closest(".dir-point-row")?.classList.add("is-row-checked");
-      });
-      this.updateCheckboxCascadeStates(tree);
-    });
-
-    document.getElementById("btn-dir-deselect-all")?.addEventListener("click", () => {
-      this.checkedPointIds.clear();
-      this.treeContainer.querySelectorAll(".dir-check-point").forEach(cb => {
-        cb.checked = false;
-        cb.closest(".dir-point-row")?.classList.remove("is-row-checked");
-      });
-      this.updateCheckboxCascadeStates(tree);
-    });
-
-    document.getElementById("btn-dir-add-point")?.addEventListener("click", () => {
-      this.openDrawerForNew();
-    });
-
-    document.getElementById("btn-dir-add-bat")?.addEventListener("click", () => {
-      const batLabel = t("org.battalion", "片区");
-      const batName = prompt(`请输入新${batLabel}名称 (例如: 3${batLabel}):`);
-      if (batName?.trim() && dm?.addBattalion) {
-        dm.addBattalion(batName.trim());
-        this.render();
-      }
-    });
-
-    document.getElementById("btn-dir-org-scale")?.addEventListener("click", () => {
+    document.getElementById("btn-dir-open-scale-inline")?.addEventListener("click", () => {
       this.openOrgSettings();
     });
 
-    this.treeContainer.querySelector(".btn-dir-rename-root")?.addEventListener("click", () => {
-      const current = this.customRootName || tree.root || "业务调度中心";
-      const val = prompt("请输入中枢集群自定义名称 (如: 协同调度集群):", current);
-      if (val && val.trim()) {
-        this.customRootName = val.trim();
-        localStorage.setItem("org_custom_root_name", this.customRootName);
-        this.render();
-      }
+    this.treeContainer.querySelectorAll(".btn-dir-rename-root").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const currentName = this.customRootName || tree.root || "业务调度中心";
+        const val = prompt("请输入名录根节点名称 (如: 协同调度集群):", currentName);
+        if (val && val.trim()) {
+          this.customRootName = val.trim();
+          localStorage.setItem("org_custom_root_name", this.customRootName);
+          this.render();
+        }
+      });
     });
 
-    this.treeContainer.querySelector(".btn-dir-add-bat-inline")?.addEventListener("click", () => {
-      const batLabel = t("org.battalion", "片区");
-      const batName = prompt(`请输入新${batLabel}名称 (例如: 3${batLabel}):`);
-      if (batName?.trim() && dm?.addBattalion) {
-        dm.addBattalion(batName.trim());
-        this.render();
-      }
+    this.treeContainer.querySelectorAll(".btn-dir-add-bat-inline").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const batLabel = t("org.battalion", "片区");
+        const nextIdx = tree.battalions.length + 1;
+        const batName = prompt(`请输入新${batLabel}名称:`, `${nextIdx}${batLabel}`);
+        if (batName?.trim() && dm?.addBattalion) {
+          dm.addBattalion(batName.trim());
+          this.render();
+        }
+      });
     });
 
     // 折叠展开点击交互

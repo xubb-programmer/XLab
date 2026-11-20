@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#060b11">
   <title data-term="app.title">智能协同作业调度平台</title>
   <link rel="stylesheet" href="/cesium/Widgets/widgets.css">
-  <link rel="stylesheet" href="/styles/main.css?v=2.1">
-  <link rel="stylesheet" href="/styles/layout.css?v=2.3">
-  <link rel="stylesheet" href="/styles/components.css?v=2.2">
+  <link rel="stylesheet" href="/styles/main.css?v=20261120_v4">
+  <link rel="stylesheet" href="/styles/layout.css?v=20261120_v4">
+  <link rel="stylesheet" href="/styles/components.css?v=20261120_v4">
   <script>window.CESIUM_BASE_URL = "/cesium/";</script>
   <script>
     // Keep the offline board compatible with its Chromium 91 runtime.
@@ -79,7 +79,7 @@
     }
   </script>
   <script defer src="/cesium/Cesium.js"></script>
-  <script type="module" src="/js/main.js?v=2.5"></script>
+  <script type="module" src="/js/main.js?v=20261120_v4"></script>
 </head>
 <body>
   <div class="app-container">
@@ -580,253 +580,165 @@
       </footer>
     </section>
 
-    <!-- 页面 3: 组织架构整备 (平级页面 3，全屏独立展示，完整树状拓扑图 + 组播动态挂载) -->
-    <section id="page-firepower-affiliation" class="page-view fullpage-view fullpage-firepower-affiliation" hidden style="display: none;" aria-label="组织架构整备">
-      <header class="view-header affiliation-header">
-        <div class="header-title-group">
-          <div class="view-title" style="display:flex; align-items:center; gap:8px;">
-            <span class="status-dot-point online" aria-hidden="true"></span>
-            <strong id="affiliation-modal-title" data-term="org.affiliationModalTitle">协同作业整备 · 通信名录列表</strong>
-          </div>
-          <div class="affiliation-header-meta">
-            <span class="meta-tag" data-term="org.metaPath">调度中心 ➔ 片区 ➔ 组 ➔ 作业单元</span>
-            <span class="meta-tag highlight-cyan">通信名录列表与动态挂载</span>
-          </div>
+    <!-- 通信名录列表 模态浮动弹窗 (仿真 Windows 经典桌面窗口，对标通信名录列表) -->
+    <div id="page-firepower-affiliation" class="modal-backdrop firepower-affiliation-dialog is-hidden" hidden style="display: none;" aria-label="通信名录列表">
+      <div id="affiliation-tree-canvas" class="affiliation-tree-canvas">
+        <!-- 动态渲染经典桌面弹窗 -->
+      </div>
+
+      <!-- 抽屉：编辑或新增工位隶属关系 -->
+      <div id="affiliation-edit-drawer" class="affiliation-edit-drawer" hidden style="display: none;">
+        <div class="drawer-header">
+          <strong id="tree-drawer-title">编辑工位架构</strong>
+          <button type="button" id="btn-cancel-tree-drawer" class="btn-close-drawer" aria-label="关闭抽屉">✕</button>
         </div>
-
-        <div class="affiliation-header-stats">
-          <div class="tree-stat-badge">
-            <span class="stat-lbl">点位总数:</span>
-            <strong id="tree-stat-total" class="stat-val mono">3</strong>
-          </div>
-          <div class="tree-stat-badge">
-            <span class="stat-lbl">在线就绪:</span>
-            <strong id="tree-stat-online" class="stat-val mono highlight-green">1</strong>
-          </div>
-          <div class="tree-stat-badge">
-            <span class="stat-lbl">离线/未挂载:</span>
-            <strong id="tree-stat-offline" class="stat-val mono dim">2</strong>
-          </div>
-          <div class="tree-stat-badge">
-            <span class="stat-lbl">设备在线:</span>
-            <strong id="tree-stat-multicast" class="stat-val mono highlight-cyan">1 台在线</strong>
-          </div>
-        </div>
-
-        <div class="affiliation-header-controls">
-          <button type="button" id="btn-tree-org-scale" class="btn btn-xs btn-tactical-tool" title="设置架构中有几个片区、每个片区有几个组">
-            <span data-term="org.scaleSettings">片区分组架构设置</span>
-          </button>
-          <button type="button" id="btn-tree-add-point" class="btn btn-xs btn-tactical-tool highlight-tool" data-term-title="roles.addFirepowerTitle" title="新增作业单元至架构中">
-            <span data-term="roles.addFirepower">+ 新增单元</span>
-          </button>
-          <button type="button" id="btn-tree-auto-mount" class="btn btn-xs btn-tactical-tool" data-term-title="ui.autoMountTitle" title="自动将在线监测设备按序挂载至未就绪作业单元">
-            <span>一键智能挂载</span>
-          </button>
-          <button type="button" id="btn-tree-reset-default" class="btn btn-xs btn-tactical-tool" title="重置为标准三工位架构">
-            <span data-term="org.resetOrg">重置架构</span>
-          </button>
-          <button type="button" class="btn btn-xs btn-secondary" id="btn-close-affiliation-modal" title="返回综合态势">
-            <span>返回大厅</span>
-          </button>
-        </div>
-      </header>
-
-      <div class="view-body affiliation-modal-body">
-        <!-- 主树状拓扑图展示画板 (全屏铺开) -->
-        <div class="affiliation-tree-scroll-container">
-          <div id="affiliation-tree-canvas" class="affiliation-tree-canvas">
-            <!-- 动态渲染树状结构: 调度中心 -> 片区 -> 组 -> 作业单元 -->
-          </div>
-        </div>
-
-        <!-- 右侧边栏：在线监测设备池 (组播实时就绪设备) -->
-        <aside class="affiliation-recon-sidebar">
-          <div class="recon-sidebar-header">
-            <div class="sidebar-title-row">
-              <svg class="panel-heading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-              <strong data-term="roles.reconPool">组播监测设备池</strong>
+        <form id="form-tree-drawer-edit" class="tactical-form drawer-form">
+          <input type="hidden" id="tree-edit-point-id">
+          <div class="form-row-grid-2">
+            <div class="form-field">
+              <label class="form-label" for="tree-edit-battalion">所属片区</label>
+              <select id="tree-edit-battalion" class="text-input select-input" required></select>
             </div>
-            <span class="recon-pool-hint">239.255.0.1:5678</span>
+            <div class="form-field">
+              <label class="form-label" for="tree-edit-company">所属组</label>
+              <select id="tree-edit-company" class="text-input select-input" required></select>
+            </div>
           </div>
-          <p class="recon-pool-desc" data-term="roles.reconPoolDesc">组播在线设备可作为作业单元通信信道，挂载后点位立即转为在线就绪。</p>
-          <div id="affiliation-recon-pool-list" class="affiliation-recon-pool-list">
-            <!-- 动态渲染各在线设备卡片及快捷挂载按钮 -->
+
+          <div class="form-row">
+            <label class="form-label" for="tree-edit-name" data-term="roles.firepowerNameLabel">作业单元名称</label>
+            <input type="text" id="tree-edit-name" class="text-input" placeholder="例如: 1号作业单元" required>
           </div>
-        </aside>
 
-        <!-- 抽屉：编辑或新增工位隶属关系 -->
-        <div id="affiliation-edit-drawer" class="affiliation-edit-drawer" hidden style="display: none;">
-          <div class="drawer-header">
-            <strong id="tree-drawer-title">编辑工位架构</strong>
-            <button type="button" id="btn-cancel-tree-drawer" class="btn-close-drawer" aria-label="关闭抽屉">✕</button>
+          <div class="form-row">
+            <label class="form-label" for="tree-edit-mounted-device">挂载在线设备ID (组播通信信道)</label>
+            <select id="tree-edit-mounted-device" class="text-input select-input">
+              <option value="">(未挂载 / 工位离线)</option>
+            </select>
+            <small class="form-field-hint">选择已在组播网络中的设备ID，挂载后工位将变为在线。</small>
           </div>
-          <form id="form-tree-drawer-edit" class="tactical-form drawer-form">
-            <input type="hidden" id="tree-edit-point-id">
-            <div class="form-row-grid-2">
-              <div class="form-field">
-                <label class="form-label" for="tree-edit-battalion">所属片区</label>
-                <select id="tree-edit-battalion" class="text-input select-input" required></select>
-              </div>
-              <div class="form-field">
-                <label class="form-label" for="tree-edit-company">所属组</label>
-                <select id="tree-edit-company" class="text-input select-input" required></select>
-              </div>
-            </div>
 
-            <div class="form-row">
-              <label class="form-label" for="tree-edit-name" data-term="roles.firepowerNameLabel">作业单元名称</label>
-              <input type="text" id="tree-edit-name" class="text-input" placeholder="例如: 1号作业单元" required>
+          <div class="form-row-grid-3">
+            <div class="form-field">
+              <label class="form-label" for="tree-edit-lon">经度 LON (°)</label>
+              <input type="number" step="0.000001" min="-180" max="180" id="tree-edit-lon" class="text-input mono" required>
             </div>
-
-            <div class="form-row">
-              <label class="form-label" for="tree-edit-mounted-device">挂载在线设备ID (组播通信信道)</label>
-              <select id="tree-edit-mounted-device" class="text-input select-input">
-                <option value="">(未挂载 / 工位离线)</option>
-              </select>
-              <small class="form-field-hint">选择已在组播网络中的设备ID，挂载后工位将变为在线。</small>
+            <div class="form-field">
+              <label class="form-label" for="tree-edit-lat">纬度 LAT (°)</label>
+              <input type="number" step="0.000001" min="-90" max="90" id="tree-edit-lat" class="text-input mono" required>
             </div>
-
-            <div class="form-row-grid-3">
-              <div class="form-field">
-                <label class="form-label" for="tree-edit-lon">经度 LON (°)</label>
-                <input type="number" step="0.000001" min="-180" max="180" id="tree-edit-lon" class="text-input mono" required>
-              </div>
-              <div class="form-field">
-                <label class="form-label" for="tree-edit-lat">纬度 LAT (°)</label>
-                <input type="number" step="0.000001" min="-90" max="90" id="tree-edit-lat" class="text-input mono" required>
-              </div>
-              <div class="form-field">
-                <label class="form-label" for="tree-edit-alt">高度 ALT (m)</label>
-                <input type="number" step="0.1" id="tree-edit-alt" class="text-input mono" required>
-              </div>
+            <div class="form-field">
+              <label class="form-label" for="tree-edit-alt">高度 ALT (m)</label>
+              <input type="number" step="0.1" id="tree-edit-alt" class="text-input mono" required>
             </div>
+          </div>
 
-            <div class="modal-helper-row drawer-helper-row">
-              <button type="button" id="btn-tree-pick-center" class="btn btn-sm btn-tactical-tool" title="将当前三维地图画面中心坐标填入">
-                <span>获取视心</span>
-              </button>
-              <button type="button" id="btn-tree-pick-point" class="btn btn-sm btn-tactical-tool highlight-tool" title="切至三维地图点选拾取坐标">
-                <span>地图点选</span>
+          <div class="modal-helper-row drawer-helper-row">
+            <button type="button" id="btn-tree-pick-center" class="btn btn-sm btn-tactical-tool" title="将当前三维地图画面中心坐标填入">
+              <span>获取视心</span>
+            </button>
+            <button type="button" id="btn-tree-pick-point" class="btn btn-sm btn-tactical-tool highlight-tool" title="切至三维地图点选拾取坐标">
+              <span>地图点选</span>
+            </button>
+          </div>
+          <div id="tree-edit-picked-hint" class="coord-picked-banner" hidden style="display: none;"></div>
+
+          <div class="form-row-grid-2">
+            <div class="form-field">
+              <label class="form-label" for="tree-edit-range" data-term="action.strikeRangeKm">覆盖范围 (km)</label>
+              <input type="text" id="tree-edit-range" class="text-input mono" placeholder="如: 12 km" required>
+            </div>
+            <div class="form-field">
+              <label class="form-label" for="tree-edit-max-targets">单次最大目标数 (通道容量)</label>
+              <input type="number" step="1" min="1" max="50" id="tree-edit-max-targets" class="text-input mono" placeholder="1" required>
+            </div>
+          </div>
+
+          <div class="form-row-grid-2">
+            <div class="form-field">
+              <label class="form-label" for="tree-edit-ip">通信 IP 地址</label>
+              <input type="text" id="tree-edit-ip" class="text-input mono" placeholder="127.0.0.1" required>
+            </div>
+            <div class="form-field">
+              <label class="form-label" for="tree-edit-port">通信端口 (TCP)</label>
+              <input type="number" step="1" min="1" max="65535" id="tree-edit-port" class="text-input mono" placeholder="5567" required>
+            </div>
+          </div>
+
+          <div class="drawer-actions-row">
+            <button type="button" id="btn-cancel-tree-drawer-btn" class="btn btn-sm btn-secondary">
+              <span>取消</span>
+            </button>
+            <div class="drawer-btn-group">
+              <button type="submit" id="btn-tree-save-drawer" class="btn btn-sm btn-primary-red">
+                <span>保存配置</span>
               </button>
             </div>
-            <div id="tree-edit-picked-hint" class="coord-picked-banner" hidden style="display: none;"></div>
-
-            <div class="form-row-grid-2">
-              <div class="form-field">
-                <label class="form-label" for="tree-edit-range" data-term="action.strikeRangeKm">覆盖范围 (km)</label>
-                <input type="text" id="tree-edit-range" class="text-input mono" placeholder="如: 12 km" required>
-              </div>
-              <div class="form-field">
-                <label class="form-label" for="tree-edit-max-targets">单次最大目标数 (通道容量)</label>
-                <input type="number" step="1" min="1" max="50" id="tree-edit-max-targets" class="text-input mono" placeholder="1" required>
-              </div>
-            </div>
-
-            <div class="form-row-grid-2">
-              <div class="form-field">
-                <label class="form-label" for="tree-edit-ip">通信 IP 地址</label>
-                <input type="text" id="tree-edit-ip" class="text-input mono" placeholder="127.0.0.1" required>
-              </div>
-              <div class="form-field">
-                <label class="form-label" for="tree-edit-port">通信端口 (TCP)</label>
-                <input type="number" step="1" min="1" max="65535" id="tree-edit-port" class="text-input mono" placeholder="5567" required>
-              </div>
-            </div>
-
-            <div class="drawer-actions-row">
-              <button type="button" id="btn-cancel-tree-drawer-btn" class="btn btn-sm btn-secondary">
-                <span>取消</span>
-              </button>
-              <div class="drawer-btn-group">
-                <button type="submit" id="btn-tree-save-drawer" class="btn btn-sm btn-primary-red">
-                  <span>保存配置</span>
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-
-        <!-- 抽屉/模态：片区分组架构规模设置 -->
-        <div id="affiliation-org-modal" class="affiliation-edit-drawer affiliation-org-drawer" hidden style="display: none;">
-          <div class="drawer-header">
-            <strong id="org-modal-title" data-term="org.scaleModalTitle">组织架构规模 · 片区分组架构设置</strong>
-            <button type="button" id="btn-close-org-modal" class="btn-close-drawer" aria-label="关闭片区设置">✕</button>
           </div>
-          <div class="drawer-form org-settings-form">
-            <!-- 快速架构规模设置 -->
-            <div class="org-quick-scale-panel">
-              <div class="panel-section-title">
-                <span class="status-dot-point online" aria-hidden="true"></span>
-                <strong>快捷架构规模生成</strong>
-              </div>
-              <p class="org-helper-desc" data-term="org.scaleDesc">设定当前调度中心下辖的片区数量以及各片区标配组数量：</p>
-              <div class="form-row-grid-2">
-                <div class="form-field">
-                  <label class="form-label" for="input-scale-battalions">设置片区数量</label>
-                  <div class="stepper-input-row">
-                    <input type="number" id="input-scale-battalions" class="text-input mono" min="1" max="10" step="1" value="2" required>
-                    <span class="input-unit">个片区</span>
-                  </div>
-                </div>
-                <div class="form-field">
-                  <label class="form-label" for="input-scale-companies">每片区下辖组数</label>
-                  <div class="stepper-input-row">
-                    <input type="number" id="input-scale-companies" class="text-input mono" min="1" max="10" step="1" value="2" required>
-                    <span class="input-unit">个组</span>
-                  </div>
+        </form>
+      </div>
+
+      <!-- 组织架构规模设置弹窗 -->
+      <div id="affiliation-org-modal" class="affiliation-edit-drawer affiliation-org-drawer" hidden style="display: none;">
+        <div class="drawer-header">
+          <strong id="org-modal-title" data-term="org.scaleModalTitle">组织架构规模 · 片区分组架构设置</strong>
+          <button type="button" id="btn-close-org-modal" class="btn-close-drawer" aria-label="关闭片区设置">✕</button>
+        </div>
+        <div class="drawer-form org-settings-form">
+          <div class="org-quick-scale-panel">
+            <div class="panel-section-title">
+              <span class="status-dot-point online" aria-hidden="true"></span>
+              <strong>快捷架构规模生成</strong>
+            </div>
+            <p class="org-helper-desc" data-term="org.scaleDesc">设定当前调度中心下辖的片区数量以及各片区标配组数量：</p>
+            <div class="form-row-grid-2">
+              <div class="form-field">
+                <label class="form-label" for="input-scale-battalions">设置片区数量</label>
+                <div class="stepper-input-row">
+                  <input type="number" id="input-scale-battalions" class="text-input mono" min="1" max="10" step="1" value="2" required>
+                  <span class="input-unit">个片区</span>
                 </div>
               </div>
-              <div class="scale-actions-row">
-                <button type="button" id="btn-apply-org-scale" class="btn btn-sm btn-tactical-tool highlight-tool">
-                  <span>快速应用架构规模</span>
-                </button>
+              <div class="form-field">
+                <label class="form-label" for="input-scale-companies">每片区下辖组数</label>
+                <div class="stepper-input-row">
+                  <input type="number" id="input-scale-companies" class="text-input mono" min="1" max="10" step="1" value="2" required>
+                  <span class="input-unit">个组</span>
+                </div>
               </div>
             </div>
-
-            <!-- 详细片区分组架构树形管理列表 -->
-            <div class="org-detail-manage-panel">
-              <div class="panel-section-title">
-                <span class="status-dot-point standby" aria-hidden="true"></span>
-                <strong>当前片区分组清单</strong>
-              </div>
-              <div id="org-manage-tree-list" class="org-manage-tree-list">
-                <!-- 动态渲染各片区及组管理项 -->
-              </div>
-              <div class="org-add-battalion-row">
-                <input type="text" id="input-new-battalion-name" class="text-input" placeholder="输入新片区名称 (例如: 3区)">
-                <button type="button" id="btn-add-new-battalion" class="btn btn-sm btn-secondary">
-                  <span>+ 添加新片区</span>
-                </button>
-              </div>
-            </div>
-
-            <div class="drawer-actions-row">
-              <button type="button" id="btn-reset-org-default" class="btn btn-sm btn-secondary">
-                <span>重置默认架构</span>
-              </button>
-              <button type="button" id="btn-finish-org-modal" class="btn btn-sm btn-primary-red">
-                <span>完成设置</span>
+            <div class="scale-actions-row">
+              <button type="button" id="btn-apply-org-scale" class="btn btn-sm btn-tactical-tool highlight-tool">
+                <span>快速应用架构规模</span>
               </button>
             </div>
+          </div>
+
+          <div class="org-detail-manage-panel">
+            <div class="panel-section-title">
+              <span class="status-dot-point standby" aria-hidden="true"></span>
+              <strong>当前片区分组清单</strong>
+            </div>
+            <div id="org-manage-tree-list" class="org-manage-tree-list"></div>
+            <div class="org-add-battalion-row">
+              <input type="text" id="input-new-battalion-name" class="text-input" placeholder="输入新片区名称 (例如: 3区)">
+              <button type="button" id="btn-add-new-battalion" class="btn btn-sm btn-secondary">
+                <span>+ 添加新片区</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="drawer-actions-row">
+            <button type="button" id="btn-reset-org-default" class="btn btn-sm btn-secondary">
+              <span>重置默认架构</span>
+            </button>
+            <button type="button" id="btn-finish-org-modal" class="btn btn-sm btn-primary-red">
+              <span>完成设置</span>
+            </button>
           </div>
         </div>
       </div>
-
-      <footer class="view-footer affiliation-footer">
-        <div class="affiliation-footer-meta">
-          <span class="footer-legend-item"><span class="legend-dot live"></span> 设备挂载在线</span>
-          <span class="footer-legend-item"><span class="legend-dot standby"></span> 未挂载或设备离线</span>
-          <span class="footer-legend-item"><span class="legend-dot note"></span> 可在监测席或设备池中直接选取设备挂载至工位</span>
-        </div>
-        <div class="affiliation-footer-actions">
-          <button type="button" id="btn-affiliation-close-foot" class="btn btn-secondary" data-term="app.backToTactical">返回综合态势</button>
-        </div>
-      </footer>
-    </section>
+    </div>
 
     <section id="page-settings" class="page-view fullpage-view" aria-label="设置" hidden>
       <header class="view-header management-header">

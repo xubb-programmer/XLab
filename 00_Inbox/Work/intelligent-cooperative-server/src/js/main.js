@@ -17,7 +17,7 @@ import { StatsPanel } from "./ui/stats-panel.js";
 import { TargetReportModal } from "./ui/target-report-modal.js";
 import { initDeviceManager } from "./ui/device-simulation.js";
 import { VideoMatrixModal } from "./ui/video-matrix-modal.js";
-import { AffiliationModal } from "./ui/affiliation-modal.js";
+import { AffiliationModal } from "./ui/affiliation-modal.js?v=20261120_v4";
 import { initDataManagement } from "./ui/data-management.js";
 import { initMapSettings } from "./ui/map-settings.js";
 
@@ -43,9 +43,6 @@ let activeMainPage = "tactical";
 let activeMainPageOptions = {};
 
 function switchMainPage(pageName, options = {}) {
-  activeMainPage = pageName;
-  activeMainPageOptions = options;
-
   const navBtnTactical = document.getElementById("nav-btn-tactical");
   const navBtnVideoMatrix = document.getElementById("nav-btn-video-matrix");
   const navBtnBatteryConfig = document.getElementById("nav-btn-battery-config");
@@ -56,15 +53,28 @@ function switchMainPage(pageName, options = {}) {
   const pageSettings = document.getElementById("page-settings");
   const pageDataManagement = document.getElementById("page-data-management");
 
+  if (pageName === "firepower") {
+    // 单元挂载：以独立浮动对话框展示【通信名录列表】，不隐藏底层综合态势
+    navBtnBatteryConfig?.classList.add("active");
+    firepowerAffiliationModal?.open(options?.keepDrawer);
+    if (options?.openNew) firepowerAffiliationModal?.openDrawerForNew();
+    return;
+  }
+
+  // 关闭名录弹窗并切换主页面
+  firepowerAffiliationModal?.close();
+  navBtnBatteryConfig?.classList.remove("active");
+
+  activeMainPage = pageName;
+  activeMainPageOptions = options;
+
   navBtnTactical?.classList.toggle("active", pageName === "tactical");
   navBtnVideoMatrix?.classList.toggle("active", pageName === "video-matrix");
-  navBtnBatteryConfig?.classList.toggle("active", pageName === "firepower");
   navBtnSettings?.classList.toggle("active", pageName === "settings" || pageName === "data-management");
 
   for (const [page, visible] of [
     [pageTactical, pageName === "tactical"],
     [pageVideo, pageName === "video-matrix"],
-    [pageFirepower, pageName === "firepower"],
     [pageSettings, pageName === "settings"],
     [pageDataManagement, pageName === "data-management"]
   ]) {
@@ -81,9 +91,6 @@ function switchMainPage(pageName, options = {}) {
     viewerManager?.requestRender();
   } else if (pageName === "video-matrix") {
     reconVideoMatrixModal?.open(options?.preferredSource);
-  } else if (pageName === "firepower") {
-    firepowerAffiliationModal?.open(options?.keepDrawer);
-    if (options?.openNew) firepowerAffiliationModal?.openDrawerForNew();
   } else if (pageName === "data-management") {
     document.getElementById("management-title")?.focus();
     eventBus.emit("management:open", options.recordType);
@@ -93,7 +100,18 @@ function switchMainPage(pageName, options = {}) {
 function bindMainPageNavigation() {
   document.getElementById("nav-btn-tactical")?.addEventListener("click", () => switchMainPage("tactical"));
   document.getElementById("nav-btn-video-matrix")?.addEventListener("click", () => switchMainPage("video-matrix"));
-  document.getElementById("nav-btn-battery-config")?.addEventListener("click", () => switchMainPage("firepower"));
+  document.getElementById("nav-btn-battery-config")?.addEventListener("click", () => {
+    const pageFirepower = document.getElementById("page-firepower-affiliation");
+    if (pageFirepower && !pageFirepower.hidden && pageFirepower.style.display !== "none") {
+      firepowerAffiliationModal?.close();
+      document.getElementById("nav-btn-battery-config")?.classList.remove("active");
+      if (activeMainPage === "tactical") {
+        document.getElementById("nav-btn-tactical")?.classList.add("active");
+      }
+    } else {
+      switchMainPage("firepower");
+    }
+  });
   document.getElementById("nav-btn-settings")?.addEventListener("click", () => switchMainPage("settings"));
   const dataManagementButton = document.getElementById("btn-open-data-management");
   dataManagementButton?.addEventListener("click", () => switchMainPage("data-management"));

@@ -3607,16 +3607,28 @@ button.artillery-card:hover {
 
 /* ----------------------------------------------------
    组织架构整备与层级隶属拓扑树状图 (Affiliation Tree)
+/* ----------------------------------------------------
+   通信名录列表 / 单元挂载模态对话框 (仿真经典桌面窗口)
 ---------------------------------------------------- */
+.firepower-affiliation-dialog,
 .fullpage-firepower-affiliation,
-.firepower-affiliation-dialog {
-  width: 100vw;
-  height: calc(100vh - 52px);
-  display: flex;
-  flex-direction: column;
-  background: radial-gradient(circle at 50% 20%, rgba(13, 30, 48, 0.45) 0%, rgba(6, 11, 17, 0.98) 100%);
+#page-firepower-affiliation.modal-backdrop {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 2800 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(4, 9, 16, 0.55) !important;
+  backdrop-filter: blur(3px);
   overflow: hidden;
-  position: relative;
+}
+
+#page-firepower-affiliation.is-hidden {
+  display: none !important;
 }
 
 .affiliation-header {
@@ -4893,125 +4905,96 @@ button.artillery-card:hover {
 
 
 /* ========================================================
-   通信名录列表 树形控件样式 (参考图 1 风格)
+   通信名录列表 经典桌面弹窗样式 (100% 还原图 1 风格)
    ======================================================== */
 .affiliation-tree-canvas {
   width: 100%;
-  max-width: 1080px;
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
 .dir-tree-window {
-  width: 100%;
-  background: rgba(10, 20, 32, 0.96);
-  border: 1px solid rgba(0, 240, 255, 0.4);
-  border-radius: 6px;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), inset 0 0 16px rgba(0, 240, 255, 0.05);
+  width: 500px;
+  max-width: 92vw;
+  height: 560px;
+  max-height: 85vh;
+  background: #ffffff;
+  border: 1px solid #5b8db8;
+  border-radius: 4px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.2);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  color: #111827;
 }
 
-/* 顶部蓝色仿真桌面窗口标题栏 (参考图 1) */
+/* 顶部经典 Windows 渐变蓝标题栏 (参考图 1) */
 .dir-window-titlebar {
-  background: linear-gradient(90deg, #10416d 0%, #0d2f4f 55%, #081d32 100%);
-  border-bottom: 1px solid rgba(0, 240, 255, 0.35);
-  padding: 8px 14px;
+  background: linear-gradient(180deg, #4298e0 0%, #2979ba 50%, #1e629b 100%);
+  border-bottom: 1px solid #174e7c;
+  padding: 5px 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   user-select: none;
+  height: 30px;
+  flex-shrink: 0;
 }
 
 .dir-title-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   color: #ffffff;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.dir-window-icon {
-  width: 18px;
-  height: 18px;
-  color: #00f0ff;
-}
-
-.dir-title-badge {
-  font-size: 11px;
-  padding: 1px 8px;
-  background: rgba(0, 240, 255, 0.15);
-  border: 1px solid rgba(0, 240, 255, 0.3);
-  color: #00f0ff;
-  border-radius: 10px;
-  font-weight: normal;
+  font-size: 13px;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .dir-title-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
 }
 
 .btn-dir-win-close {
-  background: transparent;
-  border: none;
-  color: #94a3b8;
-  font-size: 14px;
+  background: linear-gradient(180deg, #ef5350 0%, #d32f2f 100%);
+  border: 1px solid #b71c1c;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: bold;
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 3px;
+  width: 20px;
+  height: 18px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1;
 }
 
 .btn-dir-win-close:hover {
-  background: #e11d48;
-  color: #ffffff;
+  background: #c62828;
 }
 
-/* 工具栏 */
-.dir-window-toolbar {
-  background: rgba(13, 25, 38, 0.95);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 7px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.toolbar-left-group,
-.toolbar-right-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.toolbar-divider {
-  color: rgba(255, 255, 255, 0.2);
-  margin: 0 4px;
-}
-
-/* 树形名录滚动视窗 */
+/* 经典树形控件区域 (纯白底、黑字、虚线、参考图 1) */
 .dir-tree-container {
   flex: 1;
-  max-height: 620px;
-  padding: 16px 20px;
+  padding: 12px 14px;
   overflow-y: auto;
+  overflow-x: auto;
+  background: #ffffff;
   font-size: 13px;
-  background: rgba(7, 14, 23, 0.9);
+  color: #111827;
 }
 
-/* 经典树线连接 (Dotted Tree Lines) */
+/* 经典树虚线 (Dotted Tree Lines) */
 .dir-tree-list {
   list-style: none;
   margin: 0;
-  padding-left: 24px;
+  padding-left: 18px;
   position: relative;
 }
 
@@ -5019,91 +5002,65 @@ button.artillery-card:hover {
   content: "";
   position: absolute;
   top: 0;
-  bottom: 14px;
-  left: 8px;
-  border-left: 1px dotted rgba(0, 240, 255, 0.35);
+  bottom: 10px;
+  left: 6px;
+  border-left: 1px dotted #8b99a4;
 }
 
 .dir-tree-node {
   position: relative;
-  margin: 4px 0;
+  margin: 2px 0;
 }
 
 .dir-tree-node::before {
   content: "";
   position: absolute;
-  top: 15px;
-  left: -16px;
-  width: 14px;
-  border-top: 1px dotted rgba(0, 240, 255, 0.35);
+  top: 10px;
+  left: -12px;
+  width: 12px;
+  border-top: 1px dotted #8b99a4;
 }
 
-/* 节点整行交互 */
+/* 节点行 */
 .dir-node-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 5px 8px;
-  border-radius: 4px;
-  border: 1px solid transparent;
-  transition: all 0.15s ease;
+  gap: 5px;
+  padding: 2px 4px;
+  border-radius: 2px;
+  user-select: none;
+  cursor: default;
 }
 
 .dir-node-row:hover {
-  background: rgba(0, 240, 255, 0.08);
-  border-color: rgba(0, 240, 255, 0.2);
-}
-
-.dir-root-row {
-  background: rgba(0, 240, 255, 0.05);
-  border: 1px solid rgba(0, 240, 255, 0.25);
-  margin-bottom: 6px;
-}
-
-.dir-bat-row {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.dir-comp-row {
-  background: transparent;
-}
-
-.dir-point-row {
-  background: rgba(14, 25, 38, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.dir-point-row.is-row-checked {
-  background: rgba(0, 240, 255, 0.07);
-  border-color: rgba(0, 240, 255, 0.3);
+  background: #e0f2fe;
 }
 
 /* 正方形折叠展开方块 [+] / [-] (参考图 1 风格) */
 .dir-expander {
-  width: 16px;
-  height: 16px;
+  width: 11px;
+  height: 11px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(0, 240, 255, 0.55);
-  background: rgba(11, 23, 37, 0.95);
-  color: #00f0ff;
+  border: 1px solid #788896;
+  background: #ffffff;
+  color: #374151;
   font-family: monospace;
-  font-size: 13px;
+  font-size: 10px;
   font-weight: bold;
   line-height: 1;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
   user-select: none;
   flex-shrink: 0;
-  transition: all 0.12s ease;
   padding: 0;
+  margin-right: 2px;
 }
 
 .dir-expander:hover {
-  border-color: #00f0ff;
-  background: rgba(0, 240, 255, 0.2);
-  box-shadow: 0 0 6px rgba(0, 240, 255, 0.4);
+  border-color: #0284c7;
+  color: #0284c7;
 }
 
 .dir-expander.empty-placeholder {
@@ -5112,158 +5069,145 @@ button.artillery-card:hover {
 }
 
 .dir-tree-elbow {
-  width: 16px;
-  height: 16px;
+  width: 11px;
+  height: 11px;
   display: inline-block;
   flex-shrink: 0;
+  margin-right: 2px;
 }
 
 /* 经典复选框 (参考图 1 风格) */
 .dir-checkbox {
-  width: 15px;
-  height: 15px;
-  accent-color: #00f0ff;
+  width: 13px;
+  height: 13px;
   cursor: pointer;
   flex-shrink: 0;
-  margin: 0;
+  margin: 0 4px 0 0;
+  accent-color: #1d4ed8;
 }
 
-/* 节点标签 */
+/* 节点文字 */
 .dir-node-label {
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: #f1f5f9;
+  gap: 4px;
+  color: #111827;
   font-size: 13px;
   font-weight: 500;
-  user-select: none;
   white-space: nowrap;
-}
-
-.dir-node-icon {
-  font-size: 14px;
-}
-
-.dir-node-badge {
-  font-size: 10px;
-  padding: 1px 5px;
-  border-radius: 3px;
-}
-
-.dir-node-badge.root-badge {
-  background: rgba(0, 240, 255, 0.2);
-  color: #00f0ff;
-  border: 1px solid rgba(0, 240, 255, 0.4);
 }
 
 /* 节点副信息 */
 .dir-node-meta {
-  color: #94a3b8;
+  color: #6b7280;
   font-size: 11px;
+  margin-left: 6px;
   white-space: nowrap;
 }
 
-/* 挂载状态徽标 */
-.dir-mount-indicator {
-  display: flex;
-  align-items: center;
-}
-
+/* 挂载指示与操作小按键 */
 .dir-mount-tag {
   font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 3px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin-left: 6px;
   white-space: nowrap;
 }
 
 .dir-mount-tag.active {
-  background: rgba(56, 239, 125, 0.15);
-  border: 1px solid rgba(56, 239, 125, 0.4);
-  color: #38ef7d;
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  color: #15803d;
 }
 
 .dir-mount-tag.inactive {
-  background: rgba(148, 163, 184, 0.12);
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
+}
+
+.status-dot-mini {
+  font-size: 9px;
+  margin-left: 2px;
+}
+
+.status-dot-mini.online {
+  color: #16a34a;
+}
+
+.status-dot-mini.offline {
   color: #94a3b8;
 }
 
-/* 快速挂载设备下拉 */
-.dir-quick-mount {
-  width: 160px;
-  flex-shrink: 0;
-}
-
-.dir-quick-mount .quick-mount-select {
-  width: 100%;
-  font-size: 11px;
-  padding: 2px 6px;
-  height: 24px;
-}
-
-/* 规格标签 */
-.dir-point-specs {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-}
-
-.dir-spec-chip {
-  padding: 1px 5px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 3px;
-  color: #cbd5e1;
-  white-space: nowrap;
-}
-
-/* 节点操作区 */
 .dir-node-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   margin-left: auto;
+  opacity: 0.15;
+  transition: opacity 0.15s;
 }
 
-/* 空组提示 */
+.dir-node-row:hover .dir-node-actions {
+  opacity: 1;
+}
+
+.btn-dir-inline {
+  font-size: 10px;
+  padding: 1px 5px;
+  height: 18px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.btn-dir-inline:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
 .dir-empty-comp-node {
-  padding: 4px 8px;
+  padding: 2px 4px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .dir-empty-text {
   font-size: 11px;
-  color: #64748b;
-  font-style: italic;
+  color: #94a3b8;
 }
 
-/* 底部操作栏 (参考图 1 风格) */
+.quick-mount-select {
+  font-size: 11px;
+  height: 20px;
+  padding: 0 4px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 2px;
+  color: #334155;
+  cursor: pointer;
+}
+
+/* 底部操作栏 (灰色底、两个经典按钮 [发送] [取消]，100% 还原图 1) */
 .dir-window-footer {
-  background: rgba(11, 21, 33, 0.98);
-  border-top: 1px solid rgba(0, 240, 255, 0.25);
-  padding: 10px 18px;
+  background: #ece9d8;
+  border-top: 1px solid #d1d5db;
+  padding: 6px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
+  height: 44px;
 }
 
 .dir-footer-left {
   display: flex;
   align-items: center;
-  gap: 10px;
   font-size: 12px;
-}
-
-.dir-footer-stat {
-  color: #cbd5e1;
-}
-
-.dir-footer-tip {
-  color: #64748b;
-  font-size: 11px;
+  color: #475569;
 }
 
 .dir-footer-right {
@@ -5272,13 +5216,40 @@ button.artillery-card:hover {
   gap: 12px;
 }
 
-.btn-dir-send {
+.btn-classic-dialog {
   min-width: 80px;
-  font-weight: 600;
-  letter-spacing: 2px;
+  height: 26px;
+  padding: 2px 16px;
+  background: linear-gradient(180deg, #f9fafb 0%, #e5e7eb 100%);
+  border: 1px solid #9ca3af;
+  border-radius: 3px;
+  font-size: 13px;
+  color: #111827;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  user-select: none;
 }
 
-.btn-dir-cancel {
-  min-width: 80px;
-  letter-spacing: 2px;
+.btn-classic-dialog:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #d1d5db 100%);
+  border-color: #6b7280;
+}
+
+.btn-classic-dialog:active {
+  background: #d1d5db;
+}
+
+.btn-classic-primary {
+  border-color: #2563eb;
+  background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.btn-classic-primary:hover {
+  background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
 }
