@@ -2,6 +2,7 @@ import { createSocket } from "node:dgram";
 import { existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { isIPv4 } from "node:net";
+import { networkInterfaces } from "node:os";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { decodeReport, openRegistry } from "./device-simulation-registry.mjs";
@@ -11,22 +12,56 @@ import { mountedDeviceIds } from "./device-mounts.mjs";
 const namespace = "/api/device-simulation";
 const MAX_UDP_BYTES = 65_507;
 const SITUATION_REPORT_PORT = 28081;
-const SITUATION_REPORT_COMMAND = Buffer.from(JSON.stringify({
-  "定时上报": true,
-  "上报间隔毫秒": 2000,
-  "上报地址": "192.168.0.201",
-  "上报端口": 28080,
-  "目标编号": null,
-  "目标类型": null,
-  "最大速度米每秒": null
-}), "utf8");
 
-async function sendSituationReport(address) {
+export function getLocalIPv4Address(targetPeerAddress) {
+  const interfaces = networkInterfaces();
+  const allNonInternal = [];
+  for (const list of Object.values(interfaces)) {
+    if (!list) continue;
+    for (const info of list) {
+      if (info.family === "IPv4" && !info.internal) {
+        allNonInternal.push(info.address);
+      }
+    }
+  }
+  if (targetPeerAddress && isIPv4(targetPeerAddress)) {
+    const targetParts = targetPeerAddress.split(".");
+    const match24 = allNonInternal.find(ip => {
+      const parts = ip.split(".");
+      return parts[0] === targetParts[0] && parts[1] === targetParts[1] && parts[2] === targetParts[2];
+    });
+    if (match24) return match24;
+    const match16 = allNonInternal.find(ip => {
+      const parts = ip.split(".");
+      return parts[0] === targetParts[0] && parts[1] === targetParts[1];
+    });
+    if (match16) return match16;
+  }
+  return allNonInternal[0] || "127.0.0.1";
+}
+
+function buildSituationReportCommand(reportHost, reportPort = 28080) {
+  return Buffer.from(JSON.stringify({
+    "定时上报": true,
+    "上报间隔毫秒": 2000,
+    "上报地址": reportHost || getLocalIPv4Address(),
+    "上报端口": reportPort,
+    "目标编号": null,
+    "目标类型": null,
+    "最大速度米每秒": null
+  }), "utf8");
+}
+
+async function sendSituationReport(address, reportHost, reportPort = 28080) {
+  const host = (typeof reportHost === "string" && isIPv4(reportHost))
+    ? reportHost
+    : getLocalIPv4Address(address);
   const socket = createSocket("udp4");
+  const command = buildSituationReportCommand(host, reportPort);
   try {
     await new Promise((resolve, reject) => {
       socket.once("error", reject);
-      socket.send(SITUATION_REPORT_COMMAND, SITUATION_REPORT_PORT, address, error => {
+      socket.send(command, SITUATION_REPORT_PORT, address, error => {
         if (error) reject(error);
         else resolve();
       });
@@ -153,13 +188,21 @@ export async function openDeviceSimulation(rtspTimeoutOption, mqttConfig, scenar
           if (!address || !isIPv4(address) || Number(address.split(".")[0]) < 1 || Number(address.split(".")[0]) > 223) {
             return json(res, 409, { error: "该监测席没有有效的设备单播 IP" });
           }
+          const defaultReportHost = process.env.SITUATION_REPORT_HOST ||
+            process.env.INTELLIGENT_COOPERATIVE_SERVER_BIND_HOST ||
+            (mqttConfig.deviceStatusRelayIp && isIPv4(mqttConfig.deviceStatusRelayIp) ? mqttConfig.deviceStatusRelayIp : null) ||
+            getLocalIPv4Address(address);
+          const reportHost = (typeof body.reportHost === "string" && isIPv4(body.reportHost))
+            ? body.reportHost : defaultReportHost;
+          const reportPort = Number.isInteger(body.reportPort) && body.reportPort >= 1 && body.reportPort <= 65535
+            ? body.reportPort : 28080;
           try {
-            await sendSituationReport(address);
+            await sendSituationReport(address, reportHost, reportPort);
           } catch (error) {
             console.error("发送态势上报指令失败", error);
             return json(res, 502, { error: "发送态势上报指令失败" });
           }
-          return json(res, 200, { sent: true, address, port: SITUATION_REPORT_PORT });
+          return json(res, 200, { sent: true, address, port: SITUATION_REPORT_PORT, reportHost, reportPort });
         }
         const result = await scenario.enqueue(async () => {
           const current = await scenario.read();

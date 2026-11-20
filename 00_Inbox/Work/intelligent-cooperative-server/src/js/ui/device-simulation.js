@@ -67,9 +67,11 @@ export function initDeviceManager(viewer, panel, options = {}) {
         }
       }
     } catch (_) {}
+    const bName = t("org.battalion", "区");
+    const cName = t("org.company", "组");
     return [
-      { name: "1营", companies: ["1连", "2连"] },
-      { name: "2营", companies: ["1连", "2连"] }
+      { name: `1${bName}`, companies: [`1${cName}`, `2${cName}`] },
+      { name: `2${bName}`, companies: [`1${cName}`, `2${cName}`] }
     ];
   }
 
@@ -134,7 +136,7 @@ export function initDeviceManager(viewer, panel, options = {}) {
     if (idx < 0) return false;
     orgStructure.splice(idx, 1);
     if (orgStructure.length === 0) {
-      orgStructure.push({ name: "1营", companies: ["1连"] });
+      orgStructure.push({ name: ("1" + t("org.battalion", "区")), companies: ["1" + t("org.company", "组")] });
     }
     saveOrgStructure();
     const fallbackBat = orgStructure[0].name;
@@ -177,7 +179,7 @@ export function initDeviceManager(viewer, panel, options = {}) {
     if (cIdx >= 0) {
       b.companies.splice(cIdx, 1);
       if (b.companies.length === 0) {
-        b.companies.push("1连");
+        b.companies.push("1" + t("org.company", "组"));
       }
       saveOrgStructure();
       for (const pt of scenarioFirepower) {

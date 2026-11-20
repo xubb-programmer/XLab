@@ -48,7 +48,7 @@ function readVideoChannels(sources, source) {
           const url = new URL(text(value));
           if (url.protocol !== "rtsp:") continue;
           if (["127.0.0.1", "localhost"].includes(url.hostname)) url.hostname = source;
-          if (url.hostname === source) {
+          if (url.hostname) {
             rtspUrl = url.href;
             break;
           }

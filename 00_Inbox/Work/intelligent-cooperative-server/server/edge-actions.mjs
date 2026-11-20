@@ -66,7 +66,7 @@ export function createEdgeActionSender(client) {
     }
   });
 
-  return function sendEdgeAction({ deviceId, params, requestId, timeoutMs }) {
+  return function sendEdgeAction({ deviceId, params, requestId, timeoutMs, endpoint }) {
     if (typeof deviceId !== "string" || !edgeDeviceIdPattern.test(deviceId)) {
       return Promise.resolve(notSent("EdgeAgent 设备 ID 无效"));
     }
@@ -78,7 +78,16 @@ export function createEdgeActionSender(client) {
     }
     const wireParams = { ...params, x: Number(x.toFixed(2)), y: Number(y.toFixed(2)) };
     const bytes = Buffer.from(JSON.stringify({ name: "Action", params: wireParams, request_id: requestId }) + "\n");
-    const command = JSON.stringify({ id: requestId, transport: "tcp", data: bytes.toString("hex") });
+    const commandPayload = { id: requestId, transport: "tcp", data: bytes.toString("hex") };
+    if (endpoint && typeof endpoint.address === "string" && endpoint.address) {
+      commandPayload.meta = {
+        endpoint: {
+          address: endpoint.address,
+          port: Number(endpoint.port) || 5567
+        }
+      };
+    }
+    const command = JSON.stringify(commandPayload);
 
     return new Promise(resolve => {
       const request = {

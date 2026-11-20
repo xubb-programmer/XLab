@@ -411,8 +411,8 @@ export class StationConfigModal {
       return;
     }
 
-    const battalion = this.inputBattalion?.value?.trim() || "1营";
-    const company = this.inputCompany?.value?.trim() || "1连";
+    const battalion = this.inputBattalion?.value?.trim() || t("org.battalionDefault", "1区");
+    const company = this.inputCompany?.value?.trim() || t("org.companyDefault", "1组");
     const mountedDeviceId = this.inputMountedDevice?.value.trim() ?? this.currentPoint?.mountedDeviceId ?? "";
 
     const updated = {

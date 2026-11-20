@@ -215,7 +215,7 @@ export class StationPanel {
       if (simulation?.edit) {
         simulation.edit(point);
       } else {
-        eventBus.emit("firepower:openConfigModal", point);
+        eventBus.emit("firepower:openAffiliationModal");
       }
     });
 
@@ -231,7 +231,7 @@ export class StationPanel {
         if (simulation?.edit) {
           simulation.edit(point);
         } else {
-          eventBus.emit("firepower:openConfigModal", point);
+          eventBus.emit("firepower:openAffiliationModal");
         }
       });
     }

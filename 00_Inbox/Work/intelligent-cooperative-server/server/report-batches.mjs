@@ -156,7 +156,7 @@ export function openReportBatches(path, sendEdgeAction) {
             let result;
             try {
               result = item.mock ? { state: "mock" } : await sendEdgeAction({
-                deviceId, requestId, params: item.params, timeoutMs: item.timeoutMs
+                deviceId, requestId, params: item.params, timeoutMs: item.timeoutMs, endpoint: item.endpoint
               });
             } catch {
               result = { state: "unknown", pause: true, error: "发送中断，须核对接收端" };

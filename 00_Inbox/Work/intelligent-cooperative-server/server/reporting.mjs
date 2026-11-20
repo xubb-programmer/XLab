@@ -68,7 +68,7 @@ export function validateReportAssignments(assignments, firepowerPoints) {
   for (const item of assignments) {
     const point = points.get(item.firepowerId);
     if (!point) throw new ReportError(400, "所选工位不存在，请更新工位配置后重试");
-    const deviceId = point.deviceId || point.id;
+    const deviceId = point.deviceId || "firepower-action-device";
     if (typeof deviceId !== "string" || !edgeDeviceIdPattern.test(deviceId)) {
       throw new ReportError(400, `工位 ${point.name || point.id} 的 EdgeAgent 设备 ID 无效`);
     }
@@ -108,7 +108,12 @@ export function prepareReportItems({ request, firepowerPoints, getTarget, config
       ? configuredTimeout : defaultEndpoint.timeoutMs;
     return {
       targetId, targetNumber: target.targetNumber, name: target.name,
-      firepowerId, firepowerName: point.name || firepowerId, deviceId: point.deviceId || firepowerId,
+      firepowerId, firepowerName: point.name || firepowerId,
+      deviceId: point.deviceId || "firepower-action-device",
+      endpoint: {
+        address: point.ip || "127.0.0.1",
+        port: point.port || 5567
+      },
       timeoutMs, mock: Boolean(endpoint.mock),
       params: {
         lon: Number(target.longitude.toFixed(6)),

@@ -6,8 +6,8 @@
   },
   "targets": {
     "brokerUrl": "mqtt://127.0.0.1:1883",
-    "topic": "edge/v1/devices/plc_udp_dev/data",
-    "deviceStatusTopic": "edge/v1/devices/plc_udp_multicast_dev/data",
+    "topic": "edge/v1/devices/target-input-device/data",
+    "deviceStatusTopic": "edge/v1/devices/device-status-device/data",
     "deviceStatusRelayIp": "172.29.48.1",
     "username": "",
     "password": ""

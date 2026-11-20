@@ -372,8 +372,8 @@ export class AffiliationModal {
     const dm = this.getDeviceManager();
     const orgRaw = dm?.getOrgStructure ? dm.getOrgStructure() : null;
     const battalions = Array.isArray(orgRaw) ? orgRaw : (orgRaw?.battalions || [
-      { name: "1区", companies: ["1组", "2组"] },
-      { name: "2营", companies: ["1连", "2连"] }
+      { name: "1" + t("org.battalion", "区"), companies: ["1" + t("org.company", "组"), "2" + t("org.company", "组")] },
+      { name: "2" + t("org.battalion", "区"), companies: ["1" + t("org.company", "组"), "2" + t("org.company", "组")] }
     ]);
 
     if (this.inputBattalion) {
@@ -399,7 +399,7 @@ export class AffiliationModal {
     if (!this.inputCompany) return;
     const batList = Array.isArray(battalions) ? battalions : (battalions?.battalions || []);
     const batObj = batList.find(b => b.name === battalionName);
-    const comps = batObj?.companies || ["1连", "2连"];
+    const comps = batObj?.companies || ["1" + t("org.company", "组"), "2" + t("org.company", "组")];
 
     this.inputCompany.innerHTML = comps.map(c => `
       <option value="${escapeHtml(c)}" ${c === selectedComp ? 'selected' : ''}>${escapeHtml(c)}</option>
@@ -752,7 +752,8 @@ export class AffiliationModal {
     // 绑定拓扑树快捷交互
     document.getElementById("btn-tree-open-org-cfg")?.addEventListener("click", () => this.openOrgSettings());
     document.getElementById("btn-tree-add-bat-quick")?.addEventListener("click", () => {
-      const batName = prompt("请输入新营名称 (例如: 3营):");
+      const batLabel = t("org.battalion", "片区");
+      const batName = prompt(`请输入新${batLabel}名称 (例如: 3${batLabel}):`);
       if (batName?.trim() && dm?.addBattalion) {
         dm.addBattalion(batName.trim());
         this.render();
@@ -762,7 +763,8 @@ export class AffiliationModal {
     this.treeContainer.querySelectorAll(".btn-tree-add-comp-quick").forEach(btn => {
       btn.addEventListener("click", () => {
         const batName = btn.getAttribute("data-battalion");
-        const compName = prompt(`请输入要在 [${batName}] 下新增的连名称 (例如: 3连):`);
+        const compLabel = t("org.company", "组");
+        const compName = prompt(`请输入要在 [${batName}] 下新增的${compLabel}名称 (例如: 3${compLabel}):`);
         if (compName?.trim() && dm?.addCompany) {
           dm.addCompany(batName, compName.trim());
           this.render();
@@ -774,7 +776,8 @@ export class AffiliationModal {
       btn.addEventListener("click", () => {
         const batName = btn.getAttribute("data-battalion");
         const compName = btn.getAttribute("data-company");
-        if (confirm(`确定删除空连 [${batName} - ${compName}] 吗？`)) {
+        const compLabel = t("org.company", "组");
+        if (confirm(`确定删除空${compLabel} [${batName} - ${compName}] 吗？`)) {
           dm?.removeCompany?.(batName, compName);
           this.render();
         }
@@ -784,7 +787,8 @@ export class AffiliationModal {
     this.treeContainer.querySelectorAll(".btn-tree-del-bat-quick").forEach(btn => {
       btn.addEventListener("click", () => {
         const batName = btn.getAttribute("data-battalion");
-        if (confirm(`确定删除空营 [${batName}] 吗？`)) {
+        const batLabel = t("org.battalion", "片区");
+        if (confirm(`确定删除空${batLabel} [${batName}] 吗？`)) {
           dm?.removeBattalion?.(batName);
           this.render();
         }
@@ -793,8 +797,8 @@ export class AffiliationModal {
 
     this.treeContainer.querySelectorAll(".btn-tree-add-point-to-comp").forEach(btn => {
       btn.addEventListener("click", () => {
-        const batName = btn.getAttribute("data-battalion") || "1营";
-        const compName = btn.getAttribute("data-company") || "1连";
+        const batName = btn.getAttribute("data-battalion") || ("1" + t("org.battalion", "区"));
+        const compName = btn.getAttribute("data-company") || ("1" + t("org.company", "组"));
         this.openDrawerForNew(batName, compName);
       });
     });
