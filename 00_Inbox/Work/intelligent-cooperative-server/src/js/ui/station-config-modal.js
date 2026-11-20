@@ -196,19 +196,22 @@ export class StationConfigModal {
       }
       const titleEl = document.getElementById("firepower-modal-title");
       const deviceId = getPlatformDeviceId(this.currentPoint) || this.currentPoint.name || "未绑定设备";
-      const defaultName = isRecon ? `${t("roles.recon", "监测席")}-${deviceId}` : `${t("roles.firepower", "作业单元")}-${deviceId}`;
-      if (this.inputNameLabel) this.inputNameLabel.textContent = isRecon ? t("roles.reconNameLabel", "监测席名称") : t("roles.firepowerNameLabel", "作业单元名称");
-      if (this.inputName) this.inputName.placeholder = defaultName;
+      const defaultName = isRecon ? `${t("roles.recon", "侦察席")}-${deviceId}` : `${t("roles.firepower", "火力点")}-${deviceId}`;
+      if (this.inputNameLabel) this.inputNameLabel.textContent = isRecon ? t("roles.reconNameLabel", "侦察席名称") : t("roles.firepowerNameLabel", "火力点名称");
+      if (this.inputName) {
+        this.inputName.placeholder = isRecon ? "例如: 1号侦察席" : "例如: 1号火力点";
+        this.inputName.disabled = false;
+      }
       if (titleEl) {
         titleEl.textContent = isRecon
-          ? `${this.currentPoint.name || defaultName} · ${t("roles.recon", "监测席")}配置`
-          : `${this.currentPoint.name || defaultName} · ${t("roles.firepower", "作业单元")}配置`;
+          ? `${this.currentPoint.name || defaultName} · ${t("roles.recon", "侦察席")}配置`
+          : `${this.currentPoint.name || defaultName} · ${t("roles.firepower", "火力点")}配置`;
       }
       for (const field of this.form.querySelectorAll("[data-operational-point-field]")) {
         field.hidden = isRecon;
         for (const input of field.querySelectorAll("input")) input.disabled = isRecon;
       }
-      this.btnSave.textContent = isRecon ? "保存坐标" : "保存配置";
+      this.btnSave.textContent = "保存配置";
       if (this.inputName) this.inputName.value = this.currentPoint.name || defaultName;
       if (this.inputLon) this.inputLon.value = this.currentPoint.longitude != null ? this.currentPoint.longitude : "";
       if (this.inputLat) this.inputLat.value = this.currentPoint.latitude != null ? this.currentPoint.latitude : "";
@@ -392,7 +395,7 @@ export class StationConfigModal {
     const rawLat = parseFloat(this.inputLat.value);
     const rawAlt = parseFloat(this.inputAlt.value);
     const range = this.inputRange.value.trim() || "40 km";
-    const name = this.inputName.value.trim() || t("roles.firepowerPlaceholder", "地面任务输出点");
+    const name = this.inputName.value.trim() || (isRecon ? (this.currentPoint?.name || "1号侦察席") : (this.currentPoint?.name || t("roles.firepowerPlaceholder", "1号火力点")));
     const maxTargets = Math.max(1, Math.min(50, parseInt(this.inputMaxTargets?.value, 10) || 1));
     const ip = this.inputIp?.value?.trim() || "127.0.0.1";
     const port = Math.max(1, Math.min(65535, parseInt(this.inputPort?.value, 10) || 5567));

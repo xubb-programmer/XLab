@@ -312,6 +312,7 @@ export class AffiliationModal {
             <div class="bat-manage-title">
               <span class="status-dot-point online"></span>
               <strong>${escapeHtml(bat.name)}</strong>
+              <button type="button" class="btn-dir-inline btn-org-rename-bat" data-battalion="${escapeHtml(bat.name)}" title="重命名此${t("org.battalion", "营")}">✎</button>
               <span class="bat-points-count">(${pointsInBat}个${t("roles.firepower", "火力点")})</span>
             </div>
             <div class="bat-manage-actions">
@@ -328,6 +329,7 @@ export class AffiliationModal {
               return `
                 <span class="comp-chip">
                   <span class="comp-chip-name">${escapeHtml(comp)}</span>
+                  <button type="button" class="btn-del-chip btn-org-rename-comp" data-battalion="${escapeHtml(bat.name)}" data-company="${escapeHtml(comp)}" title="重命名此${t("org.company", "连")}">✎</button>
                   <span class="comp-chip-count">${pointsInComp}点</span>
                   ${pointsInComp === 0 ? `
                     <button type="button" class="comp-chip-del btn-org-del-comp" data-battalion="${escapeHtml(bat.name)}" data-company="${escapeHtml(comp)}" title="删除空${t("org.company", "连")}">✕</button>
@@ -342,6 +344,39 @@ export class AffiliationModal {
     }).join('');
 
     // 绑定营连建制管理事件
+    this.orgManageList.querySelectorAll(".btn-org-rename-bat").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const oldBat = btn.getAttribute("data-battalion");
+        const batLabel = t("org.battalion", "营");
+        const val = prompt(`请输入新的${batLabel}名称 (当前: ${oldBat}):`, oldBat);
+        if (val && val.trim() && val.trim() !== oldBat && dm?.renameBattalion) {
+          if (dm.renameBattalion(oldBat, val.trim())) {
+            this.renderOrgManageList();
+            this.render();
+          } else {
+            alert(`${batLabel}名称已存在或无效`);
+          }
+        }
+      });
+    });
+
+    this.orgManageList.querySelectorAll(".btn-org-rename-comp").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const bat = btn.getAttribute("data-battalion");
+        const oldComp = btn.getAttribute("data-company");
+        const compLabel = t("org.company", "连");
+        const val = prompt(`请输入新的${compLabel}名称 (当前: ${oldComp}):`, oldComp);
+        if (val && val.trim() && val.trim() !== oldComp && dm?.renameCompany) {
+          if (dm.renameCompany(bat, oldComp, val.trim())) {
+            this.renderOrgManageList();
+            this.render();
+          } else {
+            alert(`${compLabel}名称已存在或无效`);
+          }
+        }
+      });
+    });
+
     this.orgManageList.querySelectorAll(".btn-org-add-comp, .comp-chip-add").forEach(btn => {
       btn.addEventListener("click", () => {
         const batName = btn.getAttribute("data-battalion");
@@ -685,6 +720,7 @@ export class AffiliationModal {
                       <input type="checkbox" class="dir-checkbox dir-check-bat" data-role="bat" data-bat="${escapeHtml(bat.name)}">
                       <span class="dir-node-label">${escapeHtml(bat.name)}</span>
                       <div class="dir-node-actions">
+                        <button type="button" class="btn-dir-inline btn-dir-rename-bat" data-bat="${escapeHtml(bat.name)}" title="重命名此${t("org.battalion", "营")}">✎</button>
                         <button type="button" class="btn-dir-inline btn-dir-add-comp" data-bat="${escapeHtml(bat.name)}" title="在此${t("org.battalion", "营")}下新增${t("org.company", "连")}">+${t("org.company", "连")}</button>
                         ${bat.totalPoints === 0 ? `
                           <button type="button" class="btn-dir-inline btn-dir-del-bat" data-bat="${escapeHtml(bat.name)}" title="删除空${t("org.battalion", "营")}">✕</button>
@@ -708,6 +744,7 @@ export class AffiliationModal {
                               <input type="checkbox" class="dir-checkbox dir-check-comp" data-role="comp" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}">
                               <span class="dir-node-label">${escapeHtml(comp.name)}</span>
                               <div class="dir-node-actions">
+                                <button type="button" class="btn-dir-inline btn-dir-rename-comp" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}" title="重命名此${t("org.company", "连")}">✎</button>
                                 <button type="button" class="btn-dir-inline btn-dir-add-point-to-comp" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}" title="在此${t("org.company", "连")}新增${t("roles.firepower", "火力点")}">+${t("roles.firepower", "火力点")}</button>
                                 ${compTotal === 0 ? `
                                   <button type="button" class="btn-dir-inline btn-dir-del-comp" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}" title="删除空${t("org.company", "连")}">✕</button>
@@ -922,6 +959,78 @@ export class AffiliationModal {
     });
 
     // 树内节点快捷操作
+    this.treeContainer.querySelectorAll(".btn-dir-rename-bat").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const oldBatName = btn.getAttribute("data-bat");
+        if (!oldBatName) return;
+        const batLabel = t("org.battalion", "营");
+        const val = prompt(`请输入新的${batLabel}名称 (当前: ${oldBatName}):`, oldBatName);
+        if (val && val.trim() && val.trim() !== oldBatName && dm?.renameBattalion) {
+          const ok = dm.renameBattalion(oldBatName, val.trim());
+          if (ok) {
+            this.render();
+          } else {
+            alert(`${batLabel}名称已存在或无效`);
+          }
+        }
+      });
+    });
+
+    this.treeContainer.querySelectorAll(".btn-dir-rename-comp").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const batName = btn.getAttribute("data-bat");
+        const oldCompName = btn.getAttribute("data-comp");
+        if (!batName || !oldCompName) return;
+        const compLabel = t("org.company", "连");
+        const val = prompt(`请输入新的${compLabel}名称 (当前: ${oldCompName}):`, oldCompName);
+        if (val && val.trim() && val.trim() !== oldCompName && dm?.renameCompany) {
+          const ok = dm.renameCompany(batName, oldCompName, val.trim());
+          if (ok) {
+            this.render();
+          } else {
+            alert(`${compLabel}名称已存在或无效`);
+          }
+        }
+      });
+    });
+
+    // 双击节点文字快速重命名
+    this.treeContainer.querySelectorAll(".dir-root-row .dir-node-label").forEach(label => {
+      label.style.cursor = "pointer";
+      label.title = "双击重命名根分队";
+      label.addEventListener("dblclick", () => {
+        label.closest(".dir-root-row")?.querySelector(".btn-dir-rename-root")?.click();
+      });
+    });
+    this.treeContainer.querySelectorAll(".dir-bat-row .dir-node-label").forEach(label => {
+      label.style.cursor = "pointer";
+      label.title = "双击重命名";
+      label.addEventListener("dblclick", () => {
+        label.closest(".dir-bat-row")?.querySelector(".btn-dir-rename-bat")?.click();
+      });
+    });
+    this.treeContainer.querySelectorAll(".dir-comp-row .dir-node-label").forEach(label => {
+      label.style.cursor = "pointer";
+      label.title = "双击重命名";
+      label.addEventListener("dblclick", () => {
+        label.closest(".dir-comp-row")?.querySelector(".btn-dir-rename-comp")?.click();
+      });
+    });
+    this.treeContainer.querySelectorAll(".dir-point-row .dir-node-label").forEach(label => {
+      label.style.cursor = "pointer";
+      label.title = "双击快捷重命名";
+      label.addEventListener("dblclick", () => {
+        const row = label.closest(".dir-point-row");
+        const id = row?.getAttribute("data-point-id") || row?.closest(".dir-point-node")?.getAttribute("data-point-id");
+        const pt = tree.allPoints.find(p => p.id === id);
+        if (!pt) return;
+        const val = prompt(`请输入新的${t("roles.firepower", "火力点")}名称:`, pt.name);
+        if (val && val.trim() && val.trim() !== pt.name && dm?.updatePointAffiliation) {
+          dm.updatePointAffiliation(pt.id, { ...pt, name: val.trim() }).then(() => this.render());
+        }
+      });
+    });
+
     this.treeContainer.querySelectorAll(".btn-dir-add-comp").forEach(btn => {
       btn.addEventListener("click", () => {
         const batName = btn.getAttribute("data-bat");

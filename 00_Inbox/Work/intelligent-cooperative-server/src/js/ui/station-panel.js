@@ -135,6 +135,19 @@ export class StationPanel {
       }
     });
 
+    const uavTitleEl = card.querySelector(".uav-title strong");
+    if (uavTitleEl) {
+      uavTitleEl.style.cursor = "pointer";
+      uavTitleEl.title = "点击[配置]或双击名称修改侦察席名称";
+      uavTitleEl.addEventListener("dblclick", e => {
+        e.stopPropagation();
+        if (simulation) {
+          this.selectReconSeat(uav);
+          simulation.edit(uav, "recon");
+        }
+      });
+    }
+
     const reportControl = card.querySelector(".situation-report-control");
     reportControl.addEventListener("click", e => e.stopPropagation());
     const reportBtn = reportControl.querySelector("button");
@@ -204,7 +217,18 @@ export class StationPanel {
       </div>
     `;
 
-    card.querySelector(".artillery-title strong").textContent = displayName;
+    const fpTitleEl = card.querySelector(".artillery-title strong");
+    fpTitleEl.textContent = displayName;
+    fpTitleEl.style.cursor = "pointer";
+    fpTitleEl.title = "点击[配置]或双击名称修改火力点名称";
+    fpTitleEl.addEventListener("dblclick", e => {
+      e.stopPropagation();
+      if (simulation?.edit) {
+        simulation.edit(point);
+      } else {
+        eventBus.emit("firepower:openAffiliationModal");
+      }
+    });
 
     const editBtn = card.querySelector(".btn-tactical-edit-point");
     editBtn?.addEventListener("click", e => {

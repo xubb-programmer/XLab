@@ -215,6 +215,53 @@ export function initDeviceManager(viewer, panel, options = {}) {
     return false;
   }
 
+  function renameBattalion(oldName, newName) {
+    const oName = String(oldName || "").trim();
+    const nName = String(newName || "").trim();
+    if (!oName || !nName) return false;
+    if (oName === nName) return true;
+    const b = orgStructure.find(item => item.name === oName);
+    if (!b) return false;
+    if (orgStructure.some(item => item.name === nName)) return false;
+    b.name = nName;
+    saveOrgStructure();
+    for (const pt of scenarioFirepower) {
+      if (pt.battalion === oName) {
+        pt.battalion = nName;
+      }
+    }
+    void saveBatchFirepower();
+    previous = null;
+    render(lastDeviceResult);
+    eventBus.emit("firepower:affiliationChanged", getAffiliationTree());
+    return true;
+  }
+
+  function renameCompany(battalionName, oldCompanyName, newCompanyName) {
+    const bName = String(battalionName || "").trim();
+    const oComp = String(oldCompanyName || "").trim();
+    const nComp = String(newCompanyName || "").trim();
+    if (!bName || !oComp || !nComp) return false;
+    if (oComp === nComp) return true;
+    const b = orgStructure.find(item => item.name === bName);
+    if (!b) return false;
+    const cIdx = b.companies.indexOf(oComp);
+    if (cIdx < 0) return false;
+    if (b.companies.includes(nComp)) return false;
+    b.companies[cIdx] = nComp;
+    saveOrgStructure();
+    for (const pt of scenarioFirepower) {
+      if (pt.battalion === bName && pt.company === oComp) {
+        pt.company = nComp;
+      }
+    }
+    void saveBatchFirepower();
+    previous = null;
+    render(lastDeviceResult);
+    eventBus.emit("firepower:affiliationChanged", getAffiliationTree());
+    return true;
+  }
+
   async function saveBatchFirepower({ includeUavs = false } = {}) {
     saving = true;
     revision++;
@@ -784,8 +831,10 @@ export function initDeviceManager(viewer, panel, options = {}) {
     saveBatchFirepower,
     setOrgScale,
     addBattalion,
+    renameBattalion,
     removeBattalion,
     addCompany,
+    renameCompany,
     removeCompany,
     getOrgStructure: () => JSON.parse(JSON.stringify(orgStructure))
   };

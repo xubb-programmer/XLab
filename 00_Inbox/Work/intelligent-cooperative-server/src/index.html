@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#060b11">
   <title data-term="app.title">单兵作战辅助平台</title>
   <link rel="stylesheet" href="/cesium/Widgets/widgets.css">
-  <link rel="stylesheet" href="/styles/main.css?v=20261120_v9">
-  <link rel="stylesheet" href="/styles/layout.css?v=20261120_v9">
-  <link rel="stylesheet" href="/styles/components.css?v=20261120_v9">
+  <link rel="stylesheet" href="/styles/main.css?v=20261120_v10">
+  <link rel="stylesheet" href="/styles/layout.css?v=20261120_v10">
+  <link rel="stylesheet" href="/styles/components.css?v=20261120_v10">
   <script>window.CESIUM_BASE_URL = "/cesium/";</script>
   <script>
     // Keep the offline board compatible with its Chromium 91 runtime.
@@ -79,7 +79,7 @@
     }
   </script>
   <script defer src="/cesium/Cesium.js"></script>
-  <script type="module" src="/js/main.js?v=20261120_v9"></script>
+  <script type="module" src="/js/main.js?v=20261120_v10"></script>
 </head>
 <body>
   <div class="app-container">
@@ -105,10 +105,6 @@
         </button>
         <button type="button" id="nav-btn-battery-config" class="topbar-nav-tab" data-term-title="ui.firepowerConfig" title="火力点参数整备与火力挂载">
           <span class="nav-tab-text" data-term="roles.mountFirepower">火力挂载</span>
-        </button>
-        <button type="button" id="nav-btn-video-matrix" class="topbar-nav-tab highlight-recon" title="打开视频总览">
-          <span class="nav-tab-text">视频总览</span>
-          <span id="nav-video-source-count" class="video-source-count-badge">检测中…</span>
         </button>
         <a class="topbar-nav-tab" href="https://127.0.0.1:18007/?v=0903a" target="_blank" rel="noopener" data-term="app.reconAssistant">侦察车智能助手</a>
         <a class="topbar-nav-tab" href="intelligent-cooperative://lanchat">即时通讯</a>
@@ -374,9 +370,9 @@
               </div>
             </div>
 
-            <div class="form-row" data-operational-point-field>
-              <label class="form-label" for="cfg-fp-name" data-term="roles.firepowerNameLabel">作业单元名称</label>
-              <input type="text" id="cfg-fp-name" class="text-input" data-term-placeholder="roles.firepowerPlaceholder" placeholder="例如: 地面任务输出点" required>
+            <div class="form-row">
+              <label class="form-label" for="cfg-fp-name" id="cfg-fp-name-label" data-term="roles.firepowerNameLabel">火力点名称</label>
+              <input type="text" id="cfg-fp-name" class="text-input" placeholder="例如: 1号火力点" required>
             </div>
 
             <div class="form-row-grid-3">
