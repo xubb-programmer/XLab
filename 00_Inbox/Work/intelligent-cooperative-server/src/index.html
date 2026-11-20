@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#060b11">
-  <title data-term="app.title">智能协同作业调度平台</title>
+  <title data-term="app.title">单兵作战辅助平台</title>
   <link rel="stylesheet" href="/cesium/Widgets/widgets.css">
-  <link rel="stylesheet" href="/styles/main.css?v=20261120_v4">
-  <link rel="stylesheet" href="/styles/layout.css?v=20261120_v4">
-  <link rel="stylesheet" href="/styles/components.css?v=20261120_v4">
+  <link rel="stylesheet" href="/styles/main.css?v=20261120_v6">
+  <link rel="stylesheet" href="/styles/layout.css?v=20261120_v6">
+  <link rel="stylesheet" href="/styles/components.css?v=20261120_v6">
   <script>window.CESIUM_BASE_URL = "/cesium/";</script>
   <script>
     // Keep the offline board compatible with its Chromium 91 runtime.
@@ -79,7 +79,7 @@
     }
   </script>
   <script defer src="/cesium/Cesium.js"></script>
-  <script type="module" src="/js/main.js?v=20261120_v4"></script>
+  <script type="module" src="/js/main.js?v=20261120_v6"></script>
 </head>
 <body>
   <div class="app-container">
@@ -93,26 +93,26 @@
             transform="translate(16.9 10.3) rotate(54)" fill="currentColor" stroke="none"/>
         </svg>
         <div class="brand-title">
-          <h1 data-term="app.title">智能协同作业调度平台</h1>
+          <h1 data-term="app.title">单兵作战辅助平台</h1>
           <p>INDIVIDUAL COMBAT SUPPORT PLATFORM</p>
         </div>
       </div>
 
       <!-- 顶部工作台主入口导航 -->
       <nav class="topbar-nav" aria-label="软件功能作业入口导航">
-        <button type="button" id="nav-btn-tactical" class="topbar-nav-tab active" title="打开综合态势">
-          <span class="nav-tab-text" data-term="app.topbarTactical">综合态势</span>
+        <button type="button" id="nav-btn-tactical" class="topbar-nav-tab active" title="打开战术态势">
+          <span class="nav-tab-text" data-term="app.topbarTactical">战术态势</span>
         </button>
-        <button type="button" id="nav-btn-battery-config" class="topbar-nav-tab" data-term-title="ui.firepowerConfig" title="作业单元参数整备">
-          <span class="nav-tab-text" data-term="roles.mountFirepower">单元整备</span>
+        <button type="button" id="nav-btn-battery-config" class="topbar-nav-tab" data-term-title="ui.firepowerConfig" title="火力点参数整备与单元挂载">
+          <span class="nav-tab-text" data-term="roles.mountFirepower">单元挂载</span>
         </button>
         <button type="button" id="nav-btn-video-matrix" class="topbar-nav-tab highlight-recon" title="打开视频总览">
           <span class="nav-tab-text">视频总览</span>
           <span id="nav-video-source-count" class="video-source-count-badge">检测中…</span>
         </button>
-        <a class="topbar-nav-tab" href="https://127.0.0.1:18007/?v=0903a" target="_blank" rel="noopener" data-term="app.reconAssistant">巡检车智能助手</a>
+        <a class="topbar-nav-tab" href="https://127.0.0.1:18007/?v=0903a" target="_blank" rel="noopener" data-term="app.reconAssistant">侦察车智能助手</a>
         <a class="topbar-nav-tab" href="intelligent-cooperative://lanchat">即时通讯</a>
-        <a class="topbar-nav-tab" href="intelligent-cooperative://scout-monitor" data-term="app.analysisAssistant">数据智能分析系统</a>
+        <a class="topbar-nav-tab" href="intelligent-cooperative://scout-monitor" data-term="app.analysisAssistant">情报辅助分析系统</a>
         <button type="button" id="nav-btn-settings" class="topbar-nav-tab">
           <span class="nav-tab-text">设置</span>
         </button>
@@ -120,19 +120,19 @@
 
       <div class="topbar-stats">
         <div class="stat-item">
-          <span class="stat-label" data-term="roles.recon">监测席</span>
+          <span class="stat-label" data-term="roles.recon">侦察席</span>
           <span id="stat-platform-count" class="stat-value">—</span>
         </div>
         <div class="stat-item">
-          <span class="stat-label" data-term="roles.firepower">作业单元</span>
+          <span class="stat-label" data-term="roles.firepower">火力点</span>
           <span id="stat-firepower-count" class="stat-value">—</span>
         </div>
         <div class="stat-item">
-          <span class="stat-label" data-term="targets.statReconBurst">监测目标／告警事件</span>
+          <span class="stat-label" data-term="targets.statReconBurst">侦察目标／炸点目标</span>
           <span id="stat-target-count" class="stat-value">—</span>
         </div>
         <div class="stat-item">
-          <span class="stat-label" data-term="app.dataLinkStatus">协同数据链状态</span>
+          <span class="stat-label" data-term="app.dataLinkStatus">战术数据链状态</span>
           <span id="stat-data-source" class="stat-value stat-link">
             <span class="status-dot-point standby" aria-hidden="true"></span>
             <span>正在连接…</span>
@@ -580,8 +580,8 @@
       </footer>
     </section>
 
-    <!-- 通信名录列表 模态浮动弹窗 (仿真 Windows 经典桌面窗口，对标通信名录列表) -->
-    <div id="page-firepower-affiliation" class="modal-backdrop firepower-affiliation-dialog is-hidden" hidden style="display: none;" aria-label="通信名录列表">
+    <!-- 单元挂载 模态浮动弹窗 (仿真 Windows 经典桌面窗口) -->
+    <div id="page-firepower-affiliation" class="modal-backdrop firepower-affiliation-dialog is-hidden" hidden style="display: none;" aria-label="单元挂载">
       <div id="affiliation-tree-canvas" class="affiliation-tree-canvas">
         <!-- 动态渲染经典桌面弹窗 -->
       </div>
@@ -596,26 +596,26 @@
           <input type="hidden" id="tree-edit-point-id">
           <div class="form-row-grid-2">
             <div class="form-field">
-              <label class="form-label" for="tree-edit-battalion">所属片区</label>
+              <label class="form-label" for="tree-edit-battalion">所属营</label>
               <select id="tree-edit-battalion" class="text-input select-input" required></select>
             </div>
             <div class="form-field">
-              <label class="form-label" for="tree-edit-company">所属组</label>
+              <label class="form-label" for="tree-edit-company">所属连</label>
               <select id="tree-edit-company" class="text-input select-input" required></select>
             </div>
           </div>
 
           <div class="form-row">
-            <label class="form-label" for="tree-edit-name" data-term="roles.firepowerNameLabel">作业单元名称</label>
-            <input type="text" id="tree-edit-name" class="text-input" placeholder="例如: 1号作业单元" required>
+            <label class="form-label" for="tree-edit-name" data-term="roles.firepowerNameLabel">火力点名称</label>
+            <input type="text" id="tree-edit-name" class="text-input" placeholder="例如: 1号火力点" required>
           </div>
 
           <div class="form-row">
-            <label class="form-label" for="tree-edit-mounted-device">挂载在线设备ID (组播通信信道)</label>
+            <label class="form-label" for="tree-edit-mounted-device">挂载在线侦察通信信道</label>
             <select id="tree-edit-mounted-device" class="text-input select-input">
-              <option value="">(未挂载 / 工位离线)</option>
+              <option value="">(未挂载 / 火力点离线)</option>
             </select>
-            <small class="form-field-hint">选择已在组播网络中的设备ID，挂载后工位将变为在线。</small>
+            <small class="form-field-hint">选择已在组播网络中的设备ID，挂载后阵位将变为在线。</small>
           </div>
 
           <div class="form-row-grid-3">
@@ -678,38 +678,38 @@
         </form>
       </div>
 
-      <!-- 组织架构规模设置弹窗 -->
+      <!-- 营连建制规模设置弹窗 -->
       <div id="affiliation-org-modal" class="affiliation-edit-drawer affiliation-org-drawer" hidden style="display: none;">
         <div class="drawer-header">
-          <strong id="org-modal-title" data-term="org.scaleModalTitle">组织架构规模 · 片区分组架构设置</strong>
-          <button type="button" id="btn-close-org-modal" class="btn-close-drawer" aria-label="关闭片区设置">✕</button>
+          <strong id="org-modal-title" data-term="org.scaleModalTitle">战术建制规模 · 营连架构设置</strong>
+          <button type="button" id="btn-close-org-modal" class="btn-close-drawer" aria-label="关闭营连设置">✕</button>
         </div>
         <div class="drawer-form org-settings-form">
           <div class="org-quick-scale-panel">
             <div class="panel-section-title">
               <span class="status-dot-point online" aria-hidden="true"></span>
-              <strong>快捷架构规模生成</strong>
+              <strong>快捷建制规模生成</strong>
             </div>
-            <p class="org-helper-desc" data-term="org.scaleDesc">设定当前调度中心下辖的片区数量以及各片区标配组数量：</p>
+            <p class="org-helper-desc" data-term="org.scaleDesc">设定当前指挥中枢下辖的营数量以及各营标配连数量：</p>
             <div class="form-row-grid-2">
               <div class="form-field">
-                <label class="form-label" for="input-scale-battalions">设置片区数量</label>
+                <label class="form-label" for="input-scale-battalions">设置营数量</label>
                 <div class="stepper-input-row">
                   <input type="number" id="input-scale-battalions" class="text-input mono" min="1" max="10" step="1" value="2" required>
-                  <span class="input-unit">个片区</span>
+                  <span class="input-unit">个营</span>
                 </div>
               </div>
               <div class="form-field">
-                <label class="form-label" for="input-scale-companies">每片区下辖组数</label>
+                <label class="form-label" for="input-scale-companies">每营下辖连数</label>
                 <div class="stepper-input-row">
                   <input type="number" id="input-scale-companies" class="text-input mono" min="1" max="10" step="1" value="2" required>
-                  <span class="input-unit">个组</span>
+                  <span class="input-unit">个连</span>
                 </div>
               </div>
             </div>
             <div class="scale-actions-row">
               <button type="button" id="btn-apply-org-scale" class="btn btn-sm btn-tactical-tool highlight-tool">
-                <span>快速应用架构规模</span>
+                <span>快速应用建制规模</span>
               </button>
             </div>
           </div>
@@ -717,20 +717,20 @@
           <div class="org-detail-manage-panel">
             <div class="panel-section-title">
               <span class="status-dot-point standby" aria-hidden="true"></span>
-              <strong>当前片区分组清单</strong>
+              <strong>当前营连编制清单</strong>
             </div>
             <div id="org-manage-tree-list" class="org-manage-tree-list"></div>
             <div class="org-add-battalion-row">
-              <input type="text" id="input-new-battalion-name" class="text-input" placeholder="输入新片区名称 (例如: 3区)">
+              <input type="text" id="input-new-battalion-name" class="text-input" placeholder="输入新营名称 (例如: 3营)">
               <button type="button" id="btn-add-new-battalion" class="btn btn-sm btn-secondary">
-                <span>+ 添加新片区</span>
+                <span>+ 添加新营</span>
               </button>
             </div>
           </div>
 
           <div class="drawer-actions-row">
             <button type="button" id="btn-reset-org-default" class="btn btn-sm btn-secondary">
-              <span>重置默认架构</span>
+              <span>重置默认编制</span>
             </button>
             <button type="button" id="btn-finish-org-modal" class="btn btn-sm btn-primary-red">
               <span>完成设置</span>

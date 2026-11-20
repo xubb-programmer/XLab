@@ -17,7 +17,7 @@ import { StatsPanel } from "./ui/stats-panel.js";
 import { TargetReportModal } from "./ui/target-report-modal.js";
 import { initDeviceManager } from "./ui/device-simulation.js";
 import { VideoMatrixModal } from "./ui/video-matrix-modal.js";
-import { AffiliationModal } from "./ui/affiliation-modal.js?v=20261120_v4";
+import { AffiliationModal } from "./ui/affiliation-modal.js?v=20261120_v6";
 import { initDataManagement } from "./ui/data-management.js";
 import { initMapSettings } from "./ui/map-settings.js";
 

@@ -80,6 +80,10 @@ export class AffiliationModal {
     this.collapsedKeys = new Set();
     this.checkedPointIds = new Set();
     this.customRootName = localStorage.getItem("org_custom_root_name") || "";
+    if (this.customRootName === "业务调度中心") {
+      this.customRootName = "";
+      localStorage.removeItem("org_custom_root_name");
+    }
     this.hasInitializedChecks = false;
 
     this.initEvents();
@@ -133,7 +137,7 @@ export class AffiliationModal {
     });
 
     this.btnResetDefault?.addEventListener("click", async () => {
-      if (confirm(t("org.scaleResetConfirm", "确定重置为默认标准组织架构（2个片区，各2个组）吗？"))) {
+      if (confirm(t("org.scaleResetConfirm", "确定重置为默认标准战术建制（2个营，各2个连）吗？"))) {
         const dm = this.getDeviceManager();
         if (dm?.resetToDefaultAffiliation) {
           await dm.resetToDefaultAffiliation();
@@ -293,7 +297,7 @@ export class AffiliationModal {
     const tree = dm?.getAffiliationTree ? dm.getAffiliationTree() : null;
 
     if (!battalions.length) {
-      this.orgManageList.innerHTML = `<div class="tactical-empty-box compact"><span class="empty-text">当前暂未配置片区架构</span></div>`;
+      this.orgManageList.innerHTML = `<div class="tactical-empty-box compact"><span class="empty-text">当前暂未配置${t("org.battalion", "营")}级架构</span></div>`;
       return;
     }
 
@@ -308,12 +312,12 @@ export class AffiliationModal {
             <div class="bat-manage-title">
               <span class="status-dot-point online"></span>
               <strong>${escapeHtml(bat.name)}</strong>
-              <span class="bat-points-count">(${pointsInBat}${t("roles.firepower", "个作业单元")})</span>
+              <span class="bat-points-count">(${pointsInBat}个${t("roles.firepower", "火力点")})</span>
             </div>
             <div class="bat-manage-actions">
-              <button type="button" class="btn btn-xs btn-secondary btn-org-add-comp" data-battalion="${escapeHtml(bat.name)}">+ ${t("org.company", "组")}</button>
+              <button type="button" class="btn btn-xs btn-secondary btn-org-add-comp" data-battalion="${escapeHtml(bat.name)}">+ ${t("org.company", "连")}</button>
               ${pointsInBat === 0 ? `
-                <button type="button" class="btn btn-xs btn-secondary-danger btn-org-del-bat" data-battalion="${escapeHtml(bat.name)}" title="删除空片区">✕</button>
+                <button type="button" class="btn btn-xs btn-secondary-danger btn-org-del-bat" data-battalion="${escapeHtml(bat.name)}" title="删除空${t("org.battalion", "营")}">✕</button>
               ` : ''}
             </div>
           </div>
@@ -326,22 +330,23 @@ export class AffiliationModal {
                   <span class="comp-chip-name">${escapeHtml(comp)}</span>
                   <span class="comp-chip-count">${pointsInComp}点</span>
                   ${pointsInComp === 0 ? `
-                    <button type="button" class="comp-chip-del btn-org-del-comp" data-battalion="${escapeHtml(bat.name)}" data-company="${escapeHtml(comp)}" title="删除空组">✕</button>
+                    <button type="button" class="comp-chip-del btn-org-del-comp" data-battalion="${escapeHtml(bat.name)}" data-company="${escapeHtml(comp)}" title="删除空${t("org.company", "连")}">✕</button>
                   ` : ''}
                 </span>
               `;
             }).join('')}
-            <button type="button" class="comp-chip-add btn-org-add-comp-inline" data-battalion="${escapeHtml(bat.name)}" title="新增组">+</button>
+            <button type="button" class="comp-chip-add btn-org-add-comp-inline" data-battalion="${escapeHtml(bat.name)}" title="新增${t("org.company", "连")}">+</button>
           </div>
         </div>
       `;
     }).join('');
 
-    // 绑定片区分组管理事件
+    // 绑定营连建制管理事件
     this.orgManageList.querySelectorAll(".btn-org-add-comp, .comp-chip-add").forEach(btn => {
       btn.addEventListener("click", () => {
         const batName = btn.getAttribute("data-battalion");
-        const compName = prompt(`请输入要在 [${batName}] 下新增的组名称 (如: 3组):`);
+        const compLabel = t("org.company", "连");
+        const compName = prompt(`请输入要在 [${batName}] 下新增的${compLabel}名称 (如: 3${compLabel}):`);
         if (compName?.trim() && dm?.addCompany) {
           dm.addCompany(batName, compName.trim());
           this.renderOrgManageList();
@@ -354,6 +359,7 @@ export class AffiliationModal {
       btn.addEventListener("click", () => {
         const batName = btn.getAttribute("data-battalion");
         const compName = btn.getAttribute("data-company");
+        const compLabel = t("org.company", "连");
         if (confirm(`确定删除 [${batName}] 下的 [${compName}] 吗？`)) {
           dm?.removeCompany?.(batName, compName);
           this.renderOrgManageList();
@@ -365,7 +371,8 @@ export class AffiliationModal {
     this.orgManageList.querySelectorAll(".btn-org-del-bat").forEach(btn => {
       btn.addEventListener("click", () => {
         const batName = btn.getAttribute("data-battalion");
-        if (confirm(`确定删除空片区 [${batName}] 吗？`)) {
+        const batLabel = t("org.battalion", "营");
+        if (confirm(`确定删除空${batLabel} [${batName}] 吗？`)) {
           dm?.removeBattalion?.(batName);
           this.renderOrgManageList();
           this.render();
@@ -374,13 +381,13 @@ export class AffiliationModal {
     });
   }
 
-  // ===== 编辑抽屉片区分组下拉填充与联动 =====
-  populateOrgSelects(selectedBat = t("org.battalionDefault", "1区"), selectedComp = t("org.companyDefault", "1组")) {
+  // ===== 编辑抽屉营连下拉填充与联动 =====
+  populateOrgSelects(selectedBat = t("org.battalionDefault", "1营"), selectedComp = t("org.companyDefault", "1连")) {
     const dm = this.getDeviceManager();
     const orgRaw = dm?.getOrgStructure ? dm.getOrgStructure() : null;
     const battalions = Array.isArray(orgRaw) ? orgRaw : (orgRaw?.battalions || [
-      { name: "1" + t("org.battalion", "区"), companies: ["1" + t("org.company", "组"), "2" + t("org.company", "组")] },
-      { name: "2" + t("org.battalion", "区"), companies: ["1" + t("org.company", "组"), "2" + t("org.company", "组")] }
+      { name: "1" + t("org.battalion", "营"), companies: ["1" + t("org.company", "连"), "2" + t("org.company", "连")] },
+      { name: "2" + t("org.battalion", "营"), companies: ["1" + t("org.company", "连"), "2" + t("org.company", "连")] }
     ]);
 
     if (this.inputBattalion) {
@@ -406,7 +413,7 @@ export class AffiliationModal {
     if (!this.inputCompany) return;
     const batList = Array.isArray(battalions) ? battalions : (battalions?.battalions || []);
     const batObj = batList.find(b => b.name === battalionName);
-    const comps = batObj?.companies || ["1" + t("org.company", "组"), "2" + t("org.company", "组")];
+    const comps = batObj?.companies || ["1" + t("org.company", "连"), "2" + t("org.company", "连")];
 
     this.inputCompany.innerHTML = comps.map(c => `
       <option value="${escapeHtml(c)}" ${c === selectedComp ? 'selected' : ''}>${escapeHtml(c)}</option>
@@ -629,27 +636,27 @@ export class AffiliationModal {
       }
     }
 
-    const rootName = this.customRootName || tree.root || "业务调度中心";
+    const rootName = this.customRootName || tree.root || t("org.center", "炮兵1群");
     const isRootCollapsed = this.collapsedKeys.has("__root__");
     const totalPointsCount = allPoints.length;
     const checkedPointsCount = allPoints.filter(p => this.checkedPointIds.has(p.id)).length;
 
     this.treeContainer.innerHTML = `
       <div class="dir-tree-window">
-        <!-- 窗口标题栏: 通信名录列表 (100% 还原图 1: 渐变蓝背景、白字、红叉) -->
+        <!-- 窗口标题栏: 单元挂载 -->
         <div class="dir-window-titlebar">
           <div class="dir-title-left">
-            <span class="dir-title-text">通信名录列表</span>
+            <span class="dir-title-text">${escapeHtml(t("org.affiliationModalTitle", "单元挂载"))}</span>
           </div>
           <div class="dir-title-actions">
             <button type="button" class="btn-dir-win-close" id="btn-dir-win-close" title="关闭窗口">✕</button>
           </div>
         </div>
 
-        <!-- 经典树形名录展示区 (纯白底、黑字、虚线、正方形 +/-、复选框，对标图 1) -->
+        <!-- 经典树形名录展示区 (对标图 1 树状交互结构，融入暗色战术显控风格) -->
         <div class="dir-tree-container">
           <div class="dir-tree-root-branch ${isRootCollapsed ? 'is-collapsed' : ''}">
-            <!-- 根节点 (中枢/集群) -->
+            <!-- 根节点 (炮兵1群) -->
             <div class="dir-node-row dir-root-row" data-level="root">
               <button type="button" class="dir-expander" data-toggle="__root__" title="折叠/展开">
                 ${isRootCollapsed ? '+' : '-'}
@@ -658,12 +665,12 @@ export class AffiliationModal {
               <span class="dir-node-label dir-root-label">${escapeHtml(rootName)}</span>
               <div class="dir-node-actions">
                 <button type="button" class="btn-dir-inline btn-dir-rename-root" title="自定义名录根节点名称">✎</button>
-                <button type="button" class="btn-dir-inline btn-dir-add-bat-inline" title="新增片区">+片区</button>
-                <button type="button" class="btn-dir-inline" id="btn-dir-open-scale-inline" title="片区分组规模配置">⚙</button>
+                <button type="button" class="btn-dir-inline btn-dir-add-bat-inline" title="新增${t("org.battalion", "营")}">+${t("org.battalion", "营")}</button>
+                <button type="button" class="btn-dir-inline" id="btn-dir-open-scale-inline" title="建制规模配置">⚙</button>
               </div>
             </div>
 
-            <!-- 片区列表 -->
+            <!-- 营级列表 -->
             <ul class="dir-tree-list dir-battalions-list" ${isRootCollapsed ? 'style="display:none;"' : ''}>
               ${tree.battalions.map(bat => {
                 const batKey = `bat:${bat.name}`;
@@ -678,14 +685,14 @@ export class AffiliationModal {
                       <input type="checkbox" class="dir-checkbox dir-check-bat" data-role="bat" data-bat="${escapeHtml(bat.name)}">
                       <span class="dir-node-label">${escapeHtml(bat.name)}</span>
                       <div class="dir-node-actions">
-                        <button type="button" class="btn-dir-inline btn-dir-add-comp" data-bat="${escapeHtml(bat.name)}" title="在此片区下新增组">+组</button>
+                        <button type="button" class="btn-dir-inline btn-dir-add-comp" data-bat="${escapeHtml(bat.name)}" title="在此${t("org.battalion", "营")}下新增${t("org.company", "连")}">+${t("org.company", "连")}</button>
                         ${bat.totalPoints === 0 ? `
-                          <button type="button" class="btn-dir-inline btn-dir-del-bat" data-bat="${escapeHtml(bat.name)}" title="删除空片区">✕</button>
+                          <button type="button" class="btn-dir-inline btn-dir-del-bat" data-bat="${escapeHtml(bat.name)}" title="删除空${t("org.battalion", "营")}">✕</button>
                         ` : ''}
                       </div>
                     </div>
 
-                    <!-- 组列表 -->
+                    <!-- 连级列表 -->
                     <ul class="dir-tree-list dir-companies-list" ${isBatCollapsed ? 'style="display:none;"' : ''}>
                       ${bat.companies.map(comp => {
                         const compKey = `comp:${bat.name}:${comp.name}`;
@@ -701,19 +708,19 @@ export class AffiliationModal {
                               <input type="checkbox" class="dir-checkbox dir-check-comp" data-role="comp" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}">
                               <span class="dir-node-label">${escapeHtml(comp.name)}</span>
                               <div class="dir-node-actions">
-                                <button type="button" class="btn-dir-inline btn-dir-add-point-to-comp" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}" title="在此组新增作业单元">+单元</button>
+                                <button type="button" class="btn-dir-inline btn-dir-add-point-to-comp" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}" title="在此${t("org.company", "连")}新增${t("roles.firepower", "火力点")}">+${t("roles.firepower", "火力点")}</button>
                                 ${compTotal === 0 ? `
-                                  <button type="button" class="btn-dir-inline btn-dir-del-comp" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}" title="删除空组">✕</button>
+                                  <button type="button" class="btn-dir-inline btn-dir-del-comp" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}" title="删除空${t("org.company", "连")}">✕</button>
                                 ` : ''}
                               </div>
                             </div>
 
-                            <!-- 作业单元列表 (叶子节点) -->
+                            <!-- 火力点列表 (叶子节点) -->
                             <ul class="dir-tree-list dir-points-list" ${isCompCollapsed ? 'style="display:none;"' : ''}>
                               ${compTotal === 0 ? `
                                 <li class="dir-tree-node dir-empty-comp-node">
-                                  <span class="dir-empty-text">该组暂无作业单元</span>
-                                  <button type="button" class="btn-dir-inline btn-dir-add-point-to-comp" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}">+新增单元</button>
+                                  <span class="dir-empty-text">该${t("org.company", "连")}暂无${t("roles.firepower", "火力点")}</span>
+                                  <button type="button" class="btn-dir-inline btn-dir-add-point-to-comp" data-bat="${escapeHtml(bat.name)}" data-comp="${escapeHtml(comp.name)}">+新增${t("roles.firepower", "火力点")}</button>
                                 </li>
                               ` : comp.points.map(pt => {
                                 const isOnline = Boolean(pt.online);
@@ -728,7 +735,7 @@ export class AffiliationModal {
                                       <span class="dir-node-label">${escapeHtml(pt.name)}</span>
                                       <span class="dir-mount-tag ${isOnline ? 'active' : 'inactive'}">${isOnline ? `● ${escapeHtml(mountedDevId || '在线')}` : '○ 未挂载'}</span>
                                       <div class="dir-node-actions">
-                                        <select class="quick-mount-select" data-id="${escapeHtml(pt.id)}" title="挂载在线监测设备">
+                                        <select class="quick-mount-select" data-id="${escapeHtml(pt.id)}" title="挂载在线侦察通信信道">
                                           <option value="">${mountedDevId ? `换绑 (${escapeHtml(mountedDevId)})` : '挂载设备'}</option>
                                           <option value="__UNMOUNT__">✕ 解绑</option>
                                           ${onlineRecons.map(u => `
@@ -757,13 +764,13 @@ export class AffiliationModal {
           </div>
         </div>
 
-        <!-- 底部经典操作栏 (100% 还原图 1: 灰底、两个经典按钮 [发送] [取消]) -->
+        <!-- 底部经典操作栏 (100% 还原图 1: 两个操作按钮 [发送] [取消]) -->
         <div class="dir-window-footer">
           <div class="dir-footer-left">
-            <span class="dir-footer-stat">已勾选: <strong id="dir-checked-summary">${checkedPointsCount}</strong> / ${totalPointsCount} 个作业单元</span>
+            <span class="dir-footer-stat">已勾选: <strong id="dir-checked-summary">${checkedPointsCount}</strong> / ${totalPointsCount} 个${t("roles.firepower", "火力点")}</span>
           </div>
           <div class="dir-footer-right">
-            <button type="button" class="btn-classic-dialog btn-classic-primary" id="btn-dir-action-send">发 送</button>
+            <button type="button" class="btn-classic-dialog btn-classic-primary" id="btn-dir-action-send">确 定</button>
             <button type="button" class="btn-classic-dialog" id="btn-dir-action-cancel">取 消</button>
           </div>
         </div>
@@ -788,8 +795,8 @@ export class AffiliationModal {
 
     this.treeContainer.querySelectorAll(".btn-dir-rename-root").forEach(btn => {
       btn.addEventListener("click", () => {
-        const currentName = this.customRootName || tree.root || "业务调度中心";
-        const val = prompt("请输入名录根节点名称 (如: 协同调度集群):", currentName);
+        const currentName = this.customRootName || tree.root || t("org.center", "炮兵1群");
+        const val = prompt(`请输入名录根节点名称 (如: ${t("org.center", "炮兵1群")}):`, currentName);
         if (val && val.trim()) {
           this.customRootName = val.trim();
           localStorage.setItem("org_custom_root_name", this.customRootName);
@@ -800,7 +807,7 @@ export class AffiliationModal {
 
     this.treeContainer.querySelectorAll(".btn-dir-add-bat-inline").forEach(btn => {
       btn.addEventListener("click", () => {
-        const batLabel = t("org.battalion", "片区");
+        const batLabel = t("org.battalion", "营");
         const nextIdx = tree.battalions.length + 1;
         const batName = prompt(`请输入新${batLabel}名称:`, `${nextIdx}${batLabel}`);
         if (batName?.trim() && dm?.addBattalion) {
@@ -909,7 +916,7 @@ export class AffiliationModal {
     this.treeContainer.querySelectorAll(".btn-dir-add-comp").forEach(btn => {
       btn.addEventListener("click", () => {
         const batName = btn.getAttribute("data-bat");
-        const compLabel = t("org.company", "组");
+        const compLabel = t("org.company", "连");
         const compName = prompt(`请输入要在 [${batName}] 下新增的${compLabel}名称 (例如: 3${compLabel}):`);
         if (compName?.trim() && dm?.addCompany) {
           dm.addCompany(batName, compName.trim());
@@ -922,7 +929,7 @@ export class AffiliationModal {
       btn.addEventListener("click", () => {
         const batName = btn.getAttribute("data-bat");
         const compName = btn.getAttribute("data-comp");
-        const compLabel = t("org.company", "组");
+        const compLabel = t("org.company", "连");
         if (confirm(`确定删除空${compLabel} [${batName} - ${compName}] 吗？`)) {
           dm?.removeCompany?.(batName, compName);
           this.render();
@@ -933,7 +940,7 @@ export class AffiliationModal {
     this.treeContainer.querySelectorAll(".btn-dir-del-bat").forEach(btn => {
       btn.addEventListener("click", () => {
         const batName = btn.getAttribute("data-bat");
-        const batLabel = t("org.battalion", "片区");
+        const batLabel = t("org.battalion", "营");
         if (confirm(`确定删除空${batLabel} [${batName}] 吗？`)) {
           dm?.removeBattalion?.(batName);
           this.render();
@@ -943,8 +950,8 @@ export class AffiliationModal {
 
     this.treeContainer.querySelectorAll(".btn-dir-add-point-to-comp").forEach(btn => {
       btn.addEventListener("click", () => {
-        const batName = btn.getAttribute("data-bat") || ("1" + t("org.battalion", "区"));
-        const compName = btn.getAttribute("data-comp") || ("1" + t("org.company", "组"));
+        const batName = btn.getAttribute("data-bat") || ("1" + t("org.battalion", "营"));
+        const compName = btn.getAttribute("data-comp") || ("1" + t("org.company", "连"));
         this.openDrawerForNew(batName, compName);
       });
     });
@@ -975,7 +982,7 @@ export class AffiliationModal {
         const id = btn.getAttribute("data-id");
         const pt = tree.allPoints.find(p => p.id === id);
         const name = pt ? pt.name : id;
-        if (confirm(`确定删除作业单元 [${name}] 吗？`)) {
+        if (confirm(`确定删除${t("roles.firepower", "火力点")} [${name}] 吗？`)) {
           if (dm?.removeFirepowerPoint) {
             await dm.removeFirepowerPoint(id);
             this.checkedPointIds.delete(id);
@@ -999,14 +1006,9 @@ export class AffiliationModal {
       });
     });
 
-    // 底部【发送】按钮 (参考图 1 风格)
+    // 底部【确定】按钮 (完成单元挂载整备并返回战术态势)
     document.getElementById("btn-dir-action-send")?.addEventListener("click", () => {
-      if (this.checkedPointIds.size === 0) {
-        alert("请先勾选需要发送指令的作业单元！");
-        return;
-      }
-      const selectedPts = tree.allPoints.filter(p => this.checkedPointIds.has(p.id));
-      eventBus.emit("target:openReportModal", { firepowerId: selectedPts[0]?.id });
+      returnToTactical();
     });
   }
 
@@ -1053,7 +1055,7 @@ export class AffiliationModal {
             ` : `
               <div class="pool-unmounted-box">
                 <select class="pool-mount-select text-input text-input-xs" data-device-id="${escapeHtml(u.deviceId)}">
-                  <option value="">${t("ui.mountToFirepower", "挂载到作业单元…")}</option>
+                  <option value="">${t("ui.mountToFirepower", "挂载到火力点…")}</option>
                   ${allPoints.map(p => `
                     <option value="${escapeHtml(p.id)}">${escapeHtml(p.battalion)}-${escapeHtml(p.company)}-${escapeHtml(p.name)}</option>
                   `).join('')}
@@ -1119,10 +1121,10 @@ export class AffiliationModal {
   openDrawerForEdit(point, onlineRecons) {
     this.closeOrgSettings();
     this.editingPointId = point.id;
-    if (this.drawerTitle) this.drawerTitle.textContent = `编辑单元: ${point.name}`;
+    if (this.drawerTitle) this.drawerTitle.textContent = `编辑${t("roles.firepower", "火力点")}: ${point.name}`;
     if (this.drawerPointId) this.drawerPointId.value = point.id;
 
-    this.populateOrgSelects(point.battalion || t("org.battalionDefault", "1区"), point.company || t("org.companyDefault", "1组"));
+    this.populateOrgSelects(point.battalion || t("org.battalionDefault", "1营"), point.company || t("org.companyDefault", "1连"));
 
     if (this.inputName) this.inputName.value = point.name || "";
     if (this.inputLon) this.inputLon.value = point.longitude ? point.longitude.toFixed(6) : "118.570452";
@@ -1152,7 +1154,7 @@ export class AffiliationModal {
     }
   }
 
-  openDrawerForNew(defaultBat = t("org.battalionDefault", "1区"), defaultComp = t("org.companyDefault", "1组")) {
+  openDrawerForNew(defaultBat = t("org.battalionDefault", "1营"), defaultComp = t("org.companyDefault", "1连")) {
     this.closeOrgSettings();
     this.editingPointId = null;
     const dm = this.getDeviceManager();
@@ -1160,12 +1162,12 @@ export class AffiliationModal {
     const all = dm?.getFixedPoints ? dm.getFixedPoints() : [];
     const nextIdx = all.length + 1;
 
-    if (this.drawerTitle) this.drawerTitle.textContent = `新增单元`;
+    if (this.drawerTitle) this.drawerTitle.textContent = `新增${t("roles.firepower", "火力点")}`;
     if (this.drawerPointId) this.drawerPointId.value = "";
 
     this.populateOrgSelects(defaultBat, defaultComp);
 
-    if (this.inputName) this.inputName.value = t("roles.firepowerDefaultName", `${nextIdx}号作业单元`, { n: nextIdx });
+    if (this.inputName) this.inputName.value = t("roles.firepowerDefaultName", `${nextIdx}号火力点`, { n: nextIdx });
     if (this.inputLon) this.inputLon.value = "118.500000";
     if (this.inputLat) this.inputLat.value = "24.500000";
     if (this.inputAlt) this.inputAlt.value = "0";
@@ -1209,9 +1211,9 @@ export class AffiliationModal {
     const dm = this.getDeviceManager();
     if (!dm) return;
 
-    const battalion = this.inputBattalion?.value?.trim() || t("org.battalionDefault", "1区");
-    const company = this.inputCompany?.value?.trim() || t("org.companyDefault", "1组");
-    const name = this.inputName?.value?.trim() || t("roles.firepowerBase", "地面作业点");
+    const battalion = this.inputBattalion?.value?.trim() || t("org.battalionDefault", "1营");
+    const company = this.inputCompany?.value?.trim() || t("org.companyDefault", "1连");
+    const name = this.inputName?.value?.trim() || t("roles.firepowerBase", "地面火力点");
     const mountedDeviceId = this.selectMountDevice?.value?.trim() || "";
     const longitude = parseFloat(this.inputLon?.value);
     const latitude = parseFloat(this.inputLat?.value);
