@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#060b11">
   <title data-term="app.title">单兵作战辅助平台</title>
   <link rel="stylesheet" href="/cesium/Widgets/widgets.css">
-  <link rel="stylesheet" href="/styles/main.css?v=20261120_v10">
-  <link rel="stylesheet" href="/styles/layout.css?v=20261120_v10">
-  <link rel="stylesheet" href="/styles/components.css?v=20261120_v10">
+  <link rel="stylesheet" href="/styles/main.css?v=20261120_v11">
+  <link rel="stylesheet" href="/styles/layout.css?v=20261120_v11">
+  <link rel="stylesheet" href="/styles/components.css?v=20261120_v11">
   <script>window.CESIUM_BASE_URL = "/cesium/";</script>
   <script>
     // Keep the offline board compatible with its Chromium 91 runtime.
@@ -79,7 +79,7 @@
     }
   </script>
   <script defer src="/cesium/Cesium.js"></script>
-  <script type="module" src="/js/main.js?v=20261120_v10"></script>
+  <script type="module" src="/js/main.js?v=20261120_v11"></script>
 </head>
 <body>
   <div class="app-container">
@@ -146,12 +146,13 @@
       <aside id="platform-sidebar" class="sidebar-left" aria-label="监测席与作业单元">
         <section class="panel-section platform-list-panel" aria-labelledby="uav-list-heading">
           <header class="panel-header uav-panel-header">
-            <h3 id="uav-list-heading">
+            <h3 id="uav-list-heading" class="panel-heading-title">
               <svg class="panel-heading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/>
                 <circle cx="12" cy="12" r="3"/>
               </svg>
-              <span data-term="roles.recon">监测席</span>
+              <span id="recon-heading-text" data-term="roles.recon" title="双击重命名">侦察席</span>
+              <button type="button" class="btn-heading-rename" id="btn-rename-recon-heading" title="重命名侦察席板块标题">✎</button>
             </h3>
             <button type="button" id="btn-uav-recon-video-matrix" class="btn btn-xs btn-tactical-tool" data-term-title="ui.openReconVideoMatrix" title="打开所有监测载荷视频链路总览矩阵">
               <span>视频总览</span>
@@ -164,12 +165,13 @@
 
         <section class="panel-section platform-list-panel" aria-labelledby="firepower-list-heading">
           <header class="panel-header">
-            <h3 id="firepower-list-heading">
+            <h3 id="firepower-list-heading" class="panel-heading-title">
               <svg class="panel-heading-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M 7 17 V 3 H 20 L 16.5 7 L 20 11 H 7"/>
                 <path d="M 3 21 L 6 17 H 18 L 21 21 Z"/>
               </svg>
-              <span id="firepower-heading-text" data-term="roles.firepower">作业单元</span>
+              <span id="firepower-heading-text" data-term="roles.firepower" title="双击重命名">火力点</span>
+              <button type="button" class="btn-heading-rename" id="btn-rename-firepower-heading" title="重命名火力点板块标题">✎</button>
             </h3>
             <div class="panel-header-actions">
               <button type="button" id="btn-tactical-add-firepower" class="btn btn-xs btn-tactical-tool highlight-tool" data-term-title="roles.addFirepowerTitle" title="新增作业单元至架构中">

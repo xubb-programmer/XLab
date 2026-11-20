@@ -1,5 +1,5 @@
 // 无人机视频、位置与地图目标展示入口。
-import { initTerms, t, applyTermsToDom } from "./core/terms.js";
+import { initTerms, t, applyTermsToDom, setCustomTerm } from "./core/terms.js";
 import { eventBus } from "./core/event-bus.js";
 import { hasGeographicPosition } from "./core/coordinates.js";
 import { getPlatformDisplayName } from "./core/platform-labels.js";
@@ -122,6 +122,24 @@ function bindMainPageNavigation() {
   document.getElementById("btn-uav-recon-video-matrix")?.addEventListener("click", () => switchMainPage("video-matrix"));
   document.getElementById("btn-tactical-add-firepower")?.addEventListener("click", () =>
     switchMainPage("firepower", { keepDrawer: true, openNew: true }));
+
+  // 左侧栏板块标题自定义编辑
+  const bindHeadingRename = (btnId, textId, termKey, defaultLabel) => {
+    const btn = document.getElementById(btnId);
+    const textEl = document.getElementById(textId);
+    const doRename = () => {
+      const current = t(termKey, defaultLabel);
+      const val = prompt(`请输入${defaultLabel}板块标题名称:`, current);
+      if (val && val.trim() && val.trim() !== current) {
+        setCustomTerm(termKey, val.trim());
+      }
+    };
+    btn?.addEventListener("click", doRename);
+    textEl?.addEventListener("dblclick", doRename);
+  };
+
+  bindHeadingRename("btn-rename-recon-heading", "recon-heading-text", "roles.recon", "侦察席");
+  bindHeadingRename("btn-rename-firepower-heading", "firepower-heading-text", "roles.firepower", "火力点");
 
   eventBus.on("page:switch", (pageName, options) => switchMainPage(pageName, options));
   eventBus.on("management:openFirepower", () => switchMainPage("data-management", { recordType: "firepower" }));

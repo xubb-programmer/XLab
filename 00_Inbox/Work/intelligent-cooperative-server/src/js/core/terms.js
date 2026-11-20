@@ -23,15 +23,42 @@ export async function initTerms() {
       termsData = await res.json();
       flatTerms.clear();
       flattenObject(termsData);
-      return termsData;
     }
   } catch (err) {
     console.warn("Failed to load /api/terms, using built-in defaults", err);
   }
 
-  // 兜底默认值
-  termsData = {};
+  if (!termsData) termsData = {};
+
+  // 加载本地自定义的术语覆盖
+  try {
+    const stored = JSON.parse(localStorage.getItem("tactical_custom_terms") || "{}");
+    for (const [k, v] of Object.entries(stored)) {
+      if (v && typeof v === "string") {
+        flatTerms.set(k, v);
+        const shortKey = k.split(".").pop();
+        if (shortKey) flatTerms.set(shortKey, v);
+      }
+    }
+  } catch (_) {}
+
   return termsData;
+}
+
+export function setCustomTerm(key, val) {
+  if (!key || !val || !val.trim()) return;
+  const trimmed = val.trim();
+  flatTerms.set(key, trimmed);
+  const shortKey = key.split(".").pop();
+  if (shortKey) flatTerms.set(shortKey, trimmed);
+
+  try {
+    const stored = JSON.parse(localStorage.getItem("tactical_custom_terms") || "{}");
+    stored[key] = trimmed;
+    localStorage.setItem("tactical_custom_terms", JSON.stringify(stored));
+  } catch (_) {}
+
+  applyTermsToDom();
 }
 
 export function t(key, fallback = "", params = null) {
