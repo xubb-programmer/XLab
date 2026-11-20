@@ -331,6 +331,17 @@ export function initDeviceManager(viewer, panel, options = {}) {
     return await saveBatchFirepower() ? newPt : null;
   }
 
+  async function removeFirepowerPoint(firepowerId) {
+    if (saving) return false;
+    const idx = scenarioFirepower.findIndex(p => p.id === firepowerId);
+    if (idx !== -1) {
+      assignPointMount(scenarioFirepower[idx], "");
+      scenarioFirepower.splice(idx, 1);
+      return await saveBatchFirepower();
+    }
+    return false;
+  }
+
   async function autoMountAvailableDevices() {
     if (saving) return 0;
     const availableUavs = currentUavs.filter(u => u.online && !u.duplicateId && !u.mountedTo && !u.isScenario);
@@ -739,6 +750,7 @@ export function initDeviceManager(viewer, panel, options = {}) {
     mountDevice,
     updatePointAffiliation,
     addFirepowerPoint,
+    removeFirepowerPoint,
     autoMountAvailableDevices,
     resetToDefaultAffiliation,
     getAffiliationTree,
