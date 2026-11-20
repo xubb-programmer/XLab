@@ -41,6 +41,11 @@ export function getPlatformName(platform, role) {
 }
 
 export function getPlatformDisplayName(platform, role) {
-  const roleName = role === "firepower" ? t("roles.firepower", "作业单元") : t("roles.recon", "监测席");
-  return `${roleName} · ${getPlatformName(platform, role)}`;
+  if (role === "firepower") {
+    return getPlatformName(platform, role);
+  }
+  const roleName = t("roles.recon", "侦察席");
+  const pName = getPlatformName(platform, role);
+  if (pName.startsWith(roleName)) return pName;
+  return `${roleName} · ${pName}`;
 }

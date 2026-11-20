@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#060b11">
   <title data-term="app.title">单兵作战辅助平台</title>
   <link rel="stylesheet" href="/cesium/Widgets/widgets.css">
-  <link rel="stylesheet" href="/styles/main.css?v=20261120_v7">
-  <link rel="stylesheet" href="/styles/layout.css?v=20261120_v7">
-  <link rel="stylesheet" href="/styles/components.css?v=20261120_v7">
+  <link rel="stylesheet" href="/styles/main.css?v=20261120_v8">
+  <link rel="stylesheet" href="/styles/layout.css?v=20261120_v8">
+  <link rel="stylesheet" href="/styles/components.css?v=20261120_v8">
   <script>window.CESIUM_BASE_URL = "/cesium/";</script>
   <script>
     // Keep the offline board compatible with its Chromium 91 runtime.
@@ -100,11 +100,11 @@
 
       <!-- 顶部工作台主入口导航 -->
       <nav class="topbar-nav" aria-label="软件功能作业入口导航">
-        <button type="button" id="nav-btn-tactical" class="topbar-nav-tab active" title="打开战术态势">
-          <span class="nav-tab-text" data-term="app.topbarTactical">战术态势</span>
+        <button type="button" id="nav-btn-tactical" class="topbar-nav-tab active" title="打开综合态势">
+          <span class="nav-tab-text" data-term="app.topbarTactical">综合态势</span>
         </button>
-        <button type="button" id="nav-btn-battery-config" class="topbar-nav-tab" data-term-title="ui.firepowerConfig" title="火力点参数整备与单元挂载">
-          <span class="nav-tab-text" data-term="roles.mountFirepower">单元挂载</span>
+        <button type="button" id="nav-btn-battery-config" class="topbar-nav-tab" data-term-title="ui.firepowerConfig" title="火力点参数整备与火力挂载">
+          <span class="nav-tab-text" data-term="roles.mountFirepower">火力挂载</span>
         </button>
         <button type="button" id="nav-btn-video-matrix" class="topbar-nav-tab highlight-recon" title="打开视频总览">
           <span class="nav-tab-text">视频总览</span>
@@ -580,8 +580,8 @@
       </footer>
     </section>
 
-    <!-- 单元挂载 模态浮动弹窗 (仿真 Windows 经典桌面窗口) -->
-    <div id="page-firepower-affiliation" class="modal-backdrop firepower-affiliation-dialog is-hidden" hidden style="display: none;" aria-label="单元挂载">
+    <!-- 火力挂载 模态浮动弹窗 (仿真 Windows 经典桌面窗口) -->
+    <div id="page-firepower-affiliation" class="modal-backdrop firepower-affiliation-dialog is-hidden" hidden style="display: none;" aria-label="火力挂载">
       <div id="affiliation-tree-canvas" class="affiliation-tree-canvas">
         <!-- 动态渲染经典桌面弹窗 -->
       </div>

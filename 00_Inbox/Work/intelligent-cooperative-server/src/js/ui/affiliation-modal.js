@@ -80,7 +80,7 @@ export class AffiliationModal {
     this.collapsedKeys = new Set();
     this.checkedPointIds = new Set();
     this.customRootName = localStorage.getItem("org_custom_root_name") || "";
-    if (this.customRootName === "业务调度中心" || this.customRootName === "炮兵1群") {
+    if (this.customRootName === "业务调度中心" || this.customRootName === "炮兵1群" || this.customRootName === "协同作战集群") {
       this.customRootName = "";
       localStorage.removeItem("org_custom_root_name");
     }
@@ -636,17 +636,17 @@ export class AffiliationModal {
       }
     }
 
-    const rootName = this.customRootName || tree.root || t("org.center", "协同作战集群");
+    const rootName = this.customRootName || tree.root || t("org.center", "协同作战分队");
     const isRootCollapsed = this.collapsedKeys.has("__root__");
     const totalPointsCount = allPoints.length;
     const checkedPointsCount = allPoints.filter(p => this.checkedPointIds.has(p.id)).length;
 
     this.treeContainer.innerHTML = `
       <div class="dir-tree-window">
-        <!-- 窗口标题栏: 单元挂载 -->
+        <!-- 窗口标题栏: 火力挂载 -->
         <div class="dir-window-titlebar">
           <div class="dir-title-left">
-            <span class="dir-title-text">${escapeHtml(t("org.affiliationModalTitle", "单元挂载"))}</span>
+            <span class="dir-title-text">${escapeHtml(t("org.affiliationModalTitle", "火力挂载"))}</span>
           </div>
           <div class="dir-title-actions">
             <button type="button" class="btn-dir-win-close" id="btn-dir-win-close" title="关闭窗口">✕</button>
@@ -745,7 +745,16 @@ export class AffiliationModal {
                                           `).join('')}
                                         </select>
                                         <button type="button" class="btn-dir-inline btn-dir-edit-point" data-id="${escapeHtml(pt.id)}" title="参数配置">✎</button>
-                                        <button type="button" class="btn-dir-inline btn-dir-fly-point" data-id="${escapeHtml(pt.id)}" title="地图定位">⌖</button>
+                                        <button type="button" class="btn-dir-inline btn-dir-fly-point" data-id="${escapeHtml(pt.id)}" title="地图定位" aria-label="地图定位">
+                                          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align: -1px;">
+                                            <circle cx="12" cy="12" r="7"></circle>
+                                            <line x1="12" y1="1" x2="12" y2="5"></line>
+                                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                                            <line x1="1" y1="12" x2="5" y2="12"></line>
+                                            <line x1="19" y1="12" x2="23" y2="12"></line>
+                                            <circle cx="12" cy="12" r="1.5" fill="currentColor"></circle>
+                                          </svg>
+                                        </button>
                                         <button type="button" class="btn-dir-inline btn-dir-del-point" data-id="${escapeHtml(pt.id)}" title="删除">✕</button>
                                       </div>
                                     </div>
@@ -795,8 +804,8 @@ export class AffiliationModal {
 
     this.treeContainer.querySelectorAll(".btn-dir-rename-root").forEach(btn => {
       btn.addEventListener("click", () => {
-        const currentName = this.customRootName || tree.root || t("org.center", "协同作战集群");
-        const val = prompt(`请输入根节点名称 (如: ${t("org.center", "协同作战集群")}):`, currentName);
+        const currentName = this.customRootName || tree.root || t("org.center", "协同作战分队");
+        const val = prompt(`请输入根节点名称 (如: ${t("org.center", "协同作战分队")}):`, currentName);
         if (val && val.trim()) {
           this.customRootName = val.trim();
           localStorage.setItem("org_custom_root_name", this.customRootName);

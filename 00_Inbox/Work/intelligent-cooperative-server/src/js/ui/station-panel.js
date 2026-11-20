@@ -178,7 +178,6 @@ export class StationPanel {
 
     const isOnline = point.online === true;
     const displayName = getPlatformDisplayName(point, "firepower");
-    const affiliation = `${point.battalion || t("org.battalionDefault", "1区")} / ${point.company || t("org.companyDefault", "1组")}`;
 
     card.innerHTML = `
       <div class="card-corner-tl"></div>
@@ -188,10 +187,9 @@ export class StationPanel {
         <div class="artillery-title">
           <span class="status-dot-point ${isOnline ? 'online' : 'standby'}" aria-hidden="true"></span>
           <strong></strong>
-          <span class="artillery-affiliation" title="${t("org.affiliationTitle", "组织架构隶属")}"></span>
         </div>
         <div class="header-tags">
-          <button type="button" class="btn btn-sm btn-firepower-config btn-tactical-edit-point" aria-label="${t("ui.configFirepowerTitle", "配置作业单元参数")}" title="${t("ui.configFirepowerTitle", "配置作业单元参数")}">
+          <button type="button" class="btn btn-sm btn-firepower-config btn-tactical-edit-point" aria-label="${t("ui.configFirepowerTitle", "配置火力点参数")}" title="${t("ui.configFirepowerTitle", "配置火力点参数")}">
             <span class="btn-text">配置</span>
           </button>
         </div>
@@ -207,7 +205,6 @@ export class StationPanel {
     `;
 
     card.querySelector(".artillery-title strong").textContent = displayName;
-    card.querySelector(".artillery-affiliation").textContent = affiliation;
 
     const editBtn = card.querySelector(".btn-tactical-edit-point");
     editBtn?.addEventListener("click", e => {

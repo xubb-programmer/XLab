@@ -6,8 +6,8 @@
     "analysisAssistant": "情报辅助分析系统",
     "dataLinkStatus": "战术数据链状态",
     "viewSwitchPitch": "视角切换至: 战术俯仰全景视角 (-45°)",
-    "backToTactical": "返回战术态势",
-    "topbarTactical": "战术态势"
+    "backToTactical": "返回综合态势",
+    "topbarTactical": "综合态势"
   },
   "roles": {
     "recon": "侦察席",
@@ -15,7 +15,7 @@
     "reconPool": "组播侦察席设备池",
     "reconPoolDesc": "组播在线设备可作为火力点通信信道，挂载后阵位立即转为在线就绪。",
     "firepowerBase": "地面火力点",
-    "mountFirepower": "单元挂载",
+    "mountFirepower": "火力挂载",
     "addFirepower": "新增火力",
     "addFirepowerTitle": "新增火力至编制中",
     "addFirepowerToComp": "在该连新增火力点",
@@ -27,11 +27,11 @@
     "cancelFirepower": "取消独立火力点"
   },
   "org": {
-    "center": "协同作战集群",
+    "center": "协同作战分队",
     "rootBadge": "指挥所",
     "affiliationTitle": "战术编制隶属",
-    "affiliationModalTitle": "单元挂载",
-    "metaPath": "协同作战集群 ➔ 营 ➔ 连 ➔ 火力点",
+    "affiliationModalTitle": "火力挂载",
+    "metaPath": "协同作战分队 ➔ 营 ➔ 连 ➔ 火力点",
     "battalion": "营",
     "company": "连",
     "battalionCompany": "营连",
@@ -131,7 +131,7 @@
     "navTitle": "设置",
     "platformConfig": "系统配置",
     "viewportAndData": "三维战术视口与数据管理",
-    "backToTactical": "返回战术态势",
+    "backToTactical": "返回综合态势",
     "backToSettings": "返回设置",
     "initialViewTitle": "初始战术位置",
     "initialViewBadge": "战术基准",
