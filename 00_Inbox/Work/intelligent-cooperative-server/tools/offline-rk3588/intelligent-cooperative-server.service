@@ -9,9 +9,6 @@ Type=simple
 User=intelligent-cooperative-server
 Group=intelligent-cooperative-server
 WorkingDirectory=/opt/jw/intelligent-cooperative-server/current/web
-Environment=INTELLIGENT_COOPERATIVE_SERVER_REPORTING_DB=/var/lib/intelligent-cooperative-server/reporting.sqlite
-Environment=INTELLIGENT_COOPERATIVE_SERVER_MANAGEMENT_DB=/var/lib/intelligent-cooperative-server/management/records.sqlite
-Environment=DEVICE_SIM_STATE_DIR=/var/lib/intelligent-cooperative-server/device-simulation
 ExecStart=/opt/jw/intelligent-cooperative-server/current/node/bin/node server/serve.mjs
 Restart=on-failure
 RestartSec=2

@@ -89,7 +89,11 @@ export async function openDeviceSimulation(rtspTimeoutOption, mqttConfig, scenar
   const relaySource = process.env.DEVICE_SIM_RELAY_IP || mqttConfig.deviceStatusRelayIp || "";
   const onlineMs = integerSetting("DEVICE_SIM_ONLINE_MS", 5000, 1000, 300000);
   const topic = process.env.DEVICE_STATUS_TOPIC || mqttConfig.deviceStatusTopic;
-  const stateDir = process.env.DEVICE_SIM_STATE_DIR || fileURLToPath(new URL("../dist/device-status-simulation/", import.meta.url));
+  const envStateDir = process.env.DEVICE_SIM_STATE_DIR;
+  const defaultStateDir = fileURLToPath(new URL("../dist/device-status-simulation/", import.meta.url));
+  const stateDir = envStateDir && !envStateDir.startsWith("/var/lib/") && !envStateDir.startsWith("/etc/")
+    ? resolve(fileURLToPath(new URL("../", import.meta.url)), envStateDir)
+    : defaultStateDir;
   await mkdir(stateDir, { recursive: true });
   const registry = openRegistry(resolve(stateDir, "devices.sqlite"), onlineMs);
   const portable = resolve(stateDir, "ffmpeg.exe");

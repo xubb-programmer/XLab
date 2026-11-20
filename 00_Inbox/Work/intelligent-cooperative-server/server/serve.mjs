@@ -19,10 +19,10 @@ import { hasGeographicPosition } from "../src/js/core/coordinates.js";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 
-// 统一基于工程根目录的相对路径解析，严格使用相对路径，彻底移除 /etc/ 绝对路径与历史兼容回退
+// 统一基于工程根目录的相对路径解析，严格使用相对路径，彻底移除 /etc/ 与 /var/lib/ 绝对路径
 function resolveConfig(envVar, defaultRelativePath) {
   const envVal = process.env[envVar];
-  if (envVal && envVal.trim() && !envVal.startsWith("/etc/")) {
+  if (envVal && envVal.trim() && !envVal.startsWith("/etc/") && !envVal.startsWith("/var/lib/")) {
     return resolve(root, envVal.trim());
   }
   return resolve(root, defaultRelativePath);
@@ -35,7 +35,7 @@ const appConfig = JSON.parse(await readFile(appConfigPath, "utf8"));
 // 场景与建制基准数据路径，唯一指向 config/scenario-default.json
 function resolveScenarioPath() {
   const custom = process.env.INTELLIGENT_COOPERATIVE_SERVER_SCENARIO;
-  if (custom && custom.trim() && !custom.startsWith("/etc/")) {
+  if (custom && custom.trim() && !custom.startsWith("/etc/") && !custom.startsWith("/var/lib/")) {
     return resolve(root, custom.trim());
   }
   return resolve(root, "config/scenario-default.json");
@@ -59,7 +59,7 @@ const offlineMapDir = resolve(root, "dist/offline-maps/combined-theaters");
 // 术语与界面词条字典路径，唯一指向 config/terms.json
 function resolveTermsConfig() {
   const custom = process.env.INTELLIGENT_COOPERATIVE_SERVER_TERMS_CONFIG;
-  if (custom && custom.trim() && !custom.startsWith("/etc/")) {
+  if (custom && custom.trim() && !custom.startsWith("/etc/") && !custom.startsWith("/var/lib/")) {
     return resolve(root, custom.trim());
   }
   return resolve(root, "config/terms.json");

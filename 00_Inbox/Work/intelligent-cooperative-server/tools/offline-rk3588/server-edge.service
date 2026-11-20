@@ -8,9 +8,9 @@ Requires=mosquitto.service
 Type=simple
 User=intelligent-cooperative-server
 Group=intelligent-cooperative-server
-WorkingDirectory=/var/lib/intelligent-cooperative-server/edge
-Environment=EDGEAGENT_LOG_FILE=/var/lib/intelligent-cooperative-server/edge/edgeagent.log
-ExecStart=/opt/jw/intelligent-cooperative-server/current/bin/edgeagent --config /etc/intelligent-cooperative-server/edgeagent.json
+WorkingDirectory=/opt/jw/intelligent-cooperative-server/current/web
+Environment=EDGEAGENT_LOG_FILE=/opt/jw/intelligent-cooperative-server/current/web/dist/edge/edgeagent.log
+ExecStart=/opt/jw/intelligent-cooperative-server/current/bin/edgeagent --config config/edgeagent.json
 Restart=on-failure
 RestartSec=2
 
