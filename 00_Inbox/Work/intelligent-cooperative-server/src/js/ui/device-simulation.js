@@ -38,6 +38,10 @@ export function initDeviceManager(viewer, panel, options = {}) {
   const modelPoint = p => {
     let bat = p.battalion;
     let comp = p.company;
+    let name = p.name || "";
+    if (name.includes("作业单元")) {
+      name = name.replace("作业单元", t("roles.firepower", "火力点"));
+    }
     if (!bat || bat.includes("区")) {
       bat = t("org.battalionDefault", "1营");
     }
@@ -46,6 +50,7 @@ export function initDeviceManager(viewer, panel, options = {}) {
     }
     return {
       ...p,
+      name,
       battalion: bat,
       company: comp,
       mountedDeviceId: p.mountedDeviceId || "",
@@ -649,6 +654,9 @@ export function initDeviceManager(viewer, panel, options = {}) {
 
     // 动态依据EdgeAgent转发的在线侦察设备计算火力点在线状态
     for (const pt of allFirepowerPoints) {
+      if (pt.name && pt.name.includes("作业单元")) {
+        pt.name = pt.name.replace("作业单元", t("roles.firepower", "火力点"));
+      }
       if (!pt.battalion || pt.battalion.includes("区")) pt.battalion = t("org.battalionDefault", "1营");
       if (!pt.company || pt.company.includes("组")) pt.company = t("org.companyDefault", "1连");
       if (pt.mountedDeviceId) {
