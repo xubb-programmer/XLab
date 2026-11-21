@@ -239,29 +239,76 @@ export class MapSettings {
 
     try {
       const scene = viewer.scene;
-      const canvas = scene.canvas;
-      const centerPixel = new Cesium.Cartesian2(canvas.clientWidth / 2, canvas.clientHeight / 2);
-      const ray = viewer.camera.getPickRay(centerPixel);
-      const cartesian = scene.globe.pick(ray, scene);
+      const canvas = scene?.canvas;
+      let cartesian = null;
 
-      if (cartesian) {
-        const carto = Cesium.Cartographic.fromCartesian(cartesian);
-        if (this.inputLon) this.inputLon.value = Cesium.Math.toDegrees(carto.longitude).toFixed(6);
-        if (this.inputLat) this.inputLat.value = Cesium.Math.toDegrees(carto.latitude).toFixed(6);
-      } else {
-        const camCarto = viewer.camera.positionCartographic;
-        if (this.inputLon) this.inputLon.value = Cesium.Math.toDegrees(camCarto.longitude).toFixed(6);
-        if (this.inputLat) this.inputLat.value = Cesium.Math.toDegrees(camCarto.latitude).toFixed(6);
+      // 1. 若三维态势画布处于可见渲染状态（clientWidth > 0），优先使用视口中心像素投射射线拾取地表
+      if (canvas && canvas.clientWidth > 0 && canvas.clientHeight > 0 && viewer.camera?.getPickRay) {
+        try {
+          const centerPixel = new Cesium.Cartesian2(canvas.clientWidth / 2, canvas.clientHeight / 2);
+          const ray = viewer.camera.getPickRay(centerPixel);
+          if (ray && !Number.isNaN(ray.origin?.x) && !Number.isNaN(ray.direction?.x)) {
+            cartesian = scene.globe?.pick(ray, scene);
+          }
+        } catch {
+          // 忽略画布投射异常
+        }
       }
 
-      const camCarto = viewer.camera.positionCartographic;
-      if (this.inputAlt) this.inputAlt.value = Math.max(100, Math.round(camCarto.height));
+      // 2. 若处于设置页面（地图画布后台隐藏 clientWidth === 0）或投射未命中地形，
+      //    直接使用 Cesium 相机自身空间视线向量 (positionWC / directionWC) 与地球椭球面求交
+      if (!cartesian && viewer.camera?.positionWC && viewer.camera?.directionWC) {
+        try {
+          const centerRay = new Cesium.Ray(viewer.camera.positionWC, viewer.camera.directionWC);
+          if (scene?.globe) {
+            cartesian = scene.globe.pick(centerRay, scene);
+          }
+          if (!cartesian && scene?.globe?.ellipsoid) {
+            const interval = Cesium.IntersectionTests.rayEllipsoid(centerRay, scene.globe.ellipsoid);
+            if (interval && interval.start > 0) {
+              cartesian = Cesium.Ray.getPoint(centerRay, interval.start);
+            }
+          }
+        } catch {
+          // 忽略空间射线求交异常
+        }
+      }
+
+      // 3. 提取拾取到的经纬度；若未求交（例如仰视天空），则回退为当前相机正下方地表投影点
+      let lon = null;
+      let lat = null;
+      if (cartesian) {
+        try {
+          const carto = Cesium.Cartographic.fromCartesian(cartesian);
+          if (carto && Number.isFinite(carto.longitude) && Number.isFinite(carto.latitude)) {
+            lon = Cesium.Math.toDegrees(carto.longitude).toFixed(6);
+            lat = Cesium.Math.toDegrees(carto.latitude).toFixed(6);
+          }
+        } catch {}
+      }
+
+      const camCarto = viewer.camera?.positionCartographic;
+      if ((lon === null || lat === null) && camCarto) {
+        lon = Cesium.Math.toDegrees(camCarto.longitude).toFixed(6);
+        lat = Cesium.Math.toDegrees(camCarto.latitude).toFixed(6);
+      }
+
+      if (lon === null || lat === null) {
+        this.showStatus("无法解析当前地图相机坐标，请稍候重试", "error");
+        return;
+      }
+
+      if (this.inputLon) this.inputLon.value = lon;
+      if (this.inputLat) this.inputLat.value = lat;
+
+      const alt = camCarto ? Math.max(100, Math.round(camCarto.height)) : 26000;
+      if (this.inputAlt) this.inputAlt.value = alt;
 
       this.flashInputs();
       this.showStatus(`已获取视心：${this.inputLon.value}°, ${this.inputLat.value}° · ${this.inputAlt.value}m`, "success");
     } catch (err) {
       console.warn("[MapSettings] 读取视窗坐标失败", err);
-      this.showStatus("读取视窗坐标失败，请在地图激活后重试", "error");
+      this.showStatus("读取视窗坐标失败，请在地图就绪后重试", "error");
     }
   }
 

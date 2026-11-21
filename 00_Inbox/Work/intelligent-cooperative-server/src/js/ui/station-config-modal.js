@@ -399,10 +399,35 @@ export class StationConfigModal {
     const viewer = this.viewerManager?.viewer;
     if (!viewer) return;
     try {
-      const canvas = viewer.scene.canvas;
-      const centerPixel = new Cesium.Cartesian2(canvas.clientWidth / 2, canvas.clientHeight / 2);
-      const ray = viewer.camera.getPickRay(centerPixel);
-      const cartesian = viewer.scene.globe.pick(ray, viewer.scene);
+      const scene = viewer.scene;
+      const canvas = scene?.canvas;
+      let cartesian = null;
+
+      if (canvas && canvas.clientWidth > 0 && canvas.clientHeight > 0 && viewer.camera?.getPickRay) {
+        try {
+          const centerPixel = new Cesium.Cartesian2(canvas.clientWidth / 2, canvas.clientHeight / 2);
+          const ray = viewer.camera.getPickRay(centerPixel);
+          if (ray && !Number.isNaN(ray.origin?.x) && !Number.isNaN(ray.direction?.x)) {
+            cartesian = viewer.scene.globe?.pick(ray, viewer.scene);
+          }
+        } catch {}
+      }
+
+      if (!cartesian && viewer.camera?.positionWC && viewer.camera?.directionWC) {
+        try {
+          const centerRay = new Cesium.Ray(viewer.camera.positionWC, viewer.camera.directionWC);
+          if (scene?.globe) {
+            cartesian = scene.globe.pick(centerRay, scene);
+          }
+          if (!cartesian && scene?.globe?.ellipsoid) {
+            const interval = Cesium.IntersectionTests.rayEllipsoid(centerRay, scene.globe.ellipsoid);
+            if (interval && interval.start > 0) {
+              cartesian = Cesium.Ray.getPoint(centerRay, interval.start);
+            }
+          }
+        } catch {}
+      }
+
       if (cartesian) {
         const carto = Cesium.Cartographic.fromCartesian(cartesian);
         if (this.inputLon) this.inputLon.value = Cesium.Math.toDegrees(carto.longitude).toFixed(6);
