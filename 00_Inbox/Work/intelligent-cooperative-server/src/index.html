@@ -551,12 +551,13 @@
               </div>
             </div>
 
-            <div class="form-row-grid-2" data-operational-point-field>
+            <div class="form-row-grid-2">
               <div class="form-field">
-                <label class="form-label" for="cfg-fp-ip">通信 IP 地址</label>
-                <input type="text" id="cfg-fp-ip" class="text-input mono" placeholder="127.0.0.1" required>
+                <label class="form-label" for="cfg-fp-ip" id="cfg-fp-ip-label">通信 IP 地址</label>
+                <input type="text" id="cfg-fp-ip" class="text-input mono" placeholder="127.0.0.1">
+                <span id="cfg-fp-ip-warning" style="color:#eab308; font-size:11px; margin-top:2px; display:none;">⚠️ 当前为本地回环 (127.0.0.1)，实操请配置外部终端 IP</span>
               </div>
-              <div class="form-field">
+              <div class="form-field" data-operational-point-field>
                 <label class="form-label" for="cfg-fp-port">通信端口 (TCP)</label>
                 <input type="number" step="1" min="1" max="65535" id="cfg-fp-port" class="text-input mono" placeholder="5567" required>
               </div>

@@ -594,7 +594,7 @@ export function initDeviceManager(viewer, panel, options = {}) {
 
   const callbacks = {
     edit: (device, role) => editor.open(device, false, role),
-    reportSituation: key => request("situation-report", { key }),
+    reportSituation: (key, deviceIp) => request("situation-report", { key, ...(deviceIp ? { deviceIp } : {}) }),
     openAffiliation: () => eventBus.emit("firepower:openAffiliationModal"),
     async changeRole(device, role) {
       if (saving) throw new Error("设备配置正在保存，请稍后重试");

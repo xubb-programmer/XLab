@@ -93,10 +93,11 @@ export class StationPanel {
     const displayName = getPlatformDisplayName(uav, "recon");
     const videoCount = uav.videoSources ?? uav.videoChannels?.length ?? 0;
     const isOnline = uav.online === true;
-    const canReport = Boolean(uav.deviceIp && simulation?.reportSituation);
+    const targetIp = uav.deviceIp || uav.ip || "";
+    const canReport = Boolean(targetIp && simulation?.reportSituation);
     const reportHint = canReport
-      ? `向 ${uav.deviceIp}:28081 发送 UDP 态势上报指令`
-      : t("ui.waitingReconIp", "等待监测设备上报 IP");
+      ? `向 ${targetIp}:28081 发送 UDP 态势上报指令`
+      : t("ui.waitingReconIp", "等待监测设备上报 IP（或点击[配置]手动指定）");
 
     card.innerHTML = `
       <div class="card-corner-tl"></div>
@@ -169,7 +170,7 @@ export class StationPanel {
       status.hidden = false;
       status.textContent = `${displayName}：` + t("ui.sendingSyncCommand", "正在发送状态同步指令…");
       try {
-        const { address, port } = await simulation.reportSituation(uav.id);
+        const { address, port } = await simulation.reportSituation(uav.id, targetIp);
         status.textContent = `${displayName}：指令已发往 ${address}:${port}（UDP）`;
       } catch (error) {
         status.textContent = `${displayName}：${error.message}`;

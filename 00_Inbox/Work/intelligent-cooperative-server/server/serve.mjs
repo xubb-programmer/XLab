@@ -280,8 +280,15 @@ async function saveFirepowerPoint(point, expectedRevision, kind) {
     const { scenarioUavs } = scenarioRecords(scenario, scenarioRevision);
     const idx = scenarioUavs.findIndex(existing => existing.id === point.id);
     if (idx < 0) throw dataError(404, "场景监测席不存在");
-    const { name, longitude, latitude, altitude } = point;
-    scenarioUavs[idx] = { ...scenarioUavs[idx], name, longitude, latitude, altitude };
+    const { name, longitude, latitude, altitude, ip } = point;
+    scenarioUavs[idx] = {
+      ...scenarioUavs[idx],
+      name,
+      longitude,
+      latitude,
+      altitude,
+      ...(ip && typeof ip === "string" && ip.trim() ? { ip: ip.trim() } : {})
+    };
     scenario.uavs = scenarioUavs;
     return saveScenario(scenario);
   }

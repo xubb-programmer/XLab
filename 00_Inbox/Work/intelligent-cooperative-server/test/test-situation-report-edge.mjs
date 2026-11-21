@@ -241,6 +241,35 @@ async function run() {
   assert.match(errJson.error, /udp_target_rejected/);
   console.log("  ✓ Test 2 通过：EdgeAgent 发送失败时正确返回 502 并暴露具体错误原因！");
 
+  // --- 测试用例 3: 手动指定 deviceIp 兜底机制 (即使无组播心跳也能下发) ---
+  console.log("\n[Test 3] 测试手动指定 deviceIp 兜底机制...");
+  let lastSentCommand = null;
+  broker.onMessage = ({ topic, payload }) => {
+    if (topic === "edge/v1/devices/target-input-device/commands") {
+      const envelope = JSON.parse(payload);
+      lastSentCommand = envelope;
+      setTimeout(() => {
+        broker.publish("edge/v1/devices/target-input-device/command-results", JSON.stringify({
+          id: envelope.id,
+          status: "sent"
+        }));
+      }, 50);
+    }
+  };
+
+  await simulation.serve(
+    createMockReq({ key: "UNKNOWN-UAV", deviceIp: "192.168.0.88" }),
+    mockRes,
+    new URL("http://localhost/api/device-simulation/situation-report")
+  );
+  console.log("  -> HTTP 响应状态码:", resStatus);
+  console.log("  -> HTTP 响应数据:", resBody);
+  assert.equal(resStatus, 200);
+  const respJson3 = JSON.parse(resBody);
+  assert.equal(respJson3.address, "192.168.0.88");
+  assert.equal(lastSentCommand?.meta?.endpoint?.address, "192.168.0.88");
+  console.log("  ✓ Test 3 通过：手动指定 deviceIp 成功兜底并经由 EdgeAgent 代理下发！");
+
   // 收尾
   simulation.close();
   await broker.close();

@@ -64,9 +64,10 @@ function json(res, status, payload) {
 }
 
 export async function openDeviceSimulation(rtspTimeoutOption, mqttConfig, scenario, dbInstance) {
-  const sourceIps = (process.env.DEVICE_SIM_SOURCE_IPS || "192.168.10.130")
-    .split(",").map(address => address.trim()).filter(Boolean);
-  const source = sourceIps.join(", ");
+  const rawSource = process.env.DEVICE_SIM_SOURCE_IPS ?? (mqttConfig.deviceSimSourceIps || "");
+  const sourceIps = rawSource.split(",").map(address => address.trim()).filter(Boolean);
+  const allowAnySource = sourceIps.length === 0;
+  const source = allowAnySource ? "自动接收局域网设备 (未设来源限制)" : sourceIps.join(", ");
   const relaySource = process.env.DEVICE_SIM_RELAY_IP || mqttConfig.deviceStatusRelayIp || "";
   const onlineMs = integerSetting("DEVICE_SIM_ONLINE_MS", 5000, 1000, 300000);
   const topic = process.env.DEVICE_STATUS_TOPIC || mqttConfig.deviceStatusTopic;
@@ -78,7 +79,7 @@ export async function openDeviceSimulation(rtspTimeoutOption, mqttConfig, scenar
   const portable = resolve(dataDir, "ffmpeg.exe");
   const ffmpegPath = process.env.DEVICE_SIM_FFMPEG_PATH || (process.platform === "win32" && existsSync(portable) ? portable : "ffmpeg");
 
-  const valid = sourceIps.length > 0 && sourceIps.every(isIPv4)
+  const valid = (allowAnySource || sourceIps.every(isIPv4))
     && (!relaySource || isIPv4(relaySource)) && Boolean(topic);
   const targetDeviceId = (mqttConfig.topic || "").match(/^edge\/v1\/devices\/([^/]+)\/data$/)?.[1] || "target-input-device";
   const commandTopic = `edge/v1/devices/${targetDeviceId}/commands`;
@@ -135,9 +136,12 @@ export async function openDeviceSimulation(rtspTimeoutOption, mqttConfig, scenar
     const hex = envelope?.data;
     const peerAddress = envelope?.meta?.endpoint?.address;
     if (envelope?.transport !== "udp" || typeof hex !== "string" || hex.length > MAX_UDP_BYTES * 2
-        || hex.length % 2 !== 0 || !/^[0-9a-f]*$/i.test(hex)
-        || (!sourceIps.includes(peerAddress) && peerAddress !== relaySource)) return;
-    const reportSource = sourceIps.includes(peerAddress) ? peerAddress : sourceIps[0];
+        || hex.length % 2 !== 0 || !/^[0-9a-f]*$/i.test(hex)) return;
+    const isAllowedPeer = allowAnySource
+      ? (peerAddress && isIPv4(peerAddress) && !peerAddress.startsWith("127."))
+      : (sourceIps.includes(peerAddress) || peerAddress === relaySource);
+    if (!isAllowedPeer) return;
+    const reportSource = peerAddress || (sourceIps[0] || "127.0.0.1");
     const report = decodeReport(Buffer.from(hex, "hex"), reportSource);
     if (!report) return;
     try {
@@ -253,14 +257,17 @@ export async function openDeviceSimulation(rtspTimeoutOption, mqttConfig, scenar
         try { body = JSON.parse(content); } catch { return json(res, 400, { error: "请求内容无效" }); }
         if (typeof body?.key !== "string" || !body.key) return json(res, 400, { error: "请选择一个设备" });
         if (path === "/situation-report") {
-          const address = registry.deviceIpForKey(body.key);
+          const manualIp = typeof body.deviceIp === "string" && isIPv4(body.deviceIp.trim()) ? body.deviceIp.trim() : null;
+          const address = manualIp || registry.deviceIpForKey(body.key);
           if (!address || !isIPv4(address) || Number(address.split(".")[0]) < 1 || Number(address.split(".")[0]) > 223) {
-            return json(res, 409, { error: "该监测席没有有效的设备单播 IP" });
+            return json(res, 409, { error: "该监测席没有有效的设备单播 IP，请在席位配置中指定或等待广播" });
           }
+          const autoSubnetHost = getLocalIPv4Address(address);
           const defaultReportHost = process.env.SITUATION_REPORT_HOST ||
             process.env.INTELLIGENT_COOPERATIVE_SERVER_BIND_HOST ||
+            autoSubnetHost ||
             (mqttConfig.deviceStatusRelayIp && isIPv4(mqttConfig.deviceStatusRelayIp) ? mqttConfig.deviceStatusRelayIp : null) ||
-            getLocalIPv4Address(address);
+            "127.0.0.1";
           const reportHost = (typeof body.reportHost === "string" && isIPv4(body.reportHost))
             ? body.reportHost : defaultReportHost;
           const reportPort = Number.isInteger(body.reportPort) && body.reportPort >= 1 && body.reportPort <= 65535

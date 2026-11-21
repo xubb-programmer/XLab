@@ -265,7 +265,16 @@ export function openRegistry(databasePath, onlineMs) {
       return getObservation(key)?.deviceId ?? select.get(key)?.device_id;
     },
     deviceIpForKey(key) {
-      return getObservation(key)?.deviceIp;
+      const live = getObservation(key)?.deviceIp;
+      if (live) return live;
+      const settings = select.get(key);
+      if (settings?.last_report) {
+        try {
+          const rep = JSON.parse(settings.last_report);
+          if (rep?.deviceIp) return rep.deviceIp;
+        } catch (_) {}
+      }
+      return null;
     },
     importSnapshots(reports) {
       const insert = database.prepare("INSERT OR IGNORE INTO device_snapshots (identity, report) VALUES (?, ?)");

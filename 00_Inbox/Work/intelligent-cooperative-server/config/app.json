@@ -2,13 +2,13 @@
   "server": {
     "host": "0.0.0.0",
     "port": 4177,
-    "deviceSimSourceIps": "172.29.48.1"
+    "deviceSimSourceIps": ""
   },
   "targets": {
     "brokerUrl": "mqtt://127.0.0.1:1883",
     "topic": "edge/v1/devices/target-input-device/data",
     "deviceStatusTopic": "edge/v1/devices/device-status-device/data",
-    "deviceStatusRelayIp": "172.29.48.1",
+    "deviceStatusRelayIp": "",
     "username": "",
     "password": ""
   },

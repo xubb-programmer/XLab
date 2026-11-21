@@ -560,6 +560,17 @@ export class TargetReportModal {
 
   async handleSubmit() {
     if (this.isSubmitting || this.btnConfirm.disabled) return;
+
+    // 前置防呆校验：检查所分配火力点中是否存在仍为本地回环 127.0.0.1 且无挂载设备的情况
+    const assignedIds = new Set(this.assignments.values());
+    const allFirepower = this.targetService?.getFirepowerPoints?.() || [];
+    const loopbackFp = allFirepower.filter(p => assignedIds.has(p.id) && (!p.ip || p.ip === "127.0.0.1" || p.ip === "localhost") && !p.mountedDeviceId);
+    if (loopbackFp.length > 0) {
+      const names = loopbackFp.map(p => p.name || p.id).join("、");
+      const confirmed = window.confirm(`提示：火力点【${names}】的通信 IP 仍为本地回环 (127.0.0.1)，现场实操可能无法将打击指令发往外部终端。\n\n是否仍要继续发送本次下派？`);
+      if (!confirmed) return;
+    }
+
     const isRetry = Boolean(this.batch);
     if (isRetry) this.retryAttemptId ??= newReportId();
     else this.draft ??= {

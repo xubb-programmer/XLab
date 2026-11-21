@@ -38,6 +38,8 @@ export class StationConfigModal {
     this.inputRange = document.getElementById("cfg-fp-range");
     this.inputMaxTargets = document.getElementById("cfg-fp-max-targets");
     this.inputIp = document.getElementById("cfg-fp-ip");
+    this.inputIpLabel = document.getElementById("cfg-fp-ip-label");
+    this.inputIpWarning = document.getElementById("cfg-fp-ip-warning");
     this.inputPort = document.getElementById("cfg-fp-port");
     this.inputDeviceId = document.getElementById("cfg-fp-device");
     this.inputBattalion = document.getElementById("cfg-fp-battalion");
@@ -87,6 +89,14 @@ export class StationConfigModal {
     });
     this.btnCancelPicking?.addEventListener("click", () => {
       if (activeEditors.get(this.modal) === this) this.cancelPickingPoint();
+    });
+
+    this.inputIp?.addEventListener("input", () => {
+      if (this.currentRole !== "recon") {
+        const val = this.inputIp.value.trim();
+        const isLoopback = !val || val === "127.0.0.1" || val === "localhost";
+        if (this.inputIpWarning) this.inputIpWarning.style.display = isLoopback ? "block" : "none";
+      }
     });
 
     this.mountEdit?.addEventListener("click", () => {
@@ -225,7 +235,20 @@ export class StationConfigModal {
         this.inputMaxTargets.value = this.currentPoint.maxTargets != null ? this.currentPoint.maxTargets : 1;
       }
       if (this.inputIp) {
-        this.inputIp.value = this.currentPoint.ip || this.currentPoint.host || "127.0.0.1";
+        if (isRecon) {
+          if (this.inputIpLabel) this.inputIpLabel.textContent = "设备通信 IP (单播，可选)";
+          this.inputIp.placeholder = "例如: 192.168.10.130 (留空时由组播自动捕获)";
+          this.inputIp.value = this.currentPoint.deviceIp || this.currentPoint.ip || "";
+          this.inputIp.required = false;
+          if (this.inputIpWarning) this.inputIpWarning.style.display = "none";
+        } else {
+          if (this.inputIpLabel) this.inputIpLabel.textContent = "通信 IP 地址";
+          this.inputIp.placeholder = "例如: 192.168.0.100";
+          this.inputIp.value = this.currentPoint.ip || this.currentPoint.host || "127.0.0.1";
+          this.inputIp.required = true;
+          const isLoopback = !this.inputIp.value || this.inputIp.value === "127.0.0.1" || this.inputIp.value === "localhost";
+          if (this.inputIpWarning) this.inputIpWarning.style.display = isLoopback ? "block" : "none";
+        }
       }
       if (this.inputPort) {
         this.inputPort.value = this.currentPoint.port || 5567;
@@ -461,7 +484,12 @@ export class StationConfigModal {
     try {
       const { longitude, latitude, altitude, strikeRange, maxTargets, ip, port } = updated;
       const coordinates = isRecon
-        ? (Number.isNaN(rawLon) && Number.isNaN(rawLat) && Number.isNaN(rawAlt) ? null : { longitude, latitude, altitude })
+        ? {
+            longitude: Number.isNaN(rawLon) ? (this.currentPoint?.longitude ?? null) : Number(rawLon.toFixed(6)),
+            latitude: Number.isNaN(rawLat) ? (this.currentPoint?.latitude ?? null) : Number(rawLat.toFixed(6)),
+            altitude: Number.isNaN(rawAlt) ? (this.currentPoint?.altitude ?? 0) : Number(rawAlt.toFixed(1)),
+            ...(ip ? { ip } : {})
+          }
         : { longitude, latitude, altitude, strikeRange, maxTargets, ip, port, battalion, company, mountedDeviceId };
       await this.saveSimulationCoordinates(this.currentPoint, coordinates, updated.name);
     } catch (error) {
