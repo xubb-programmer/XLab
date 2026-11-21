@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#060b11">
   <title data-term="app.title">单兵作战辅助平台</title>
   <link rel="stylesheet" href="/cesium/Widgets/widgets.css">
-  <link rel="stylesheet" href="/styles/main.css?v=20261121_v2">
-  <link rel="stylesheet" href="/styles/layout.css?v=20261121_v2">
-  <link rel="stylesheet" href="/styles/components.css?v=20261121_v2">
+  <link rel="stylesheet" href="/styles/main.css?v=20261121_v4">
+  <link rel="stylesheet" href="/styles/layout.css?v=20261121_v4">
+  <link rel="stylesheet" href="/styles/components.css?v=20261121_v4">
   <script>window.CESIUM_BASE_URL = "/cesium/";</script>
   <script>
     // Keep the offline board compatible with its Chromium 91 runtime.
@@ -79,7 +79,7 @@
     }
   </script>
   <script defer src="/cesium/Cesium.js"></script>
-  <script type="module" src="/js/main.js?v=20261121_v2"></script>
+  <script type="module" src="/js/main.js?v=20261121_v4"></script>
 </head>
 <body>
   <div class="app-container">
@@ -120,10 +120,8 @@
         </button>
         <a class="topbar-nav-tab" href="https://127.0.0.1:18007/?v=0903a" target="_blank" rel="noopener">
           <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect x="1" y="3" width="15" height="13"/>
-            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
-            <circle cx="5.5" cy="18.5" r="2.5"/>
-            <circle cx="18.5" cy="18.5" r="2.5"/>
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
           </svg>
           <span data-term="app.reconAssistant">侦察车智能助手</span>
         </a>
@@ -364,21 +362,14 @@
             </button>
             <button id="filter-btn-recon" class="btn btn-sm" type="button">
               <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 3"/>
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
               </svg>
               <span data-term="targets.reconTarget">监测目标</span>
             </button>
             <button id="filter-btn-burst" class="btn btn-sm" type="button">
               <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="3"/>
-                <line x1="12" y1="2" x2="12" y2="6"/>
-                <line x1="12" y1="18" x2="12" y2="22"/>
-                <line x1="2" y1="12" x2="6" y2="12"/>
-                <line x1="18" y1="12" x2="22" y2="12"/>
-                <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
-                <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
-                <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
-                <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+                <path d="M12 2c0 5.5-4.5 10-10 10 5.5 0 10 4.5 10 10 0-5.5 4.5-10 10-10-5.5 0-10-4.5-10-10z"/>
               </svg>
               <span data-term="targets.burstTarget">告警事件</span>
             </button>
