@@ -42,6 +42,18 @@ export async function initTerms() {
     }
   } catch (_) {}
 
+  // 确保初始派生词与 roles.recon / roles.firepower 保持同步
+  if (flatTerms.has("roles.recon")) {
+    const reconName = flatTerms.get("roles.recon");
+    flatTerms.set("settings.reconHubTitle", `${reconName}台账`);
+    flatTerms.set("reconHubTitle", `${reconName}台账`);
+  }
+  if (flatTerms.has("roles.firepower")) {
+    const firepowerName = flatTerms.get("roles.firepower");
+    flatTerms.set("settings.firepowerHubTitle", `${firepowerName}台账`);
+    flatTerms.set("firepowerHubTitle", `${firepowerName}台账`);
+  }
+
   return termsData;
 }
 
@@ -51,6 +63,15 @@ export async function setCustomTerm(key, val) {
   flatTerms.set(key, trimmed);
   const shortKey = key.split(".").pop();
   if (shortKey) flatTerms.set(shortKey, trimmed);
+
+  // 同步更新派生的台账标题
+  if (key === "roles.recon") {
+    flatTerms.set("settings.reconHubTitle", `${trimmed}台账`);
+    flatTerms.set("reconHubTitle", `${trimmed}台账`);
+  } else if (key === "roles.firepower") {
+    flatTerms.set("settings.firepowerHubTitle", `${trimmed}台账`);
+    flatTerms.set("firepowerHubTitle", `${trimmed}台账`);
+  }
 
   // 1. 客户端本地持久化存储
   try {
@@ -79,6 +100,12 @@ export async function setCustomTerm(key, val) {
 }
 
 export function t(key, fallback = "", params = null) {
+  if (key === "settings.reconHubTitle" || key === "reconHubTitle") {
+    return `${t("roles.recon", "侦察席")}台账`;
+  }
+  if (key === "settings.firepowerHubTitle" || key === "firepowerHubTitle") {
+    return `${t("roles.firepower", "火力点")}台账`;
+  }
   let val = flatTerms.get(key) ?? fallback ?? key;
   if (params && typeof params === "object") {
     for (const [pKey, pVal] of Object.entries(params)) {

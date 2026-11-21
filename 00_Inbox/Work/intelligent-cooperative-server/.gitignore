@@ -1,5 +1,7 @@
 node_modules/
 /dist/
+/data/offline-maps/
+*.sqlite*
 .DS_Store
 Thumbs.db
 *.log

@@ -2,16 +2,12 @@ import { DatabaseSync } from "node:sqlite";
 import { randomUUID } from "node:crypto";
 import { isIPv4 } from "node:net";
 import { dataError, fieldText, readPosition } from "./operational-store.mjs";
+import { getCooperativeDatabase } from "./db.mjs";
 
 export function openPreviewRegistry(path) {
-  const db = new DatabaseSync(path);
-  db.exec(`
-    PRAGMA busy_timeout = 3000;
-    CREATE TABLE IF NOT EXISTS recon_seats (
-      key TEXT PRIMARY KEY, device_id TEXT NOT NULL UNIQUE, name TEXT NOT NULL,
-      ip TEXT NOT NULL, coordinates TEXT, deleted INTEGER NOT NULL DEFAULT 0
-    );
-  `);
+  const db = path && typeof path === "object" && typeof path.prepare === "function"
+    ? path
+    : getCooperativeDatabase(path);
   const all = db.prepare("SELECT * FROM recon_seats WHERE deleted = 0 ORDER BY name, key");
   const byKey = db.prepare("SELECT * FROM recon_seats WHERE key = ?");
   const byId = db.prepare("SELECT * FROM recon_seats WHERE device_id = ?");
@@ -51,6 +47,8 @@ export function openPreviewRegistry(path) {
     removeManaged(key) {
       if (!remove.run(key).changes) throw dataError(404, "监测席不存在");
     },
-    close: () => db.close()
+    close: () => {
+      if (typeof path === "string" && path === ":memory:") db.close();
+    }
   };
 }

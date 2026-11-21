@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { isIP } from "node:net";
 import { hasGeographicPosition } from "../src/js/core/coordinates.js";
 import { appendTrajectoryPoint } from "../src/js/core/target-trajectory.js";
+import { getCooperativeDatabase } from "./db.mjs";
 
 export function dataError(status, message) {
   return Object.assign(new Error(message), { status });
@@ -55,36 +56,26 @@ function targetIdentity(type, targetNumber) {
 }
 
 export function openOperationalStore(path) {
-  if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
-  const db = new DatabaseSync(path);
-  db.exec(`
-    PRAGMA journal_mode = WAL;
-    PRAGMA busy_timeout = 3000;
-    CREATE TABLE IF NOT EXISTS firepower_points (
-      id TEXT PRIMARY KEY, sort_order INTEGER NOT NULL, data TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS targets (
-      id TEXT PRIMARY KEY, target_type TEXT NOT NULL, target_number INTEGER NOT NULL,
-      name TEXT NOT NULL, longitude REAL NOT NULL, latitude REAL NOT NULL, altitude REAL NOT NULL,
-      trajectory TEXT NOT NULL, source TEXT NOT NULL, updated_at INTEGER NOT NULL,
-      deleted INTEGER NOT NULL DEFAULT 0, UNIQUE (target_type, target_number)
-    );
-    CREATE INDEX IF NOT EXISTS targets_visible ON targets(deleted, updated_at DESC);
-    CREATE TABLE IF NOT EXISTS live_targets (
-      id TEXT PRIMARY KEY, target_type TEXT NOT NULL, target_number INTEGER NOT NULL,
-      name TEXT NOT NULL, longitude REAL NOT NULL, latitude REAL NOT NULL, altitude REAL NOT NULL,
-      trajectory TEXT NOT NULL, updated_at INTEGER NOT NULL, ordinal INTEGER NOT NULL, generation TEXT NOT NULL DEFAULT ''
-    );
-    CREATE INDEX IF NOT EXISTS live_targets_recent ON live_targets(ordinal DESC);
-  `);
-  if (!db.prepare("PRAGMA table_info(live_targets)").all().some(column => column.name === "generation")) {
-    db.exec("ALTER TABLE live_targets ADD COLUMN generation TEXT NOT NULL DEFAULT ''");
-  }
+  const db = path && typeof path === "object" && typeof path.prepare === "function"
+    ? path
+    : getCooperativeDatabase(path);
 
   const pointRows = db.prepare("SELECT data FROM firepower_points ORDER BY sort_order, id");
   const pointRow = db.prepare("SELECT data FROM firepower_points WHERE id = ?");
-  const insertPoint = db.prepare("INSERT INTO firepower_points VALUES (?, ?, ?)");
-  const updatePoint = db.prepare("UPDATE firepower_points SET data = ? WHERE id = ?");
+  const insertPoint = db.prepare(`
+    INSERT INTO firepower_points (
+      id, name, battalion, company, longitude, latitude, altitude,
+      strike_range, max_targets, ip, port, mounted_device_id, unmounted_ip,
+      sort_order, data, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const updatePoint = db.prepare(`
+    UPDATE firepower_points SET
+      name = ?, battalion = ?, company = ?, longitude = ?, latitude = ?, altitude = ?,
+      strike_range = ?, max_targets = ?, ip = ?, port = ?, mounted_device_id = ?, unmounted_ip = ?,
+      data = ?, updated_at = ?
+    WHERE id = ?
+  `);
   const nextOrder = db.prepare("SELECT COALESCE(MAX(sort_order), -1) + 1 AS value FROM firepower_points");
   const deletePoint = db.prepare("DELETE FROM firepower_points WHERE id = ?");
   const targetRow = db.prepare("SELECT * FROM targets WHERE id = ?");
@@ -157,8 +148,21 @@ export function openOperationalStore(path) {
       }
       const point = readPoint(merged);
       ensureUniqueMounts([...points().filter(item => item.id !== key), point]);
-      if (current) updatePoint.run(JSON.stringify(point), key);
-      else insertPoint.run(key, nextOrder.get().value, JSON.stringify(point));
+      const mountedId = point.mountedDeviceId ? point.mountedDeviceId : null;
+      const now = Date.now();
+      if (current) {
+        updatePoint.run(
+          point.name, point.battalion, point.company, point.longitude, point.latitude, point.altitude,
+          point.strikeRange, point.maxTargets, point.ip, point.port, mountedId, point.unmountedIp ?? null,
+          JSON.stringify(point), now, key
+        );
+      } else {
+        insertPoint.run(
+          key, point.name, point.battalion, point.company, point.longitude, point.latitude, point.altitude,
+          point.strikeRange, point.maxTargets, point.ip, point.port, mountedId, point.unmountedIp ?? null,
+          nextOrder.get().value, JSON.stringify(point), now
+        );
+      }
       return point;
     });
   }
@@ -245,6 +249,8 @@ export function openOperationalStore(path) {
     removeTarget(id) {
       if (!deleteTarget.run(id).changes) throw dataError(404, "目标不存在");
     },
-    close: () => db.close()
+    close: () => {
+      if (typeof path === "string" && path === ":memory:") db.close();
+    }
   };
 }

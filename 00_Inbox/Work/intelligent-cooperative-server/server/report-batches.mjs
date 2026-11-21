@@ -3,34 +3,15 @@ import { randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { ReportError, reportIdPattern, validateReportAssignments } from "./reporting.mjs";
+import { getCooperativeDatabase } from "./db.mjs";
 
 const retryableStates = new Set(["not_sent", "rejected", "not_processed"]);
 
 export function openReportBatches(path, sendEdgeAction) {
-  if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
-  const db = new DatabaseSync(path);
+  const db = path && typeof path === "object" && typeof path.prepare === "function"
+    ? path
+    : getCooperativeDatabase(path);
   const activeDevices = new Set();
-  db.exec(`
-    PRAGMA foreign_keys = ON;
-    PRAGMA journal_mode = WAL;
-    PRAGMA synchronous = FULL;
-    PRAGMA busy_timeout = 3000;
-    CREATE TABLE IF NOT EXISTS report_batches (
-      id TEXT PRIMARY KEY, request_key TEXT NOT NULL, updated_at INTEGER NOT NULL,
-      running INTEGER NOT NULL DEFAULT 0
-    );
-    CREATE TABLE IF NOT EXISTS report_items (
-      batch_id TEXT NOT NULL REFERENCES report_batches(id),
-      item_id INTEGER NOT NULL, device_id TEXT NOT NULL, details TEXT NOT NULL,
-      state TEXT NOT NULL, request_id TEXT, error TEXT, timed_out INTEGER NOT NULL DEFAULT 0,
-      PRIMARY KEY (batch_id, item_id)
-    );
-    CREATE INDEX IF NOT EXISTS report_items_device_state ON report_items(device_id, state);
-    CREATE TABLE IF NOT EXISTS report_retries (
-      batch_id TEXT NOT NULL REFERENCES report_batches(id), attempt_id TEXT NOT NULL,
-      PRIMARY KEY (batch_id, attempt_id)
-    );
-  `);
 
   function transaction(work) {
     db.exec("BEGIN IMMEDIATE");
@@ -56,7 +37,8 @@ export function openReportBatches(path, sendEdgeAction) {
   const hasUnknown = db.prepare("SELECT 1 FROM report_items WHERE device_id = ? AND state = 'unknown' LIMIT 1");
   const insertBatch = db.prepare("INSERT INTO report_batches(id, request_key, updated_at, running) VALUES (?, ?, ?, 1)");
   const insertItem = db.prepare(`
-    INSERT INTO report_items(batch_id, item_id, device_id, details, state) VALUES (?, ?, ?, ?, 'pending')
+    INSERT INTO report_items(batch_id, item_id, device_id, point_id, target_id, details, state)
+    VALUES (?, ?, ?, ?, ?, ?, 'pending')
   `);
   const updateBatch = db.prepare("UPDATE report_batches SET running = ?, updated_at = ? WHERE id = ?");
   const updateItem = db.prepare(`
@@ -195,7 +177,14 @@ export function openReportBatches(path, sendEdgeAction) {
         const found = snapshot(request.batchId, request.requestKey);
         if (found) return found;
         insertBatch.run(request.batchId, request.requestKey, Date.now());
-        prepared.forEach((item, index) => insertItem.run(request.batchId, index + 1, item.deviceId, JSON.stringify(item)));
+        prepared.forEach((item, index) => insertItem.run(
+          request.batchId,
+          index + 1,
+          item.deviceId,
+          item.firepowerId || null,
+          item.targetId || null,
+          JSON.stringify(item)
+        ));
         return null;
       });
       return existing || start(request.batchId, background);
@@ -235,6 +224,8 @@ export function openReportBatches(path, sendEdgeAction) {
         return snapshot(batchId);
       });
     },
-    close: () => db.close()
+    close: () => {
+      if (typeof path === "string" && path === ":memory:") db.close();
+    }
   };
 }

@@ -128,9 +128,21 @@ export class TargetPanel {
           </div>
           <div class="card-action-buttons">
             <button type="button" class="btn btn-sm btn-locate-target" title="三维视点对准该目标">
+              <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="3"/>
+                <line x1="12" y1="2" x2="12" y2="6"/>
+                <line x1="12" y1="18" x2="12" y2="22"/>
+                <line x1="2" y1="12" x2="6" y2="12"/>
+                <line x1="18" y1="12" x2="22" y2="12"/>
+              </svg>
               <span>定位</span>
             </button>
             <button type="button" class="btn btn-sm btn-report-single-target btn-primary-red" title="${t("action.sendTargetTitle", "发送该目标至作业单元接收终端")}">
+              <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
               <span>发送</span>
             </button>
           </div>

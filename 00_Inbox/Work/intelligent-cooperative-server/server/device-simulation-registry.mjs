@@ -2,6 +2,7 @@ import { isIPv4 } from "node:net";
 import { DatabaseSync } from "node:sqlite";
 import { hasGeographicPosition } from "../src/js/core/coordinates.js";
 import { appendTrajectoryPoint } from "../src/js/core/target-trajectory.js";
+import { getCooperativeDatabase } from "./db.mjs";
 
 const utf8 = new TextDecoder("utf-8", { fatal: true });
 const text = value => typeof value === "string" ? value.trim() : "";
@@ -108,36 +109,11 @@ function changeError(status, message) {
 }
 
 export function openRegistry(databasePath, onlineMs) {
-  const database = new DatabaseSync(databasePath);
+  const database = databasePath && typeof databasePath === "object" && typeof databasePath.prepare === "function"
+    ? databasePath
+    : getCooperativeDatabase(databasePath);
   const observations = new Map();
   const received = new Set();
-  database.exec(`
-    PRAGMA journal_mode = WAL;
-    PRAGMA busy_timeout = 3000;
-    CREATE TABLE IF NOT EXISTS simulation_devices (
-      key TEXT PRIMARY KEY,
-      device_id TEXT NOT NULL,
-      firepower INTEGER NOT NULL DEFAULT 0,
-      last_report TEXT NOT NULL,
-      coordinates TEXT,
-      custom_name TEXT
-    );
-    CREATE UNIQUE INDEX IF NOT EXISTS simulation_firepower_id
-      ON simulation_devices(device_id) WHERE firepower = 1;
-    CREATE TABLE IF NOT EXISTS device_snapshots (
-      identity TEXT PRIMARY KEY,
-      report TEXT NOT NULL,
-      deleted INTEGER NOT NULL DEFAULT 0
-    );
-  `);
-  const columns = new Set(database.prepare("PRAGMA table_info(simulation_devices)").all().map(column => column.name));
-  if (!columns.has("custom_name")) {
-    database.exec("ALTER TABLE simulation_devices ADD COLUMN custom_name TEXT");
-  }
-  const snapshotColumns = database.prepare("PRAGMA table_info(device_snapshots)").all();
-  if (!snapshotColumns.some(column => column.name === "deleted")) {
-    database.exec("ALTER TABLE device_snapshots ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0");
-  }
   const select = database.prepare("SELECT * FROM simulation_devices WHERE key = ?");
   const selected = database.prepare("SELECT * FROM simulation_devices WHERE firepower = 1");
   const selectById = database.prepare("SELECT key FROM simulation_devices WHERE device_id = ? AND firepower = 1");
@@ -169,6 +145,41 @@ export function openRegistry(databasePath, onlineMs) {
     INSERT INTO simulation_devices (key, device_id, last_report, custom_name) VALUES (?, ?, ?, ?)
     ON CONFLICT(key) DO UPDATE SET last_report = excluded.last_report, custom_name = excluded.custom_name
   `);
+
+  // 同步更新统一业务设备主表 (devices)
+  const upsertDevice = database.prepare(`
+    INSERT INTO devices (
+      device_id, identity, device_key, name, custom_name, serial, device_ip,
+      role, is_firepower, coordinates, video_channels, aircraft_position, aircraft_trajectory,
+      last_report, last_seen, snapshot_at, source, deleted
+    ) VALUES (
+      ?, ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, 0
+    )
+    ON CONFLICT(device_id) DO UPDATE SET
+      identity = excluded.identity,
+      device_key = excluded.device_key,
+      name = excluded.name,
+      custom_name = COALESCE(excluded.custom_name, devices.custom_name),
+      serial = excluded.serial,
+      device_ip = excluded.device_ip,
+      role = excluded.role,
+      is_firepower = excluded.is_firepower,
+      coordinates = COALESCE(excluded.coordinates, devices.coordinates),
+      video_channels = excluded.video_channels,
+      aircraft_position = excluded.aircraft_position,
+      aircraft_trajectory = excluded.aircraft_trajectory,
+      last_report = excluded.last_report,
+      last_seen = excluded.last_seen,
+      snapshot_at = excluded.snapshot_at,
+      source = excluded.source,
+      deleted = 0
+  `);
+  const updateDeviceRole = database.prepare("UPDATE devices SET is_firepower = ?, role = ? WHERE device_id = ?");
+  const updateDeviceCoords = database.prepare("UPDATE devices SET coordinates = ? WHERE device_id = ?");
+  const updateDeviceName = database.prepare("UPDATE devices SET custom_name = ? WHERE device_id = ?");
+  const markDeviceDeleted = database.prepare("UPDATE devices SET deleted = 1 WHERE device_id = ?");
 
   const online = (report, now) => received.has(report.identity) && now - report.lastSeen < onlineMs;
 
@@ -274,10 +285,35 @@ export function openRegistry(databasePath, onlineMs) {
     },
     ingest({ aircraftUpdate, ...report }) {
       report.aircraftTrack = updateAircraftTrack(observations.get(report.identity)?.aircraftTrack, aircraftUpdate);
-      storeSnapshot.run(report.identity, JSON.stringify(publicReport(report)));
+      const publicRep = publicReport(report);
+      storeSnapshot.run(report.identity, JSON.stringify(publicRep));
       deletedSnapshots.delete(report.identity);
       observations.set(report.identity, report);
       received.add(report.identity);
+
+      try {
+        const settings = select.get(report.key);
+        const isFp = settings ? settings.firepower : 0;
+        upsertDevice.run(
+          report.deviceId,
+          report.identity,
+          report.key,
+          report.name || report.deviceId,
+          settings?.custom_name || null,
+          report.serial || null,
+          report.deviceIp || null,
+          isFp ? 'firepower' : 'recon',
+          isFp,
+          settings?.coordinates || null,
+          JSON.stringify(publicRep.videoChannels || []),
+          report.aircraftTrack?.position ? JSON.stringify(report.aircraftTrack.position) : null,
+          report.aircraftTrack?.trajectory ? JSON.stringify(report.aircraftTrack.trajectory) : null,
+          JSON.stringify(publicRep),
+          report.lastSeen || Date.now(),
+          report.snapshotAt || null,
+          report.source || 'udp'
+        );
+      } catch (_) {}
     },
     removeSnapshot(key, mounts) {
       const settings = select.get(key);
@@ -292,6 +328,9 @@ export function openRegistry(databasePath, onlineMs) {
       deletedSnapshots.add(report.identity);
       observations.delete(report.identity);
       received.delete(report.identity);
+      try {
+        markDeviceDeleted.run(report.deviceId);
+      } catch (_) {}
     },
     expire() {
       // 不删除最后一份组播快照，以便离线设备仍可在卡片中显示为离线。
@@ -313,8 +352,14 @@ export function openRegistry(databasePath, onlineMs) {
         const assigned = selectById.get(latest.deviceId);
         if (assigned && assigned.key !== key) throw changeError(409, "该 ID 已绑定另一台设备，请先移回原设备");
         setRole.run(key, latest.deviceId, 1, JSON.stringify(publicReport(latest)));
+        try {
+          updateDeviceRole.run(1, "firepower", latest.deviceId);
+        } catch (_) {}
       } else if (role === "uav" && settings?.firepower) {
         setRole.run(key, settings.device_id, 0, latest ? JSON.stringify(publicReport(latest)) : settings.last_report);
+        try {
+          updateDeviceRole.run(0, "recon", settings.device_id);
+        } catch (_) {}
       } else {
         throw changeError(400, "请选择有效的设备分类");
       }
@@ -345,11 +390,21 @@ export function openRegistry(databasePath, onlineMs) {
         };
       }
       setCoordinates.run(key, report.deviceId, JSON.stringify(publicReport(report)), coordinates === null ? null : JSON.stringify(coordinates));
+      if (coordinates !== null) {
+        try {
+          updateDeviceCoords.run(JSON.stringify(coordinates), report.deviceId);
+        } catch (_) {}
+      }
       if (customName !== undefined) {
         setName.run(key, report.deviceId, JSON.stringify(publicReport(report)), normalizedName || null);
+        try {
+          updateDeviceName.run(normalizedName || null, report.deviceId);
+        } catch (_) {}
       }
       return snapshot();
     },
-    close: () => database.close()
+    close: () => {
+      if (typeof databasePath === "string" && databasePath === ":memory:") database.close();
+    }
   };
 }

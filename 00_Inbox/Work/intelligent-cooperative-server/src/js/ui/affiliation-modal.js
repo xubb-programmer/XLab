@@ -137,7 +137,7 @@ export class AffiliationModal {
     });
 
     this.btnResetDefault?.addEventListener("click", async () => {
-      if (confirm(t("org.scaleResetConfirm", "确定重置为默认标准战术建制（2个营，各2个连）吗？"))) {
+      if (confirm(t("org.scaleResetConfirm", "确定重置为默认标准建制（2个营，各2个连）吗？"))) {
         const dm = this.getDeviceManager();
         if (dm?.resetToDefaultAffiliation) {
           await dm.resetToDefaultAffiliation();

@@ -3,6 +3,7 @@
   flex-direction: column;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   position: relative;
 }
@@ -156,39 +157,321 @@
   color: var(--red-threat);
 }
 
+/* ==========================================================================
+   响应式断点体系（支持 2K/1080P 电脑大屏、笔记本、平板电脑横竖屏与触控设备）
+   ========================================================================== */
+
+/* 1. 笔记本与中屏电脑 (1025px ~ 1360px) */
 @media (max-width: 1360px) {
   .topbar {
-    display: grid;
-    gap: 8px;
-    height: auto;
-    padding-block: 8px;
+    padding: 0 12px;
+    gap: 10px;
   }
 
-  .topbar-stats {
-    width: 100%;
+  .brand-title p {
+    display: none;
   }
 
   .topbar-nav {
-    flex-wrap: wrap;
-    margin: 0;
+    gap: 5px;
+    margin: 0 8px;
+  }
+
+  .topbar-nav-tab {
+    padding: 0 9px;
+    font-size: 11.5px;
+    height: 30px;
+  }
+
+  .sidebar-left {
+    width: min(290px, 30%);
+  }
+
+  .sidebar-right {
+    width: min(300px, 30%);
   }
 }
 
-@media (max-width: 600px) {
-  .topbar-stats {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    row-gap: 6px;
+/* 2. 平板电脑横屏 (1025px ~ 1200px) */
+@media (min-width: 1025px) and (max-width: 1200px) {
+  .sidebar-left {
+    width: 250px;
   }
 
-  .stat-item:nth-child(3n + 1) {
-    border-inline-start: 0;
+  .sidebar-right {
+    width: 260px;
+  }
+
+  .sidebar-left .panel-header,
+  .sidebar-right .panel-header {
+    padding: 8px 10px;
+  }
+
+  .topbar-stats {
+    width: auto;
+  }
+
+  .stat-item {
+    padding-inline: 4px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+  }
+
+  .stat-value {
+    font-size: 11px;
+  }
+}
+
+/* 3. 平板电脑竖屏及小屏幕 (≤ 1024px) —— 全屏地图优先与抽屉式（Drawer Overlay） */
+@media (max-width: 1024px) {
+  .topbar {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    gap: 6px 12px;
+    height: auto;
+    padding: 6px 12px;
+  }
+
+  .brand-section {
+    grid-column: 1;
+    grid-row: 1;
+    gap: 8px;
+  }
+
+  .brand-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .brand-title h1 {
+    font-size: 14px;
+  }
+
+  .brand-title p {
+    display: none;
+  }
+
+  .topbar-stats {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px 10px;
+    width: 100%;
+  }
+
+  .stat-item {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    border: none !important;
+    padding: 0;
+  }
+
+  .stat-item + .stat-item::before {
+    content: "·";
+    color: var(--border-medium);
+    margin-right: 2px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
+  .stat-value {
+    font-size: 11px;
+  }
+
+  .topbar-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 6px;
+    padding-bottom: 2px;
+  }
+
+  .topbar-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .topbar-nav-tab {
+    flex-shrink: 0;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  /* 地图视口在平板端 100% 铺满，拒绝挤压 */
+  .map-viewport {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* 侧栏转为悬浮抽屉遮罩 (Floating Drawer Overlay) */
+  .sidebar-left {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(340px, 86vw) !important;
+    height: 100% !important;
+    z-index: 25;
+    background: rgba(8, 14, 22, 0.96) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 8px 0 36px rgba(0, 0, 0, 0.85);
+    border-right: 1px solid rgba(255, 71, 87, 0.35) !important;
+    animation: drawerSlideLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .sidebar-right {
+    position: absolute !important;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(340px, 86vw) !important;
+    height: 100% !important;
+    z-index: 25;
+    background: rgba(8, 14, 22, 0.96) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: -8px 0 36px rgba(0, 0, 0, 0.85);
+    border-left: 1px solid rgba(59, 130, 246, 0.35) !important;
+    animation: drawerSlideRight 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .sidebar-left[hidden],
+  .sidebar-right[hidden] {
+    display: none !important;
+  }
+
+  /* 侧边栏触控把手 (Sidebar Toggles) */
+  .sidebar-toggle {
+    width: 28px !important;
+    height: 54px !important;
+    z-index: 30 !important;
+    border-radius: 4px !important;
+  }
+
+  .sidebar-toggle-left {
+    left: 0 !important;
+    transition: left 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* 当抽屉展开时，按钮吸附在抽屉右外边沿，方便随时轻触收起 */
+  .sidebar-toggle-left[aria-expanded="true"] {
+    left: min(340px, 86vw) !important;
+    border-radius: 0 6px 6px 0 !important;
+    box-shadow: 4px 0 16px rgba(255, 71, 87, 0.45);
+  }
+
+  .sidebar-toggle-right {
+    right: 0 !important;
+    transition: right 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .sidebar-toggle-right[aria-expanded="true"] {
+    right: min(340px, 86vw) !important;
+    border-radius: 6px 0 0 6px !important;
+    box-shadow: -4px 0 16px rgba(59, 130, 246, 0.45);
+  }
+
+  /* 地图浮动工具条紧凑化 */
+  .map-overlay-tools {
+    top: 10px;
+    left: 10px;
+    max-width: calc(100% - 20px);
+    gap: 6px;
+  }
+
+  .map-overlay-tools .btn-sm {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  /* 目标与作业点点选 HUD 悬浮栏自适应 */
+  .map-picking-hud,
+  .map-target-selection-hud {
+    width: calc(100% - 24px) !important;
+    left: 12px !important;
+    transform: none !important;
+  }
+}
+
+@keyframes drawerSlideLeft {
+  from { transform: translateX(-100%); opacity: 0.7; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes drawerSlideRight {
+  from { transform: translateX(100%); opacity: 0.7; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* 4. 触屏交互优化（针对平板电脑手指触控） */
+@media (pointer: coarse) {
+  .btn {
+    min-height: 36px;
+    padding: 6px 12px;
+  }
+
+  .btn-sm {
+    min-height: 32px;
+    padding: 5px 10px;
+  }
+
+  .topbar-nav-tab {
+    min-height: 36px;
+    padding: 0 10px;
+  }
+
+  .sidebar-toggle {
+    width: 32px !important;
+    height: 58px !important;
+  }
+
+  .sidebar-toggle svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .text-input,
+  .select-input {
+    min-height: 36px;
+    font-size: 13px;
+  }
+
+  .card-essential-info-row .btn-sm {
+    min-height: 30px;
+    padding: 4px 8px;
+  }
+
+  .selection-checkbox-label input[type="checkbox"],
+  .target-card-checkbox {
+    width: 18px;
+    height: 18px;
   }
 }
 
 /* 主导航页面 */
 .page-view {
-  width: 100vw;
-  height: calc(100vh - 52px);
+  width: 100%;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -203,6 +486,7 @@
   flex: 1;
   min-height: 0;
   position: relative;
+  overflow: hidden;
 }
 
 /* 全屏独立工作台页面 */
@@ -213,8 +497,7 @@
   min-height: 0;
   background: var(--bg-dark-1);
   position: relative;
-  width: 100vw;
-  height: calc(100vh - 52px);
+  width: 100%;
   overflow: hidden;
   z-index: 5;
 }
@@ -235,7 +518,7 @@
 
 /* 左侧栏：平台编队 */
 .sidebar-left {
-  width: min(350px, 45%);
+  width: min(350px, 32%);
   background: var(--bg-dark-1);
   border-right: 1px solid var(--border-subtle);
   display: grid;
@@ -335,7 +618,7 @@
 
 /* 右侧栏：策略、目标列表、参数监视器 */
 .sidebar-right {
-  width: min(350px, 40%);
+  width: min(340px, 30%);
   background: var(--bg-dark-1);
   border-left: 1px solid var(--border-subtle);
   display: flex;

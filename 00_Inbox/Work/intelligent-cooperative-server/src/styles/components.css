@@ -26,6 +26,62 @@
   transform: translateY(1px);
 }
 
+/* 矢量线条图标规范 (对齐地图引导线/模式切换开关标准) */
+.btn-icon-svg {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+  stroke: currentColor;
+  pointer-events: none;
+  transition: transform 0.15s ease, stroke 0.15s ease;
+}
+
+.btn:hover .btn-icon-svg {
+  stroke: currentColor;
+}
+
+.topbar-nav-tab .btn-icon-svg {
+  width: 15px;
+  height: 15px;
+  margin-right: 3px;
+  stroke: currentColor;
+}
+
+.topbar-nav-tab.active .btn-icon-svg {
+  filter: drop-shadow(0 0 6px var(--cyan-glow, #00f0ff));
+  stroke: var(--cyan-glow, #00f0ff);
+}
+
+.btn-tactical-tool .btn-icon-svg {
+  width: 13px;
+  height: 13px;
+}
+
+.btn-heading-rename svg {
+  width: 11px;
+  height: 11px;
+  display: block;
+  stroke: currentColor;
+  margin: auto;
+}
+
+.btn-xs .btn-icon-svg {
+  width: 12px;
+  height: 12px;
+}
+
+.btn-sm .btn-icon-svg {
+  width: 13px;
+  height: 13px;
+}
+
+.btn-primary .btn-icon-svg,
+.btn-primary-red .btn-icon-svg {
+  stroke: currentColor;
+}
+
 .btn-primary {
   background: rgba(0, 240, 255, 0.15);
   border-color: var(--cyan-glow);
@@ -2331,8 +2387,14 @@ button.artillery-card:hover {
   line-height: 1;
 }
 
-.panel-header:hover .btn-heading-rename {
+.panel-header:hover .btn-heading-rename,
+.data-hub-item:hover .btn-heading-rename {
   opacity: 0.9;
+}
+
+.btn-hub-rename {
+  margin-left: 2px;
+  opacity: 0.35;
 }
 
 .btn-heading-rename:hover {
@@ -4672,17 +4734,25 @@ button.artillery-card:hover {
   min-height: 375px;
 }
 
+#page-settings .affiliation-header-meta {
+  display: none !important;
+}
+
+.settings-data-card .toolbar-preset-group {
+  display: none !important;
+}
+
 .settings-data-grid {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .data-hub-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 12px;
+  padding: 10px 14px;
   background: var(--bg-dark-3);
   border: 1px solid var(--border-subtle);
   border-left: 3px solid var(--border-medium);
@@ -4704,8 +4774,8 @@ button.artillery-card:hover {
 .data-hub-item-title-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 2px;
+  gap: 10px;
+  margin-bottom: 0;
 }
 
 .data-hub-item-title {
@@ -4725,13 +4795,7 @@ button.artillery-card:hover {
 }
 
 .data-hub-item-desc {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: none !important;
 }
 
 .btn-data-hub-action {
@@ -4743,15 +4807,19 @@ button.artillery-card:hover {
 
 .settings-card-header {
   border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: 8px;
-  margin-bottom: 12px;
+  padding-bottom: 6px;
+  margin-bottom: 10px;
 }
 
 .settings-card-title-group {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 4px;
+  margin-bottom: 0;
+}
+
+.settings-card-title-group .badge-meta-id {
+  display: none !important;
 }
 
 .settings-card-title {
@@ -4761,10 +4829,7 @@ button.artillery-card:hover {
 }
 
 .settings-card-desc {
-  margin: 0;
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  line-height: 1.4;
+  display: none !important;
 }
 
 .settings-card-body {
@@ -5310,4 +5375,121 @@ button.artillery-card:hover {
   background: var(--platform-red, #ff4757);
   color: #000000;
   box-shadow: 0 0 16px rgba(255, 71, 87, 0.6);
+}
+
+/* ==========================================================================
+   平板电脑与移动端弹窗/表格/设置表单自适应适配
+   ========================================================================== */
+@media (max-width: 1024px) {
+  /* 设置页面与数据管理页面卡片自适应 */
+  .settings-page-body {
+    padding: 12px !important;
+    gap: 12px !important;
+    overflow-y: auto !important;
+  }
+
+  .settings-card {
+    margin-bottom: 12px !important;
+  }
+
+  .settings-coords-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .settings-action-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .toolbar-left-actions {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .toolbar-preset-group {
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+  }
+
+  .settings-data-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .data-hub-item {
+    padding: 10px 12px !important;
+  }
+
+  .management-toolbar {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .management-toolbar .text-input {
+    flex: 1 1 180px !important;
+  }
+
+  .management-table-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* 抽屉类在平板上自适应宽度 */
+  .affiliation-edit-drawer {
+    width: min(420px, 92vw) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-dialog {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    max-height: 90vh !important;
+  }
+
+  .modal-dialog.firepower-modal {
+    width: 95vw !important;
+  }
+
+  .modal-body {
+    padding: 12px !important;
+    max-height: calc(88vh - 110px) !important;
+    overflow-y: auto !important;
+  }
+
+  .modal-device-meta-bar {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+  }
+
+  .form-row-grid-3,
+  .form-row-grid-2 {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .stepper-input-row {
+    width: 100% !important;
+  }
+
+  .modal-footer {
+    flex-direction: column !important;
+    gap: 10px !important;
+    align-items: stretch !important;
+  }
+
+  .modal-footer-left,
+  .modal-footer-right {
+    display: flex !important;
+    width: 100% !important;
+    justify-content: flex-end !important;
+  }
+
+  .dir-tree-window {
+    width: 96vw !important;
+    max-width: 96vw !important;
+    height: 85vh !important;
+  }
 }

@@ -5,6 +5,7 @@ import { stat, readFile, writeFile, rename, unlink } from "node:fs/promises";
 import { createHash, randomUUID } from "node:crypto";
 import { extname, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { getCooperativeDatabase, closeAllDatabases } from "./db.mjs";
 import { loadVideoConfig, serveVideo } from "./video.mjs";
 import { openDeviceSimulation } from "./device-simulation.mjs";
 import { loadTargetsConfig, openTargetFeed } from "./targets.mjs";
@@ -51,10 +52,11 @@ const port = Number(process.env.PORT ?? appServer.port ?? 4177);
 const host = process.env.INTELLIGENT_COOPERATIVE_SERVER_BIND_HOST || appServer.host || "127.0.0.1";
 const videoConfig = await loadVideoConfig(appConfig.video || {});
 let deviceSimulation;
-const managementDb = resolveConfig("INTELLIGENT_COOPERATIVE_SERVER_MANAGEMENT_DB", "dist/data-preview/records.sqlite");
-const operations = openOperationalStore(managementDb);
-const managementRegistry = openPreviewRegistry(managementDb);
-const offlineMapDir = resolve(root, "dist/offline-maps/combined-theaters");
+const databasePath = resolveConfig("INTELLIGENT_COOPERATIVE_SERVER_DB", "data/cooperative.sqlite");
+const db = getCooperativeDatabase(databasePath);
+const operations = openOperationalStore(db);
+const managementRegistry = openPreviewRegistry(db);
+const offlineMapDir = resolve(root, "data/offline-maps/combined-theaters");
 
 // 术语与界面词条字典路径，唯一指向 config/terms.json
 function resolveTermsConfig() {
@@ -70,16 +72,13 @@ let offlineMapDb;
 let offlineMapTileQuery;
 const targetsConfig = await loadTargetsConfig(appConfig.targets || {});
 const targetFeed = await openTargetFeed(targetsConfig, operations);
-const reportBatches = openReportBatches(
-  resolveConfig("INTELLIGENT_COOPERATIVE_SERVER_REPORTING_DB", "dist/reporting/reporting.sqlite"),
-  targetFeed.sendEdgeAction
-);
+const reportBatches = openReportBatches(db, targetFeed.sendEdgeAction);
 
 function getDeviceSimulation() {
   deviceSimulation ??= openDeviceSimulation(videoConfig.rtspTimeoutOption, targetsConfig, {
     read: readScenarioRecords,
     enqueue: queueFirepowerWrite
-  }).catch(error => {
+  }, db).catch(error => {
     deviceSimulation = undefined;
     throw error;
   });
@@ -656,5 +655,6 @@ server.on("close", () => {
   managementRegistry.close();
   operations.close();
   void deviceSimulation?.then(simulation => simulation.close()).catch(() => {});
+  closeAllDatabases();
   offlineMapDb?.close();
 });

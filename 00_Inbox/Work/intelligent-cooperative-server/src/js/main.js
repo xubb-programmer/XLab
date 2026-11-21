@@ -33,6 +33,8 @@ const targetFeedLabels = {
   unavailable: "读取失败"
 };
 
+window.setCustomTerm = setCustomTerm;
+
 let viewerManager = null;
 let deviceManager = null;
 let targetPanel = null;
@@ -123,23 +125,37 @@ function bindMainPageNavigation() {
   document.getElementById("btn-tactical-add-firepower")?.addEventListener("click", () =>
     switchMainPage("firepower", { keepDrawer: true, openNew: true }));
 
-  // 左侧栏板块标题自定义编辑
-  const bindHeadingRename = (btnId, textId, termKey, defaultLabel) => {
-    const btn = document.getElementById(btnId);
-    const textEl = document.getElementById(textId);
+  // 席位/火力点标题与设置台账标题双向编辑与全局同步
+  const bindHeadingRename = (triggerIds, termKey, defaultLabel) => {
     const doRename = () => {
       const current = t(termKey, defaultLabel);
-      const val = prompt(`请输入${defaultLabel}板块标题名称:`, current);
+      const val = prompt(`请输入${defaultLabel}标题名称:`, current);
       if (val && val.trim() && val.trim() !== current) {
         setCustomTerm(termKey, val.trim());
       }
     };
-    btn?.addEventListener("click", doRename);
-    textEl?.addEventListener("dblclick", doRename);
+    for (const id of triggerIds) {
+      const el = document.getElementById(id);
+      if (el) {
+        if (el.tagName === "BUTTON") {
+          el.addEventListener("click", doRename);
+        } else {
+          el.addEventListener("dblclick", doRename);
+        }
+      }
+    }
   };
 
-  bindHeadingRename("btn-rename-recon-heading", "recon-heading-text", "roles.recon", "侦察席");
-  bindHeadingRename("btn-rename-firepower-heading", "firepower-heading-text", "roles.firepower", "火力点");
+  bindHeadingRename(
+    ["btn-rename-recon-heading", "btn-rename-hub-recon", "recon-heading-text", "setting-hub-title-recon"],
+    "roles.recon",
+    "侦察席"
+  );
+  bindHeadingRename(
+    ["btn-rename-firepower-heading", "btn-rename-hub-firepower", "firepower-heading-text", "setting-hub-title-firepower"],
+    "roles.firepower",
+    "火力点"
+  );
 
   eventBus.on("page:switch", (pageName, options) => switchMainPage(pageName, options));
   eventBus.on("management:openFirepower", () => switchMainPage("data-management", { recordType: "firepower" }));
@@ -238,19 +254,67 @@ async function bootstrap() {
   window.__targetService = targetService;
   window.__eventBus = eventBus;
 
+  // 3. 侧边栏折叠/抽屉展开与平板电脑自适应互斥控制
   for (const button of document.querySelectorAll(".sidebar-toggle")) {
     const sidebar = document.getElementById(button.getAttribute("aria-controls"));
     button.addEventListener("click", () => {
       const collapsed = !sidebar.hidden;
       sidebar.hidden = collapsed;
       button.setAttribute("aria-expanded", String(!collapsed));
-      const label = `${collapsed ? "展开" : "收起"}${sidebar.getAttribute("aria-label")}侧栏`;
+      const label = `${collapsed ? "展开" : "收起"}${sidebar.getAttribute("aria-label") || ""}侧栏`;
       button.setAttribute("aria-label", label);
       button.title = label;
-      viewerManager.viewer.resize();
+
+      // 平板竖屏/小屏抽屉模式下：展开当前侧栏时自动收起对侧抽屉，保持视野清爽
+      if (!collapsed && window.innerWidth <= 1024) {
+        for (const otherBtn of document.querySelectorAll(".sidebar-toggle")) {
+          if (otherBtn !== button) {
+            const otherSidebar = document.getElementById(otherBtn.getAttribute("aria-controls"));
+            if (otherSidebar && !otherSidebar.hidden) {
+              otherSidebar.hidden = true;
+              otherBtn.setAttribute("aria-expanded", "false");
+              const otherLabel = `展开${otherSidebar.getAttribute("aria-label") || ""}侧栏`;
+              otherBtn.setAttribute("aria-label", otherLabel);
+              otherBtn.title = otherLabel;
+            }
+          }
+        }
+      }
+
+      viewerManager.viewer?.resize();
       viewerManager.requestRender();
     });
   }
+
+  // 平板/中小型触控屏幕自适应初始态：默认收起侧边栏，将最大视野优先让给三维态势地图
+  if (window.innerWidth <= 1024) {
+    for (const button of document.querySelectorAll(".sidebar-toggle")) {
+      const sidebar = document.getElementById(button.getAttribute("aria-controls"));
+      if (sidebar) {
+        sidebar.hidden = true;
+        button.setAttribute("aria-expanded", "false");
+        const label = `展开${sidebar.getAttribute("aria-label") || ""}侧栏`;
+        button.setAttribute("aria-label", label);
+        button.title = label;
+      }
+    }
+  }
+
+  // 监听窗口尺寸调整及屏幕旋转（平板横竖屏切换），动态重算三维视口画布
+  let resizeTimer = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      viewerManager.viewer?.resize();
+      viewerManager.requestRender();
+    }, 120);
+  });
+  window.addEventListener("orientationchange", () => {
+    setTimeout(() => {
+      viewerManager.viewer?.resize();
+      viewerManager.requestRender();
+    }, 250);
+  });
 
   const uavs = readPlatforms(scenarioData.uavs ?? [scenarioData.uav], "无人机");
   const points = readPlatforms(scenarioData.firepowerPoints ?? [scenarioData.firepowerPoint], t("roles.firepowerBase", "地面作业点"));
