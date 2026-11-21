@@ -1,4 +1,4 @@
-import { createSocket } from "node:dgram";
+import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { isIPv4 } from "node:net";
@@ -40,35 +40,16 @@ export function getLocalIPv4Address(targetPeerAddress) {
   return allNonInternal[0] || "127.0.0.1";
 }
 
-function buildSituationReportCommand(reportHost, reportPort = 28080) {
-  return Buffer.from(JSON.stringify({
+function buildSituationReportPayload(reportHost, reportPort = 28080) {
+  return JSON.stringify({
     "定时上报": true,
     "上报间隔毫秒": 2000,
-    "上报地址": reportHost || getLocalIPv4Address(),
+    "上报地址": reportHost,
     "上报端口": reportPort,
     "目标编号": null,
     "目标类型": null,
     "最大速度米每秒": null
-  }), "utf8");
-}
-
-async function sendSituationReport(address, reportHost, reportPort = 28080) {
-  const host = (typeof reportHost === "string" && isIPv4(reportHost))
-    ? reportHost
-    : getLocalIPv4Address(address);
-  const socket = createSocket("udp4");
-  const command = buildSituationReportCommand(host, reportPort);
-  try {
-    await new Promise((resolve, reject) => {
-      socket.once("error", reject);
-      socket.send(command, SITUATION_REPORT_PORT, address, error => {
-        if (error) reject(error);
-        else resolve();
-      });
-    });
-  } finally {
-    socket.close();
-  }
+  });
 }
 
 function integerSetting(name, fallback, minimum, maximum) {
@@ -82,25 +63,28 @@ function json(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
-export async function openDeviceSimulation(rtspTimeoutOption, mqttConfig, scenario) {
+export async function openDeviceSimulation(rtspTimeoutOption, mqttConfig, scenario, dbInstance) {
   const sourceIps = (process.env.DEVICE_SIM_SOURCE_IPS || "192.168.10.130")
     .split(",").map(address => address.trim()).filter(Boolean);
   const source = sourceIps.join(", ");
   const relaySource = process.env.DEVICE_SIM_RELAY_IP || mqttConfig.deviceStatusRelayIp || "";
   const onlineMs = integerSetting("DEVICE_SIM_ONLINE_MS", 5000, 1000, 300000);
   const topic = process.env.DEVICE_STATUS_TOPIC || mqttConfig.deviceStatusTopic;
-  const envStateDir = process.env.DEVICE_SIM_STATE_DIR;
-  const defaultStateDir = fileURLToPath(new URL("../dist/device-status-simulation/", import.meta.url));
-  const stateDir = envStateDir && !envStateDir.startsWith("/var/lib/") && !envStateDir.startsWith("/etc/")
-    ? resolve(fileURLToPath(new URL("../", import.meta.url)), envStateDir)
-    : defaultStateDir;
-  await mkdir(stateDir, { recursive: true });
-  const registry = openRegistry(resolve(stateDir, "devices.sqlite"), onlineMs);
-  const portable = resolve(stateDir, "ffmpeg.exe");
+  const registry = openRegistry(
+    dbInstance ?? resolve(fileURLToPath(new URL("../", import.meta.url)), "data/cooperative.sqlite"),
+    onlineMs
+  );
+  const dataDir = resolve(fileURLToPath(new URL("../", import.meta.url)), "data");
+  const portable = resolve(dataDir, "ffmpeg.exe");
   const ffmpegPath = process.env.DEVICE_SIM_FFMPEG_PATH || (process.platform === "win32" && existsSync(portable) ? portable : "ffmpeg");
 
   const valid = sourceIps.length > 0 && sourceIps.every(isIPv4)
     && (!relaySource || isIPv4(relaySource)) && Boolean(topic);
+  const targetDeviceId = (mqttConfig.topic || "").match(/^edge\/v1\/devices\/([^/]+)\/data$/)?.[1] || "target-input-device";
+  const commandTopic = `edge/v1/devices/${targetDeviceId}/commands`;
+  const resultTopic = `edge/v1/devices/${targetDeviceId}/command-results`;
+  const pendingCommands = new Map();
+
   const mqtt = mqttConfig.brokerUrl && valid ? await import("mqtt").catch(() => null) : null;
   let state = !mqttConfig.brokerUrl ? mqttConfig.state : !valid ? "invalid" : mqtt ? "connecting" : "dependency_missing";
   let receiveError = null;
@@ -111,7 +95,8 @@ export async function openDeviceSimulation(rtspTimeoutOption, mqttConfig, scenar
   });
   client?.on("connect", () => {
     state = "connecting";
-    client.subscribe(topic, { qos: 1 }, (error, granted) => {
+    const subscribeTopics = [topic, resultTopic];
+    client.subscribe(subscribeTopics, { qos: 1 }, (error, granted) => {
       if (!client.connected) return;
       state = !error && granted?.some(entry => entry.topic === topic && entry.qos <= 1)
         ? "subscribed" : "subscription_failed";
@@ -119,7 +104,28 @@ export async function openDeviceSimulation(rtspTimeoutOption, mqttConfig, scenar
     });
   });
   client?.on("message", (receivedTopic, message, packet) => {
-    if (receivedTopic !== topic || packet.retain || message.length > MAX_UDP_BYTES * 2 + 512) return;
+    if (packet.retain) return;
+    if (receivedTopic === resultTopic) {
+      if (pendingCommands.size === 0 || message.length > 65_536) return;
+      try {
+        const envelope = JSON.parse(message.toString("utf8"));
+        const reqId = envelope?.id;
+        const pending = pendingCommands.get(reqId);
+        if (pending) {
+          if (envelope.status === "sent") {
+            pending.resolve(envelope);
+          } else {
+            const errCode = envelope.error?.code || "send_failed";
+            const errMsg = envelope.error?.message || "EdgeAgent 指令发送未被接收";
+            pending.reject(new Error(`EdgeAgent ${errCode}: ${errMsg}`));
+          }
+        }
+      } catch {
+        // 忽略非标准格式回执
+      }
+      return;
+    }
+    if (receivedTopic !== topic || message.length > MAX_UDP_BYTES * 2 + 512) return;
     let envelope;
     try {
       envelope = JSON.parse(message.toString("utf8"));
@@ -147,9 +153,68 @@ export async function openDeviceSimulation(rtspTimeoutOption, mqttConfig, scenar
     receiveError = "EdgeAgent设备状态连接失败";
     console.error(receiveError, error);
   });
+  client?.on("close", () => {
+    for (const pending of pendingCommands.values()) {
+      pending.reject(new Error("MQTT 已断开，态势上报指令未发出"));
+    }
+    pendingCommands.clear();
+  });
   client?.on("offline", () => { state = "disconnected"; });
   client?.on("reconnect", () => { state = "connecting"; });
-  if (client) console.log(`[Device Simulation] MQTT订阅 ${topic}，设备来源 ${source}，转发来源 ${relaySource}`);
+  if (client) console.log(`[Device Simulation] MQTT订阅 ${topic} 与 ${resultTopic}，设备来源 ${source}，转发来源 ${relaySource}`);
+
+  function sendSituationReport(address, reportHost, reportPort = 28080, timeoutMs = 4000) {
+    if (!client || !client.connected) {
+      return Promise.reject(new Error("MQTT 未连接，无法通过 EdgeAgent 下发指令"));
+    }
+    const host = (typeof reportHost === "string" && isIPv4(reportHost))
+      ? reportHost
+      : getLocalIPv4Address(address);
+    const jsonPayload = buildSituationReportPayload(host, reportPort);
+    const hex = Buffer.from(jsonPayload, "utf8").toString("hex");
+    const requestId = randomUUID();
+    const commandEnvelope = {
+      id: requestId,
+      transport: "udp",
+      data: hex,
+      meta: {
+        endpoint: {
+          address,
+          port: SITUATION_REPORT_PORT
+        }
+      }
+    };
+
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        if (pendingCommands.has(requestId)) {
+          pendingCommands.delete(requestId);
+          reject(new Error("等待 EdgeAgent 回执超时"));
+        }
+      }, timeoutMs);
+
+      pendingCommands.set(requestId, {
+        resolve: result => {
+          clearTimeout(timer);
+          pendingCommands.delete(requestId);
+          resolve(result);
+        },
+        reject: error => {
+          clearTimeout(timer);
+          pendingCommands.delete(requestId);
+          reject(error);
+        }
+      });
+
+      client.publish(commandTopic, JSON.stringify(commandEnvelope), { qos: 1, retain: false }, error => {
+        if (error) {
+          clearTimeout(timer);
+          pendingCommands.delete(requestId);
+          reject(new Error(`向 EdgeAgent 发布命令失败: ${error.message}`));
+        }
+      });
+    });
+  }
 
   return {
     isFirepower: registry.isFirepower,
@@ -203,10 +268,10 @@ export async function openDeviceSimulation(rtspTimeoutOption, mqttConfig, scenar
           try {
             await sendSituationReport(address, reportHost, reportPort);
           } catch (error) {
-            console.error("发送态势上报指令失败", error);
-            return json(res, 502, { error: "发送态势上报指令失败" });
+            console.error("通过 EdgeAgent 发送态势上报指令失败", error);
+            return json(res, 502, { error: error.message || "发送态势上报指令失败" });
           }
-          return json(res, 200, { sent: true, address, port: SITUATION_REPORT_PORT, reportHost, reportPort });
+          return json(res, 200, { sent: true, via: "edgeagent", address, port: SITUATION_REPORT_PORT, reportHost, reportPort });
         }
         const result = await scenario.enqueue(async () => {
           const current = await scenario.read();
@@ -227,6 +292,10 @@ export async function openDeviceSimulation(rtspTimeoutOption, mqttConfig, scenar
       }
     },
     close() {
+      for (const pending of pendingCommands.values()) {
+        pending.reject(new Error("服务正在关闭"));
+      }
+      pendingCommands.clear();
       client?.end(true);
       registry.close();
     }
