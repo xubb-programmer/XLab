@@ -109,3 +109,6 @@
    - 访问地址：`http://<IP>:4177/`；
    - 态势数据链状态显示为 `● 已订阅`；
    - 电脑大屏（1080p）与平板电脑（iPad Air / 1024×768 / 768×1024）自适应渲染工整，抽屉与把手触控顺畅。
+4. **离线打包与交付规格**：
+   - **全量交付包**（`npm run pack` / `npm run pack:full`）：产出 `intelligent-cooperative-server-full.tar.gz`，强制内置 `data/offline-maps/combined-theaters/tiles.db`（1.67GB，含朱日和战区等 16.1 万张高精瓦片及 manifest 索引），确保新板端刷机与交付时开箱即用，卫星底图全量呈现；
+   - **增量更新包**（`npm run pack:lite`）：产出 `intelligent-cooperative-server-lite.tar.gz`（~165 KB），用于已有地图底座的在线功能快速更新迭代。

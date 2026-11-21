@@ -6,6 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "node server/serve.mjs",
+    "pack": "node tools/package-release.mjs",
+    "pack:full": "node tools/package-release.mjs",
+    "pack:lite": "node tools/package-release.mjs --lite",
     "relay:edgeagent": "node tools/edgeagent-multicast-relay.mjs",
     "check": "node --check src/js/main.js && node --check server/serve.mjs",
     "test": "node test/test-situation-report-edge.mjs"
