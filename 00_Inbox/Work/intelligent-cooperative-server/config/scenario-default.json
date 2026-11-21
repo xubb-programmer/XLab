@@ -14,8 +14,8 @@
       "battalion": "1营",
       "company": "1连",
       "mountedDeviceId": "",
-      "longitude": 118.5,
-      "latitude": 24.5,
+      "longitude": 112.792494,
+      "latitude": 42.465369,
       "altitude": 0,
       "strikeRange": "20 km",
       "maxTargets": 1,
@@ -23,5 +23,5 @@
       "port": 5567
     }
   ],
-  "revision": "bcc21fad-c6f5-47df-9e02-3b9abedb469e"
+  "revision": "10821f71-171c-4264-8928-3c0f98e4e798"
 }
