@@ -588,19 +588,22 @@
 
           <footer class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
             <div class="modal-footer-left">
-              <button type="button" id="btn-modal-role-to-recon" class="btn btn-secondary" hidden>
+              <button type="button" id="btn-modal-role-to-recon" class="btn btn-secondary" hidden data-term-title="roles.cancelFirepower" title="恢复为侦察席">
                 <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
+                  <path d="M1 4v6h6"/>
+                  <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
                 </svg>
-                <span data-term="roles.cancelFirepower">取消独立作业单元</span>
+                <span data-term="roles.cancelFirepower">恢复为侦察席</span>
               </button>
-              <button type="button" id="btn-modal-role-to-firepower" class="btn btn-secondary" hidden>
+              <button type="button" id="btn-modal-role-to-firepower" class="btn btn-secondary" hidden data-term-title="roles.asFirepower" title="兼任火力点">
                 <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <line x1="12" y1="5" x2="12" y2="19"/>
-                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <circle cx="12" cy="12" r="7"/>
+                  <line x1="12" y1="2" x2="12" y2="5"/>
+                  <line x1="12" y1="19" x2="12" y2="22"/>
+                  <line x1="2" y1="12" x2="5" y2="12"/>
+                  <line x1="19" y1="12" x2="22" y2="12"/>
                 </svg>
-                <span data-term="roles.asFirepower">同时作为作业单元</span>
+                <span data-term="roles.asFirepower">兼任火力点</span>
               </button>
             </div>
             <div class="modal-footer-right" style="display:flex; gap:10px;">

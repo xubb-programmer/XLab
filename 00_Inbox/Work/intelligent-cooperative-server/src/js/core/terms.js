@@ -47,11 +47,15 @@ export async function initTerms() {
     const reconName = flatTerms.get("roles.recon");
     flatTerms.set("settings.reconHubTitle", `${reconName}台账`);
     flatTerms.set("reconHubTitle", `${reconName}台账`);
+    flatTerms.set("roles.cancelFirepower", `恢复为${reconName}`);
+    flatTerms.set("cancelFirepower", `恢复为${reconName}`);
   }
   if (flatTerms.has("roles.firepower")) {
     const firepowerName = flatTerms.get("roles.firepower");
     flatTerms.set("settings.firepowerHubTitle", `${firepowerName}台账`);
     flatTerms.set("firepowerHubTitle", `${firepowerName}台账`);
+    flatTerms.set("roles.asFirepower", `兼任${firepowerName}`);
+    flatTerms.set("asFirepower", `兼任${firepowerName}`);
   }
 
   return termsData;
@@ -64,13 +68,17 @@ export async function setCustomTerm(key, val) {
   const shortKey = key.split(".").pop();
   if (shortKey) flatTerms.set(shortKey, trimmed);
 
-  // 同步更新派生的台账标题
+  // 同步更新派生的台账标题与角色切换按钮
   if (key === "roles.recon") {
     flatTerms.set("settings.reconHubTitle", `${trimmed}台账`);
     flatTerms.set("reconHubTitle", `${trimmed}台账`);
+    flatTerms.set("roles.cancelFirepower", `恢复为${trimmed}`);
+    flatTerms.set("cancelFirepower", `恢复为${trimmed}`);
   } else if (key === "roles.firepower") {
     flatTerms.set("settings.firepowerHubTitle", `${trimmed}台账`);
     flatTerms.set("firepowerHubTitle", `${trimmed}台账`);
+    flatTerms.set("roles.asFirepower", `兼任${trimmed}`);
+    flatTerms.set("asFirepower", `兼任${trimmed}`);
   }
 
   // 1. 客户端本地持久化存储
@@ -105,6 +113,12 @@ export function t(key, fallback = "", params = null) {
   }
   if (key === "settings.firepowerHubTitle" || key === "firepowerHubTitle") {
     return `${t("roles.firepower", "火力点")}台账`;
+  }
+  if (key === "roles.cancelFirepower" || key === "cancelFirepower") {
+    return `恢复为${t("roles.recon", "侦察席")}`;
+  }
+  if (key === "roles.asFirepower" || key === "asFirepower") {
+    return `兼任${t("roles.firepower", "火力点")}`;
   }
   let val = flatTerms.get(key) ?? fallback ?? key;
   if (params && typeof params === "object") {

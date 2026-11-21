@@ -249,8 +249,26 @@ export class StationConfigModal {
     }
 
     const canSwitchRole = Boolean(this.changeSimulationRole);
-    if (this.btnRoleToFirepower) this.btnRoleToFirepower.textContent = t("roles.asFirepower", "同时作为作业单元");
-    if (this.btnRoleToRecon) this.btnRoleToRecon.textContent = t("roles.cancelFirepower", "取消独立作业单元");
+    const reconLabel = t("roles.recon", "侦察席");
+    const firepowerLabel = t("roles.firepower", "火力点");
+    const reconBtnText = this.btnRoleToRecon?.querySelector("span");
+    const reconBtnLabel = t("roles.cancelFirepower", `恢复为${reconLabel}`);
+    if (reconBtnText) {
+      reconBtnText.textContent = reconBtnLabel;
+    } else if (this.btnRoleToRecon) {
+      this.btnRoleToRecon.textContent = reconBtnLabel;
+    }
+    if (this.btnRoleToRecon) this.btnRoleToRecon.title = reconBtnLabel;
+
+    const fpBtnText = this.btnRoleToFirepower?.querySelector("span");
+    const fpBtnLabel = t("roles.asFirepower", `兼任${firepowerLabel}`);
+    if (fpBtnText) {
+      fpBtnText.textContent = fpBtnLabel;
+    } else if (this.btnRoleToFirepower) {
+      this.btnRoleToFirepower.textContent = fpBtnLabel;
+    }
+    if (this.btnRoleToFirepower) this.btnRoleToFirepower.title = fpBtnLabel;
+
     if (this.btnRoleToFirepower) {
       this.btnRoleToFirepower.hidden = !(canSwitchRole && isRecon);
     }

@@ -23,8 +23,8 @@
     "firepowerNameLabel": "火力点名称",
     "firepowerPlaceholder": "例如: 地面火力输出点",
     "reconNameLabel": "侦察席名称",
-    "asFirepower": "同时作为火力点",
-    "cancelFirepower": "取消独立火力点"
+    "asFirepower": "兼任火力点",
+    "cancelFirepower": "恢复为侦察席"
   },
   "org": {
     "center": "协同作战分队",
